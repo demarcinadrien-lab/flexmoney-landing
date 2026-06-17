@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FlexMoney — Rentabilise tes pauses</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --brand: #6C47FF;
+      --brand-light: #8B6DFF;
+      --brand-dim: rgba(108,71,255,0.12);
+      --accent: #00D4AA;
+      --dark: #0A0A0F;
+      --dark2: #12121A;
+      --dark3: #1A1A28;
+      --text: #F0EFF8;
+      --muted: #8A8AA8;
+      --border: rgba(255,255,255,0.08);
+      --radius: 16px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--dark);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 40px;
+      background: rgba(10,10,15,0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo {
+      font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px;
+      color: var(--text);
+    }
+    .logo span { color: var(--brand); }
+    .nav-cta {
+      background: var(--brand); color: #fff;
+      padding: 10px 22px; border-radius: 100px;
+      font-size: 0.9rem; font-weight: 600; text-decoration: none;
+      transition: background 0.2s;
+    }
+    .nav-cta:hover { background: var(--brand-light); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 120px 24px 80px;
+      position: relative; overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute; top: -200px; left: 50%; transform: translateX(-50%);
+      width: 800px; height: 800px;
+      background: radial-gradient(circle, rgba(108,71,255,0.18) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--brand-dim); border: 1px solid rgba(108,71,255,0.3);
+      color: var(--brand-light); padding: 8px 18px;
+      border-radius: 100px; font-size: 0.82rem; font-weight: 600;
+      margin-bottom: 32px; letter-spacing: 0.3px;
+    }
+    .badge-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--accent); animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.4); }
+    }
+
+    h1 {
+      font-size: clamp(2.6rem, 7vw, 5rem);
+      font-weight: 900; line-height: 1.05;
+      letter-spacing: -2px; margin-bottom: 24px;
+    }
+    h1 .highlight { color: var(--brand); }
+    h1 .accent { color: var(--accent); }
+
+    .hero-sub {
+      font-size: clamp(1rem, 2.5vw, 1.25rem);
+      color: var(--muted); max-width: 560px;
+      margin: 0 auto 48px;
+    }
+
+    /* ── CTA BUTTONS ── */
+    .cta-group {
+      display: flex; gap: 16px; flex-wrap: wrap;
+      justify-content: center; margin-bottom: 20px;
+    }
+    .btn-primary {
+      background: var(--brand); color: #fff;
+      padding: 16px 32px; border-radius: 100px;
+      font-size: 1rem; font-weight: 700; text-decoration: none;
+      border: none; cursor: pointer;
+      transition: all 0.2s; display: inline-block;
+      box-shadow: 0 4px 24px rgba(108,71,255,0.35);
+    }
+    .btn-primary:hover { background: var(--brand-light); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(108,71,255,0.45); }
+
+    .btn-secondary {
+      background: transparent; color: var(--text);
+      padding: 16px 32px; border-radius: 100px;
+      font-size: 1rem; font-weight: 700; text-decoration: none;
+      border: 1px solid var(--border); cursor: pointer;
+      transition: all 0.2s; display: inline-block;
+    }
+    .btn-secondary:hover { border-color: var(--brand); color: var(--brand-light); }
+
+    .hero-note { font-size: 0.82rem; color: var(--muted); }
+
+    /* ── STATS ── */
+    .stats {
+      display: flex; gap: 48px; flex-wrap: wrap;
+      justify-content: center; padding: 48px 24px;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .stat { text-align: center; }
+    .stat-num { font-size: 2rem; font-weight: 900; color: var(--brand-light); }
+    .stat-label { font-size: 0.82rem; color: var(--muted); margin-top: 4px; }
+
+    /* ── SECTION BASE ── */
+    section { padding: 96px 24px; }
+    .container { max-width: 1080px; margin: 0 auto; }
+    .section-label {
+      font-size: 0.78rem; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--brand-light);
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 900; letter-spacing: -1px;
+      line-height: 1.15; margin-bottom: 16px;
+    }
+    .section-sub { font-size: 1.05rem; color: var(--muted); max-width: 500px; }
+
+    /* ── PILLARS ── */
+    .pillars { background: var(--dark2); }
+    .pillars-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
+      margin-top: 56px;
+    }
+    .pillar-card {
+      background: var(--dark3); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 40px;
+      position: relative; overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .pillar-card:hover { border-color: rgba(108,71,255,0.4); }
+    .pillar-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+    .pillar-card:first-child::before { background: var(--brand); }
+    .pillar-card:last-child::before { background: var(--accent); }
+    .pillar-icon { font-size: 2.5rem; margin-bottom: 20px; }
+    .pillar-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 12px; }
+    .pillar-text { color: var(--muted); font-size: 0.97rem; line-height: 1.7; }
+
+    /* ── HOW IT WORKS ── */
+    .steps { display: flex; flex-direction: column; gap: 0; margin-top: 56px; }
+    .step {
+      display: flex; gap: 32px; align-items: flex-start;
+      padding: 36px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .step:last-child { border-bottom: none; }
+    .step-num {
+      flex-shrink: 0;
+      width: 48px; height: 48px; border-radius: 50%;
+      background: var(--brand-dim); border: 1px solid rgba(108,71,255,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; font-weight: 800; color: var(--brand-light);
+    }
+    .step-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; }
+    .step-text { color: var(--muted); font-size: 0.95rem; }
+
+    /* ── LAW BANNER ── */
+    .law-banner {
+      background: linear-gradient(135deg, rgba(108,71,255,0.15), rgba(0,212,170,0.08));
+      border: 1px solid rgba(108,71,255,0.25);
+      border-radius: var(--radius); padding: 40px 48px;
+      display: flex; align-items: center; gap: 32px;
+      margin-top: 32px;
+    }
+    .law-icon { font-size: 3rem; flex-shrink: 0; }
+    .law-text h3 { font-size: 1.2rem; font-weight: 800; margin-bottom: 8px; }
+    .law-text p { color: var(--muted); font-size: 0.95rem; }
+    .law-text strong { color: var(--accent); }
+
+    /* ── AUDIENCE TABS ── */
+    .audience { background: var(--dark2); }
+    .tabs { display: flex; gap: 8px; margin-bottom: 40px; }
+    .tab {
+      padding: 12px 24px; border-radius: 100px;
+      font-weight: 700; font-size: 0.9rem; cursor: pointer;
+      border: 1px solid var(--border); color: var(--muted);
+      background: transparent; transition: all 0.2s;
+    }
+    .tab.active {
+      background: var(--brand); color: #fff; border-color: var(--brand);
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+    .feature-card {
+      background: var(--dark3); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 28px;
+      transition: border-color 0.2s;
+    }
+    .feature-card:hover { border-color: rgba(108,71,255,0.35); }
+    .feature-icon { font-size: 1.8rem; margin-bottom: 14px; }
+    .feature-title { font-weight: 700; margin-bottom: 6px; }
+    .feature-text { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+
+    /* ── WAITLIST ── */
+    .waitlist { text-align: center; }
+    .waitlist-box {
+      background: var(--dark2); border: 1px solid var(--border);
+      border-radius: 24px; padding: 64px 40px;
+      max-width: 600px; margin: 0 auto;
+    }
+    .waitlist-box h2 { font-size: 2rem; font-weight: 900; margin-bottom: 12px; letter-spacing: -1px; }
+    .waitlist-box p { color: var(--muted); margin-bottom: 32px; }
+
+    .form-group { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .form-group input, .form-group select {
+      flex: 1; min-width: 200px;
+      background: var(--dark3); border: 1px solid var(--border);
+      color: var(--text); padding: 14px 20px; border-radius: 100px;
+      font-size: 0.95rem; outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus, .form-group select:focus { border-color: var(--brand); }
+    .form-group select option { background: var(--dark3); }
+    .form-full input {
+      width: 100%; background: var(--dark3); border: 1px solid var(--border);
+      color: var(--text); padding: 14px 20px; border-radius: 100px;
+      font-size: 0.95rem; outline: none; margin-bottom: 12px;
+      transition: border-color 0.2s;
+    }
+    .form-full input:focus { border-color: var(--brand); }
+    .btn-submit {
+      width: 100%; background: var(--brand); color: #fff;
+      padding: 16px; border-radius: 100px;
+      font-size: 1rem; font-weight: 700; border: none; cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 24px rgba(108,71,255,0.35);
+    }
+    .btn-submit:hover { background: var(--brand-light); transform: translateY(-2px); }
+    .form-note { font-size: 0.8rem; color: var(--muted); margin-top: 12px; }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 40px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 16px;
+    }
+    .footer-logo { font-size: 1.1rem; font-weight: 800; }
+    .footer-logo span { color: var(--brand); }
+    footer p { font-size: 0.82rem; color: var(--muted); }
+
+    /* ── SUCCESS STATE ── */
+    .success-msg {
+      display: none; text-align: center; padding: 20px;
+      background: rgba(0,212,170,0.1); border: 1px solid rgba(0,212,170,0.3);
+      border-radius: var(--radius); color: var(--accent);
+      font-weight: 600; margin-top: 16px;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      nav { padding: 16px 20px; }
+      .pillars-grid { grid-template-columns: 1fr; }
+      .tab-content.active { grid-template-columns: 1fr; }
+      .law-banner { flex-direction: column; padding: 28px; }
+      .stats { gap: 28px; }
+      footer { flex-direction: column; text-align: center; }
+      .form-group { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">Flex<span>Money</span></div>
+  <a href="inscription-travailleur.html" class="nav-cta">Je m'inscris</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="badge">
+    <span class="badge-dot"></span>
+    Nouveau droit belge — en vigueur le 1er juillet 2026
+  </div>
+  <h1>
+    Rentabilise<br/>
+    <span class="highlight">tes pauses.</span>
+  </h1>
+  <p class="hero-sub">
+    La première plateforme belge de flexi-jobs à distance.<br/>
+    Basée sur tes <strong style="color:var(--text)">compétences</strong> — pas sur ton CV.
+  </p>
+  <div class="cta-group">
+    <a href="inscription-travailleur.html" class="btn-primary">Je suis travailleur →</a>
+    <a href="inscription-employeur.html" class="btn-secondary">Je recrute en flexi</a>
+  </div>
+  <p class="hero-note">Rejoins la liste d'attente · Gratuit · Sans engagement</p>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat">
+    <div class="stat-num">+5M</div>
+    <div class="stat-label">travailleurs éligibles en Belgique</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">100%</div>
+    <div class="stat-label">du secteur privé ouvert dès juillet 2026</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">0 CV</div>
+    <div class="stat-label">requis pour postuler</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">Zéro</div>
+    <div class="stat-label">charge sociale pour le travailleur</div>
+  </div>
+</div>
+
+<!-- PILLARS -->
+<section class="pillars">
+  <div class="container">
+    <div class="section-label">Notre philosophie</div>
+    <h2 class="section-title">Deux idées. Une révolution.</h2>
+    <p class="section-sub">FlexSkill réinvente le flexi-job pour l'économie du savoir.</p>
+
+    <div class="pillars-grid">
+      <div class="pillar-card">
+        <div class="pillar-icon">⏸️</div>
+        <div class="pillar-title">Rentabilise tes pauses</div>
+        <div class="pillar-text">
+          Tu travailles à 4/5e ? Tu as un vendredi libre, des après-midis disponibles, du temps entre deux tâches ? Ce temps a de la valeur. FlexSkill te connecte à des employeurs qui ont besoin de toi exactement quand tu es disponible — depuis chez toi, sans contrainte.
+        </div>
+      </div>
+      <div class="pillar-card">
+        <div class="pillar-icon">🧠</div>
+        <div class="pillar-title">Tes compétences, pas ton CV</div>
+        <div class="pillar-text">
+          Fini les CV qui ne disent pas grand-chose. Sur FlexSkill, tu montres ce que tu sais faire : rédaction, comptabilité, support client, data, social media... Les employeurs te trouvent grâce à tes compétences réelles, tes évaluations et tes missions passées.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section>
+  <div class="container">
+    <div class="section-label">Comment ça marche</div>
+    <h2 class="section-title">Simple. Rapide. Efficace.</h2>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div>
+          <div class="step-title">Crée ton passeport de compétences</div>
+          <div class="step-text">Pas de CV à formater. Tu listes tes compétences, tes disponibilités et tes expériences en quelques minutes. Notre IA te suggère les bonnes catégories.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div>
+          <div class="step-title">Notre algorithme te matche</div>
+          <div class="step-text">FlexSkill analyse tes compétences, ta localisation, tes disponibilités et tes évaluations pour te connecter aux missions qui te correspondent vraiment.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div>
+          <div class="step-title">Accepte, travaille, sois évalué</div>
+          <div class="step-text">Le contrat flexi-job est généré automatiquement. Tu travailles. Tu gagnes. Chaque mission renforce ton profil et augmente ta visibilité pour les prochaines.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div>
+          <div class="step-title">Reçois ton salaire flexi</div>
+          <div class="step-text">Faible imposition, zéro cotisation ONSS pour toi. Le flexi-job reste l'un des revenus complémentaires les plus avantageux fiscalement en Belgique.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LAW BANNER -->
+    <div class="law-banner">
+      <div class="law-icon">⚖️</div>
+      <div class="law-text">
+        <h3>La loi belge vient de tout changer</h3>
+        <p>À partir du <strong>1er juillet 2026</strong>, le flexi-job s'ouvre à <strong>l'ensemble du secteur privé belge</strong> — incluant le travail à distance, le back-office, le marketing, l'IT et bien plus. C'est une révolution. FlexSkill est là dès le premier jour.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AUDIENCE TABS -->
+<section class="audience">
+  <div class="container">
+    <div class="section-label">Pour qui ?</div>
+    <h2 class="section-title">Taillé pour toi, quel que soit ton profil.</h2>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('workers', this)">👤 Travailleurs</button>
+      <button class="tab" onclick="switchTab('employers', this)">🏢 Employeurs</button>
+    </div>
+
+    <div id="workers" class="tab-content active">
+      <div class="feature-card">
+        <div class="feature-icon">🏠</div>
+        <div class="feature-title">100% à distance</div>
+        <div class="feature-text">Travaille depuis chez toi. Pas de déplacement, pas de contrainte géographique. Ton bureau, ton rythme.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📅</div>
+        <div class="feature-title">Tu choisis tes disponibilités</div>
+        <div class="feature-text">Tu indiques quand tu es libre. On ne te propose des missions que quand tu veux travailler. Jamais l'inverse.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💶</div>
+        <div class="feature-title">Revenu avantageux</div>
+        <div class="feature-text">Salaire flexi faiblement taxé. Pas de cotisation ONSS travailleur. Un des compléments de revenu les plus intéressants du marché belge.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🏅</div>
+        <div class="feature-title">Ton passeport de compétences</div>
+        <div class="feature-text">Chaque mission enrichit ton profil. Tes évaluations remplacent ton CV et parlent pour toi.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🤖</div>
+        <div class="feature-title">Matching intelligent</div>
+        <div class="feature-text">Notre algorithme analyse tes compétences réelles pour te proposer uniquement des missions qui te correspondent.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📝</div>
+        <div class="feature-title">Contrat automatique</div>
+        <div class="feature-text">Le contrat flexi-job est généré et signé électroniquement en quelques secondes. Zéro paperasse.</div>
+      </div>
+    </div>
+
+    <div id="employers" class="tab-content">
+      <div class="feature-card">
+        <div class="feature-icon">🎯</div>
+        <div class="feature-title">Matching par compétences</div>
+        <div class="feature-text">Décrivez la tâche, pas le profil idéal. Notre IA identifie les meilleurs candidats selon leurs compétences réelles.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <div class="feature-title">Disponibles rapidement</div>
+        <div class="feature-text">Des profils disponibles, qualifiés et prêts à travailler. Vous comblez un besoin ponctuel sans procédure RH complexe.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💰</div>
+        <div class="feature-title">Coût maîtrisé</div>
+        <div class="feature-text">Le flexi-job réduit les charges employeur. Vous payez uniquement pour les missions réellement effectuées.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⭐</div>
+        <div class="feature-title">Profils évalués</div>
+        <div class="feature-text">Chaque travailleur a un historique de missions et d'évaluations. Vous savez exactement à qui vous faites appel.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📄</div>
+        <div class="feature-title">Conformité garantie</div>
+        <div class="feature-text">FlexMoney vérifie automatiquement l'éligibilité de chaque travailleur et génère les documents légaux requis.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🌍</div>
+        <div class="feature-title">Talent à distance</div>
+        <div class="feature-text">Accédez à des compétences partout en Belgique, sans contrainte géographique. Le bon profil, où qu'il soit.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WAITLIST -->
+<section class="waitlist" id="waitlist">
+  <div class="container">
+    <div class="waitlist-box">
+      <div style="font-size:2.5rem;margin-bottom:16px;">🚀</div>
+      <h2>Rejoins la liste d'attente</h2>
+      <p>La plateforme ouvre le 1er juillet 2026.<br/>Sois parmi les premiers à en bénéficier.</p>
+
+      <form id="waitlistForm" onsubmit="handleSubmit(event)">
+        <div class="form-group">
+          <input type="text" placeholder="Prénom" required />
+          <input type="text" placeholder="Nom" required />
+        </div>
+        <div class="form-full">
+          <input type="email" placeholder="Adresse e-mail" required />
+        </div>
+        <div class="form-group">
+          <select required>
+            <option value="" disabled selected>Je suis...</option>
+            <option value="worker">👤 Travailleur flexi (4/5e ou retraité)</option>
+            <option value="employer">🏢 Employeur / RH</option>
+          </select>
+        </div>
+        <button type="submit" class="btn-submit">Réserver ma place gratuitement →</button>
+      </form>
+
+      <div class="success-msg" id="successMsg">
+        ✅ Inscription confirmée ! On te contacte dès l'ouverture.
+      </div>
+      <p class="form-note">🔒 Tes données restent privées. Aucun spam. Désinscription en 1 clic.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Flex<span>Money</span></div>
+  <p>© 2026 FlexMoney · Belgique · Tous droits réservés</p>
+  <p style="font-size:0.78rem;color:var(--muted)">Flexi-job conforme à la loi belge · RGPD</p>
+</footer>
+
+<script>
+  const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
+
+  function switchTab(id, el) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById(id).classList.add('active');
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    const form = e.target;
+    const btn = form.querySelector('.btn-submit');
+    btn.textContent = 'Inscription en cours...';
+    btn.disabled = true;
+
+    const inputs = form.querySelectorAll('input, select');
+    const prenom = inputs[0].value.trim();
+    const nom    = inputs[1].value.trim();
+    const email  = inputs[2].value.trim();
+    const type   = inputs[3].value;
+
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/waitlist`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({ prenom, nom, email, type })
+      });
+
+      if (res.ok || res.status === 201) {
+        document.getElementById('waitlistForm').style.display = 'none';
+        document.getElementById('successMsg').style.display = 'block';
+      } else {
+        const err = await res.json();
+        throw new Error(err.message || 'Erreur serveur');
+      }
+    } catch (err) {
+      btn.textContent = 'Réserver ma place gratuitement →';
+      btn.disabled = false;
+      alert('Une erreur est survenue : ' + err.message + '\nVérifie la politique RLS dans Supabase.');
+    }
+  }
+
+  // Smooth nav on scroll
+  window.addEventListener('scroll', () => {
+    const nav = document.querySelector('nav');
+    nav.style.boxShadow = window.scrollY > 20 ? '0 4px 32px rgba(0,0,0,0.4)' : 'none';
+  });
+</script>
+
+</body>
+</html>
