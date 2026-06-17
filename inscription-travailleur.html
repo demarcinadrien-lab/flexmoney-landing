@@ -4,6 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FlexMoney — Inscription Travailleur</title>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -632,6 +633,12 @@
   const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
 
+  // ── EMAILJS CONFIG ── À remplir après création du compte emailjs.com
+  const EMAILJS_PUBLIC_KEY  = 'VOTRE_PUBLIC_KEY';
+  const EMAILJS_SERVICE_ID  = 'VOTRE_SERVICE_ID';
+  const EMAILJS_TEMPLATE_ID = 'template_worker';
+  emailjs.init(EMAILJS_PUBLIC_KEY);
+
   let currentStep = 1;
   let formData = {};
   let selectedComps = [];
@@ -801,6 +808,18 @@
         });
       }
     } catch(e) { console.log('DB error (non-bloquant)', e); }
+
+    // ── ENVOI EMAIL CONFIRMATION ─────────────────────────────
+    try {
+      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+        to_email:    formData.email,
+        to_name:     formData.prenom + ' ' + formData.nom,
+        prenom:      formData.prenom,
+        competences: (formData.competences || []).join(', '),
+        eligible:    formData.eligible ? 'Éligible ✅' : 'En cours de vérification ⏳',
+        reply_to:    'contact.flexmoney@gmail.com'
+      });
+    } catch(e) { console.log('Email non envoyé (non-bloquant)', e); }
 
     // Show success
     document.getElementById('success-name').textContent  = formData.prenom + ' ' + formData.nom;

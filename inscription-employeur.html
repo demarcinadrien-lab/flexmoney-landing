@@ -4,6 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FlexMoney — Inscription Employeur</title>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -474,6 +475,12 @@
   const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
 
+  // ── EMAILJS CONFIG ── À remplir après création du compte emailjs.com
+  const EMAILJS_PUBLIC_KEY  = 'VOTRE_PUBLIC_KEY';
+  const EMAILJS_SERVICE_ID  = 'VOTRE_SERVICE_ID';
+  const EMAILJS_TEMPLATE_ID = 'template_employer';
+  emailjs.init(EMAILJS_PUBLIC_KEY);
+
   let currentStep = 1;
   let formData = {};
   let bceValidated = false;
@@ -675,7 +682,46 @@
     formData.type = 'employer';
 
     try {
-      await fetch(`${SUPABASE_URL}/rest/v1/waitlist`, {
+      await fetch(`${SUPABASE_URL}/rest/v1/employers_inscription`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Prefer': 'return=minimal' },
+        body: JSON.stringify({
+          numero_bce:       formData.bce,
+          nom_entreprise:   formData.company_name,
+          secteur:          formData.secteur,
+          prenom_contact:   formData.prenom,
+          nom_contact:      formData.nom,
+          fonction_contact: formData.fonction,
+          email_contact:    formData.email,
+          telephone_contact: formData.telephone,
+          volume_mensuel:   formData.volume,
+          secteur_eligible: formData.secteur_eligible,
+          secteur_statut:   formData.secteur_statut,
+          dimona_accepte:   true,
+          assurance_accepte: true,
+          onss_accepte:     true,
+          salaire_accepte:  true,
+          facture_accepte:  true
+        })
+      });
+    } catch(e) { console.log('DB save (non-bloquant)', e); }
+
+    // ── ENVOI EMAIL EMPLOYEUR + GUIDE DIMONA ─────────────────
+    try {
+      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+        to_email:       formData.email,
+        to_name:        formData.prenom + ' ' + formData.nom,
+        prenom:         formData.prenom,
+        entreprise:     formData.company_name,
+        bce:            formData.bce || 'Non renseigné',
+        secteur:        formData.secteur || 'Non renseigné',
+        dimona_url:     'https://www.socialsecurity.be/site_fr/employer/applics/dimona/index.htm',
+        reply_to:       'contact.flexmoney@gmail.com'
+      });
+    } catch(e) { console.log('Email non envoyé (non-bloquant)', e); }
+
+    // legacy waitlist fallback (conservé pour compatibilité)
+    try { await fetch(`${SUPABASE_URL}/rest/v1/waitlist`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Prefer': 'return=minimal' },
         body: JSON.stringify({
