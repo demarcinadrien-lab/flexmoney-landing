@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Validation de mission — FlexMoney</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; color: #1e293b; }
+
+    header {
+      background: #fff;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    header .logo { font-weight: 800; font-size: 20px; color: #6366f1; }
+    header .logo span { color: #1e293b; }
+
+    .container { max-width: 760px; margin: 40px auto; padding: 0 20px; }
+
+    .step-bar {
+      display: flex;
+      gap: 0;
+      margin-bottom: 40px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+    }
+    .step {
+      flex: 1;
+      padding: 14px 10px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      background: #f1f5f9;
+      color: #94a3b8;
+      border-right: 1px solid #e2e8f0;
+      transition: all 0.3s;
+    }
+    .step:last-child { border-right: none; }
+    .step.active { background: #6366f1; color: #fff; }
+    .step.done { background: #dcfce7; color: #16a34a; }
+
+    .card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 24px;
+    }
+    .card h2 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .card p.sub { color: #64748b; font-size: 14px; margin-bottom: 24px; }
+
+    .role-select {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .role-btn {
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+      background: #fff;
+    }
+    .role-btn:hover { border-color: #6366f1; }
+    .role-btn.selected { border-color: #6366f1; background: #f0f0ff; }
+    .role-btn .icon { font-size: 32px; margin-bottom: 8px; }
+    .role-btn .label { font-weight: 700; font-size: 15px; }
+    .role-btn .desc { font-size: 12px; color: #64748b; margin-top: 4px; }
+
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; padding: 11px 14px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color 0.2s;
+      background: #fff;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      outline: none; border-color: #6366f1;
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    .mission-recap {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    .mission-recap h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; color: #1e293b; }
+    .recap-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 14px;
+    }
+    .recap-row:last-child { border-bottom: none; }
+    .recap-row .label { color: #64748b; }
+    .recap-row .value { font-weight: 600; }
+    .recap-row.total { margin-top: 8px; padding-top: 12px; }
+    .recap-row.total .label { font-weight: 700; color: #1e293b; }
+    .recap-row.total .value { font-size: 18px; color: #6366f1; font-weight: 800; }
+    .recap-row.commission .value { color: #f59e0b; }
+
+    .hours-input {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: #f0f0ff;
+      border: 2px solid #6366f1;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    .hours-input .icon { font-size: 36px; }
+    .hours-input .content { flex: 1; }
+    .hours-input .content label { font-size: 13px; font-weight: 600; color: #6366f1; margin-bottom: 6px; display: block; }
+    .hours-input .content input {
+      width: 120px; padding: 10px 14px;
+      border: 1.5px solid #6366f1;
+      border-radius: 8px; font-size: 18px; font-weight: 700;
+      text-align: center; color: #6366f1;
+    }
+
+    .confirm-check {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      cursor: pointer;
+    }
+    .confirm-check input[type=checkbox] { width: 20px; height: 20px; margin-top: 2px; accent-color: #6366f1; }
+    .confirm-check .text { font-size: 14px; color: #374151; line-height: 1.5; }
+    .confirm-check .text strong { color: #1e293b; }
+
+    .btn {
+      padding: 14px 28px;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-primary { background: #6366f1; color: #fff; width: 100%; justify-content: center; }
+    .btn-primary:hover { background: #4f46e5; }
+    .btn-primary:disabled { background: #a5b4fc; cursor: not-allowed; }
+    .btn-outline { background: #fff; color: #6366f1; border: 2px solid #6366f1; }
+    .btn-outline:hover { background: #f0f0ff; }
+
+    /* Récapitulatif secrétariat social */
+    .secretariat-doc {
+      background: #fff;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 28px;
+      margin-top: 24px;
+      font-size: 14px;
+    }
+    .secretariat-doc .doc-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    .secretariat-doc .doc-title { font-size: 18px; font-weight: 800; color: #1e293b; }
+    .secretariat-doc .doc-badge {
+      background: #f0f0ff;
+      color: #6366f1;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+    .doc-section { margin-bottom: 20px; }
+    .doc-section h4 { font-size: 12px; font-weight: 700; color: #6366f1; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+    .doc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .doc-field { padding: 8px 12px; background: #f8fafc; border-radius: 6px; }
+    .doc-field .field-label { font-size: 11px; color: #94a3b8; margin-bottom: 2px; }
+    .doc-field .field-value { font-weight: 600; color: #1e293b; }
+    .doc-total-box {
+      background: #f0f0ff;
+      border: 1px solid #c7d2fe;
+      border-radius: 10px;
+      padding: 16px;
+      margin-top: 16px;
+    }
+    .doc-total-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; }
+    .doc-total-row.final { font-weight: 800; font-size: 16px; color: #6366f1; border-top: 1px solid #c7d2fe; margin-top: 6px; padding-top: 10px; }
+
+    /* Notation */
+    .stars { display: flex; gap: 8px; margin: 12px 0; }
+    .star {
+      font-size: 32px; cursor: pointer; color: #e2e8f0;
+      transition: color 0.15s, transform 0.1s;
+    }
+    .star:hover, .star.active { color: #f59e0b; transform: scale(1.15); }
+
+    .success-box {
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .success-box .check { font-size: 64px; margin-bottom: 16px; }
+    .success-box h2 { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+    .success-box p { color: #64748b; font-size: 15px; max-width: 400px; margin: 0 auto 24px; }
+
+    .alert {
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-size: 14px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .alert-info { background: #f0f9ff; border: 1px solid #bae6fd; color: #0369a1; }
+    .alert-warning { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+    .alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+
+    .hidden { display: none !important; }
+
+    @media print {
+      header, .step-bar, .btn, .role-select, #step1, #step2, #step3, #step4 { display: none !important; }
+      .secretariat-doc { border: none; padding: 0; }
+      body { background: #fff; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Flex<span>Money</span></div>
+  <span style="color:#94a3b8;font-size:14px;">— Validation de mission</span>
+</header>
+
+<div class="container">
+
+  <!-- Barre de progression -->
+  <div class="step-bar">
+    <div class="step active" id="bar1">① Identification</div>
+    <div class="step" id="bar2">② Heures & validation</div>
+    <div class="step" id="bar3">③ Récap secrétariat</div>
+    <div class="step" id="bar4">④ Notation</div>
+  </div>
+
+  <!-- ÉTAPE 1 : Identification -->
+  <div id="step1">
+    <div class="card">
+      <h2>Qui êtes-vous ?</h2>
+      <p class="sub">Sélectionnez votre rôle pour accéder au bon formulaire de validation.</p>
+
+      <div class="role-select">
+        <div class="role-btn" id="roleEmployeur" onclick="selectRole('employeur')">
+          <div class="icon">🏢</div>
+          <div class="label">Je suis employeur</div>
+          <div class="desc">Je valide les heures prestées et génère le récap secrétariat social</div>
+        </div>
+        <div class="role-btn" id="roleTravailleur" onclick="selectRole('travailleur')">
+          <div class="icon">👤</div>
+          <div class="label">Je suis travailleur</div>
+          <div class="desc">Je confirme les heures que j'ai prestées</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Votre adresse email</label>
+        <input type="email" id="emailUser" placeholder="votre@email.com">
+      </div>
+      <div class="form-group">
+        <label>Code de mission (reçu par email)</label>
+        <input type="text" id="missionCode" placeholder="FM-2026-XXXX" style="font-family:monospace;letter-spacing:2px;">
+      </div>
+
+      <div class="alert alert-info">
+        💡 <span>Vous recevez ce lien par email automatiquement dès que la mission est marquée comme terminée.</span>
+      </div>
+
+      <button class="btn btn-primary" onclick="goToStep2()">Continuer →</button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 2 : Heures & validation -->
+  <div id="step2" class="hidden">
+    <div class="card">
+      <h2 id="step2Title">Confirmer les heures prestées</h2>
+      <p class="sub" id="step2Sub">Vérifiez et confirmez les heures de la mission.</p>
+
+      <!-- Récap mission -->
+      <div class="mission-recap">
+        <h3>📋 Détails de la mission</h3>
+        <div class="recap-row">
+          <span class="label">Mission</span>
+          <span class="value" id="recapTitre">Assistant comptable</span>
+        </div>
+        <div class="recap-row">
+          <span class="label">Travailleur</span>
+          <span class="value" id="recapTravailleur">Sophie Martin</span>
+        </div>
+        <div class="recap-row">
+          <span class="label">Employeur</span>
+          <span class="value" id="recapEmployeur">Fiduciaire Dupont SA</span>
+        </div>
+        <div class="recap-row">
+          <span class="label">Date</span>
+          <span class="value" id="recapDate">Samedi 21 juin 2026</span>
+        </div>
+        <div class="recap-row">
+          <span class="label">Horaires déclarés</span>
+          <span class="value" id="recapHoraires">08:00 → 16:00 (8h)</span>
+        </div>
+        <div class="recap-row">
+          <span class="label">Taux horaire</span>
+          <span class="value" id="recapTaux">22,00 €/h</span>
+        </div>
+        <div class="recap-row total">
+          <span class="label">Salaire brut total</span>
+          <span class="value" id="recapBrut">176,00 €</span>
+        </div>
+      </div>
+
+      <!-- Saisie heures réelles -->
+      <div class="hours-input">
+        <div class="icon">⏱️</div>
+        <div class="content">
+          <label>Heures réellement prestées</label>
+          <input type="number" id="heuresReelles" value="8" min="0" max="24" step="0.5" oninput="updateCalc()">
+          <span style="font-size:13px;color:#6366f1;margin-left:8px;">heures</span>
+        </div>
+      </div>
+
+      <!-- Calcul dynamique -->
+      <div class="mission-recap" id="calcDyn">
+        <h3>💰 Calcul mis à jour</h3>
+        <div class="recap-row">
+          <span class="label">Salaire brut flexi</span>
+          <span class="value" id="calcBrut">176,00 €</span>
+        </div>
+        <div class="recap-row">
+          <span class="label">ONSS employeur (25%)</span>
+          <span class="value" id="calcONSS">44,00 €</span>
+        </div>
+        <div class="recap-row commission">
+          <span class="label">Commission FlexMoney (5%)</span>
+          <span class="value" id="calcCommission">8,80 €</span>
+        </div>
+        <div class="recap-row total">
+          <span class="label">Coût total employeur</span>
+          <span class="value" id="calcTotal">228,80 €</span>
+        </div>
+        <div style="margin-top:12px;padding:10px;background:#f0fdf4;border-radius:8px;font-size:13px;color:#166534;">
+          ✅ <strong>Travailleur reçoit : <span id="calcNet">176,00 €</span> net</strong> (pas d'impôt ni cotisation personnelle sur le flexi)
+        </div>
+      </div>
+
+      <!-- Confirmations -->
+      <label class="confirm-check" onclick="toggleCheck('check1')">
+        <input type="checkbox" id="check1">
+        <div class="text">Je confirme que <strong id="checkName">ces heures</strong> correspondent bien à la prestation réalisée.</div>
+      </label>
+      <label class="confirm-check" onclick="toggleCheck('check2')">
+        <input type="checkbox" id="check2">
+        <div class="text" id="check2Text">Je confirme que la mission a été exécutée conformément aux attentes.</div>
+      </label>
+
+      <div class="alert alert-warning" id="dimonaReminder">
+        ⚠️ <span><strong>Rappel Dimona :</strong> Avez-vous bien effectué la déclaration Dimona FLX avant le début de cette mission sur <a href="https://www.socialsecurity.be" target="_blank" style="color:#92400e;">socialsecurity.be</a> ?</span>
+      </div>
+
+      <div class="alert alert-warning" id="assuranceReminder" style="background:#fef2f2;border-color:#fecaca;color:#991b1b;">
+        🛡️ <span><strong>Obligation légale — Assurance :</strong> En tant qu'employeur flexi-job, vous êtes légalement tenu de couvrir le travailleur via votre <strong>assurance accidents du travail</strong> pour la durée de cette mission. Vérifiez que votre police couvre bien les travailleurs flexi avant de valider. En cas de doute, contactez votre assureur.</span>
+      </div>
+
+      <button class="btn btn-primary" id="btnValider" onclick="goToStep3()" disabled>Valider la mission ✓</button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 3 : Récap secrétariat social (employeur uniquement) -->
+  <div id="step3" class="hidden">
+    <div class="card">
+      <h2>📄 Récapitulatif secrétariat social</h2>
+      <p class="sub">Document pré-rempli à transmettre à votre secrétariat social (Securex, SD Worx, Partena, Acerta…).</p>
+
+      <div class="secretariat-doc" id="docPrint">
+        <div class="doc-header">
+          <div>
+            <div class="doc-title">Déclaration de prestation flexi-job</div>
+            <div style="font-size:13px;color:#94a3b8;margin-top:4px;">À communiquer à votre secrétariat social</div>
+          </div>
+          <div class="doc-badge">FlexMoney • <span id="docDate"></span></div>
+        </div>
+
+        <div class="doc-section">
+          <h4>🏢 Employeur</h4>
+          <div class="doc-grid">
+            <div class="doc-field">
+              <div class="field-label">Nom entreprise</div>
+              <div class="field-value" id="docEmployeur">—</div>
+            </div>
+            <div class="doc-field">
+              <div class="field-label">Numéro BCE</div>
+              <div class="field-value" id="docBCE">—</div>
+            </div>
+            <div class="doc-field">
+              <div class="field-label">Commission paritaire</div>
+              <div class="field-value" id="docCP">CP 200 (Employés)</div>
+            </div>
+            <div class="doc-field">
+              <div class="field-label">Référence mission</div>
+              <div class="field-value" id="docRef">FM-2026-0001</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="doc-section">
+          <h4>👤 Travailleur flexi-job</h4>
+          <div class="doc-grid">
+            <div class="doc-field">
+              <div class="field-label">Nom complet</div>
+              <div class="field-value" id="docTravailleur">—</div>
+            </div>
+            <div class="doc-field">
+              <div class="field-label">NISS</div>
+              <div class="field-value" id="docNISS">—</div>
+            </div>
+            <div class="doc-field">
+              <div class="field-label">Type contrat</div>
+              <div class="field-value">CDD flexi-job</div>
+            </div>
+            <div class="doc-field">
+              <div class="field-label">Statut</div>
+              <div class="field-value">Salarié 4/5e ou pensionné</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="doc-section">
+          <h4>⏱️ Prestation</h4>
+          <div class="doc-grid">
+            <div class="doc-field">
+              <div class="field-label">Date de prestation</div>
+              <div class="field-value" id="docDatePrest">—</div>
+            </div>
+            <div class="doc-field">
+              <div class="field-label">Heures prestées</div>
+              <div class="field-value" id="docHeures">—</div>
+            </div>
+            <div class="doc-field">
+              <div class="field-label">Heure début</div>
+              <div class="field-value" id="docHeureDebut">—</div>
+            </div>
+            <div class="doc-field">
+              <div class="field-label">Heure fin</div>
+              <div class="field-value" id="docHeureFin">—</div>
+            </div>
+            <div class="doc-field">
+              <div class="field-label">Fonction</div>
+              <div class="field-value" id="docFonction">—</div>
+            </div>
+            <div class="doc-field">
+              <div class="field-label">Lieu</div>
+              <div class="field-value" id="docLieu">Télétravail</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="doc-total-box">
+          <h4 style="font-size:12px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">💰 Calcul de la rémunération</h4>
+          <div class="doc-total-row">
+            <span>Taux horaire flexi</span>
+            <span id="docTaux">—</span>
+          </div>
+          <div class="doc-total-row">
+            <span>Heures prestées</span>
+            <span id="docH">—</span>
+          </div>
+          <div class="doc-total-row">
+            <span>Salaire brut flexi (pécule vacances inclus)</span>
+            <span id="docBrutDoc">—</span>
+          </div>
+          <div class="doc-total-row">
+            <span>Cotisation ONSS employeur (25%)</span>
+            <span id="docONSSDoc">—</span>
+          </div>
+          <div class="doc-total-row" style="color:#94a3b8;font-size:13px;">
+            <span>Cotisation ONSS travailleur</span>
+            <span>0,00 € (exonéré flexi)</span>
+          </div>
+          <div class="doc-total-row" style="color:#94a3b8;font-size:13px;">
+            <span>Précompte professionnel</span>
+            <span>0,00 € (exonéré flexi)</span>
+          </div>
+          <div class="doc-total-row final">
+            <span>NET à payer au travailleur</span>
+            <span id="docNetDoc">—</span>
+          </div>
+        </div>
+
+        <div style="margin-top:20px;padding:14px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:13px;color:#92400e;">
+          ⚠️ <strong>Important :</strong> Le salaire flexi est exonéré d'impôts pour le travailleur (jusqu'à 18 000 €/an). Net = Brut. Dimona FLX obligatoire avant chaque prestation.
+        </div>
+
+        <div style="margin-top:16px;font-size:12px;color:#94a3b8;text-align:center;">
+          Document généré par FlexMoney — flexmoney.be — Réf. <span id="docRefFoot">FM-2026-0001</span>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-top:20px;">
+        <button class="btn btn-outline" onclick="window.print()" style="flex:1;">🖨️ Imprimer / PDF</button>
+        <button class="btn btn-primary" onclick="goToStep4()" style="flex:1;">Continuer → Notation</button>
+      </div>
+    </div>
+
+    <!-- Facture commission -->
+    <div class="card">
+      <h2>💳 Paiement de la commission FlexMoney</h2>
+      <p class="sub">Commission de <strong id="commissionDisplay">5%</strong> sur le salaire brut, conformément à nos conditions.</p>
+
+      <div class="mission-recap">
+        <div class="recap-row">
+          <span class="label">Salaire brut flexi</span>
+          <span class="value" id="payBrut">—</span>
+        </div>
+        <div class="recap-row commission">
+          <span class="label">Commission FlexMoney (5%)</span>
+          <span class="value" id="payCommission">—</span>
+        </div>
+        <div class="recap-row total">
+          <span class="label">À payer à FlexMoney</span>
+          <span class="value" id="payTotal">—</span>
+        </div>
+      </div>
+
+      <div class="alert alert-info">
+        💡 <span>Le paiement par carte ou virement SEPA sera disponible après intégration Stripe. Pour l'instant, nous vous enverrons une facture par email.</span>
+      </div>
+
+      <button class="btn btn-primary" style="background:#16a34a;" onclick="alert('Facture envoyée à votre email. Paiement Stripe disponible prochainement.')">
+        📧 Recevoir la facture par email
+      </button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 3b : Confirmation travailleur -->
+  <div id="step3b" class="hidden">
+    <div class="card success-box">
+      <div class="check">✅</div>
+      <h2>Heures confirmées !</h2>
+      <p>Merci pour votre confirmation. L'employeur va maintenant valider de son côté et générer les documents nécessaires.</p>
+      <div class="alert alert-success" style="text-align:left;">
+        ✅ <span>Votre salaire net sera de <strong id="netTravailleur">—</strong>. Vous recevrez un email dès que l'employeur aura validé et généré la fiche de paie.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 4 : Notation -->
+  <div id="step4" class="hidden">
+    <div class="card">
+      <h2>⭐ Évaluez cette mission</h2>
+      <p class="sub" id="noteSubtitle">Votre évaluation aide à construire la confiance sur la plateforme.</p>
+
+      <div style="margin-bottom:24px;">
+        <div style="font-weight:700;margin-bottom:8px;" id="noteLabel">Note globale de la mission</div>
+        <div class="stars" id="starsContainer">
+          <span class="star" onclick="setNote(1)">★</span>
+          <span class="star" onclick="setNote(2)">★</span>
+          <span class="star" onclick="setNote(3)">★</span>
+          <span class="star" onclick="setNote(4)">★</span>
+          <span class="star" onclick="setNote(5)">★</span>
+        </div>
+        <div id="noteText" style="font-size:13px;color:#6366f1;height:20px;"></div>
+      </div>
+
+      <div class="form-group">
+        <label id="commentLabel">Commentaire (visible publiquement)</label>
+        <textarea id="commentaire" rows="3" placeholder="Travailleur sérieux, mission bien réalisée dans les délais..."></textarea>
+      </div>
+
+      <button class="btn btn-primary" onclick="submitNote()">Soumettre l'évaluation ✓</button>
+    </div>
+  </div>
+
+  <!-- FIN -->
+  <div id="stepFin" class="hidden">
+    <div class="card success-box">
+      <div class="check">🎉</div>
+      <h2>Mission clôturée !</h2>
+      <p>Tout est en ordre. La mission est officiellement terminée et enregistrée sur FlexMoney.</p>
+      <div class="alert alert-success" style="text-align:left;margin-bottom:20px;">
+        ✅ <span>Récapitulatif secrétariat généré · Commission facturée · Évaluation enregistrée</span>
+      </div>
+      <a href="index.html"><button class="btn btn-primary">Retour à l'accueil</button></a>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Config Supabase
+  const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
+
+  // État
+  let currentRole = null;
+  let currentNote = 0;
+  const tauxHoraire = 22;
+  const commissionTaux = 0.05;
+
+  // Données mission simulées (en prod: chargées depuis Supabase via code mission)
+  const missionData = {
+    titre: 'Assistant comptable',
+    travailleur: 'Sophie Martin',
+    niss: '85.04.12-123.45',
+    employeur: 'Fiduciaire Dupont SA',
+    bce: 'BE 0472.391.845',
+    cp: 'CP 200',
+    date: 'Samedi 21 juin 2026',
+    heureDebut: '08:00',
+    heureFin: '16:00',
+    heures: 8,
+    taux: 22,
+    fonction: 'Assistant comptable / encodage',
+    lieu: 'Télétravail',
+    ref: 'FM-2026-0001'
+  };
+
+  function selectRole(role) {
+    currentRole = role;
+    document.getElementById('roleEmployeur').classList.toggle('selected', role === 'employeur');
+    document.getElementById('roleTravailleur').classList.toggle('selected', role === 'travailleur');
+  }
+
+  function goToStep2() {
+    if (!currentRole) { alert('Veuillez sélectionner votre rôle.'); return; }
+
+    // Remplir récap
+    document.getElementById('recapTitre').textContent = missionData.titre;
+    document.getElementById('recapTravailleur').textContent = missionData.travailleur;
+    document.getElementById('recapEmployeur').textContent = missionData.employeur;
+    document.getElementById('recapDate').textContent = missionData.date;
+    document.getElementById('recapHoraires').textContent = `${missionData.heureDebut} → ${missionData.heureFin} (${missionData.heures}h)`;
+    document.getElementById('recapTaux').textContent = fmt(missionData.taux) + ' €/h';
+    document.getElementById('recapBrut').textContent = fmt(missionData.heures * missionData.taux) + ' €';
+    document.getElementById('heuresReelles').value = missionData.heures;
+
+    if (currentRole === 'employeur') {
+      document.getElementById('step2Title').textContent = 'Valider les heures et clôturer la mission';
+      document.getElementById('step2Sub').textContent = 'Confirmez les heures prestées, puis FlexMoney génère le récapitulatif pour votre secrétariat social.';
+      document.getElementById('checkName').textContent = 'les heures ci-dessus';
+      document.getElementById('check2Text').textContent = 'Je confirme avoir effectué la déclaration Dimona FLX avant cette mission.';
+    } else {
+      document.getElementById('step2Title').textContent = 'Confirmer vos heures prestées';
+      document.getElementById('step2Sub').textContent = 'Vérifiez que les heures correspondent à votre prestation réelle.';
+      document.getElementById('checkName').textContent = 'les heures ci-dessus';
+      document.getElementById('check2Text').textContent = 'Je confirme avoir réalisé cette mission conformément à la description.';
+      document.getElementById('dimonaReminder').classList.add('hidden');
+      document.getElementById('assuranceReminder').classList.add('hidden');
+    }
+
+    updateCalc();
+    setStep(2);
+  }
+
+  function updateCalc() {
+    const h = parseFloat(document.getElementById('heuresReelles').value) || 0;
+    const brut = h * missionData.taux;
+    const onss = brut * 0.25;
+    const comm = brut * commissionTaux;
+    const total = brut + onss + comm;
+
+    document.getElementById('calcBrut').textContent = fmt(brut) + ' €';
+    document.getElementById('calcONSS').textContent = fmt(onss) + ' €';
+    document.getElementById('calcCommission').textContent = fmt(comm) + ' €';
+    document.getElementById('calcTotal').textContent = fmt(total) + ' €';
+    document.getElementById('calcNet').textContent = fmt(brut) + ' €';
+  }
+
+  function toggleCheck(id) {
+    const cb = document.getElementById(id);
+    cb.checked = !cb.checked;
+    const both = document.getElementById('check1').checked && document.getElementById('check2').checked;
+    document.getElementById('btnValider').disabled = !both;
+  }
+
+  function goToStep3() {
+    const h = parseFloat(document.getElementById('heuresReelles').value) || 0;
+    const brut = h * missionData.taux;
+    const onss = brut * 0.25;
+    const comm = brut * commissionTaux;
+
+    if (currentRole === 'travailleur') {
+      document.getElementById('netTravailleur').textContent = fmt(brut) + ' €';
+      document.getElementById('step3b').classList.remove('hidden');
+      document.getElementById('step3').classList.add('hidden');
+      setStep(3);
+      return;
+    }
+
+    // Remplir doc secrétariat
+    document.getElementById('docDate').textContent = new Date().toLocaleDateString('fr-BE');
+    document.getElementById('docEmployeur').textContent = missionData.employeur;
+    document.getElementById('docBCE').textContent = missionData.bce;
+    document.getElementById('docCP').textContent = missionData.cp;
+    document.getElementById('docRef').textContent = missionData.ref;
+    document.getElementById('docRefFoot').textContent = missionData.ref;
+    document.getElementById('docTravailleur').textContent = missionData.travailleur;
+    document.getElementById('docNISS').textContent = missionData.niss;
+    document.getElementById('docDatePrest').textContent = missionData.date;
+    document.getElementById('docHeures').textContent = h + 'h';
+    document.getElementById('docHeureDebut').textContent = missionData.heureDebut;
+    document.getElementById('docHeureFin').textContent = missionData.heureFin;
+    document.getElementById('docFonction').textContent = missionData.fonction;
+    document.getElementById('docLieu').textContent = missionData.lieu;
+    document.getElementById('docTaux').textContent = fmt(missionData.taux) + ' €/h';
+    document.getElementById('docH').textContent = h + 'h';
+    document.getElementById('docBrutDoc').textContent = fmt(brut) + ' €';
+    document.getElementById('docONSSDoc').textContent = fmt(onss) + ' €';
+    document.getElementById('docNetDoc').textContent = fmt(brut) + ' € (Net = Brut)';
+
+    // Paiement commission
+    document.getElementById('payBrut').textContent = fmt(brut) + ' €';
+    document.getElementById('payCommission').textContent = fmt(comm) + ' €';
+    document.getElementById('payTotal').textContent = fmt(comm) + ' €';
+
+    setStep(3);
+  }
+
+  function goToStep4() {
+    if (currentRole === 'employeur') {
+      document.getElementById('noteLabel').textContent = 'Évaluez le travailleur';
+      document.getElementById('noteSubtitle').textContent = 'Votre évaluation aide les autres employeurs à choisir les meilleurs profils.';
+      document.getElementById('commentLabel').textContent = 'Commentaire sur le travailleur (visible sur son profil)';
+    } else {
+      document.getElementById('noteLabel').textContent = 'Évaluez l\'employeur';
+      document.getElementById('noteSubtitle').textContent = 'Votre évaluation aide les autres travailleurs à choisir leurs missions.';
+      document.getElementById('commentLabel').textContent = 'Commentaire sur l\'employeur (visible sur son profil)';
+    }
+    setStep(4);
+  }
+
+  function setNote(n) {
+    currentNote = n;
+    const stars = document.querySelectorAll('.star');
+    const labels = ['', 'Insuffisant', 'Passable', 'Bien', 'Très bien', 'Excellent !'];
+    stars.forEach((s, i) => s.classList.toggle('active', i < n));
+    document.getElementById('noteText').textContent = labels[n];
+  }
+
+  function submitNote() {
+    if (currentNote === 0) { alert('Veuillez attribuer une note.'); return; }
+    document.getElementById('step4').classList.add('hidden');
+    document.getElementById('stepFin').classList.remove('hidden');
+    document.getElementById('bar4').classList.remove('active');
+    document.getElementById('bar4').classList.add('done');
+  }
+
+  function setStep(n) {
+    ['step1','step2','step3','step3b','step4','stepFin'].forEach(id => {
+      document.getElementById(id).classList.add('hidden');
+    });
+    const map = {1:'step1', 2:'step2', 3: currentRole === 'travailleur' ? 'step3b' : 'step3', 4:'step4'};
+    if (map[n]) document.getElementById(map[n]).classList.remove('hidden');
+
+    for (let i = 1; i <= 4; i++) {
+      const bar = document.getElementById('bar' + i);
+      bar.classList.remove('active', 'done');
+      if (i < n) bar.classList.add('done');
+      else if (i === n) bar.classList.add('active');
+    }
+  }
+
+  function fmt(n) {
+    return n.toLocaleString('fr-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+</script>
+
+</body>
+</html>
