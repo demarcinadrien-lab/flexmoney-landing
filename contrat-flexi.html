@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Contrat Flexi-Job — FlexMoney</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --brand: #6C47FF; --brand-light: #8B6DFF; --accent: #00D4AA;
+      --dark: #0A0A0F; --dark2: #12121A; --dark3: #1A1A28;
+      --text: #F0EFF8; --muted: #8A8AA8; --border: rgba(255,255,255,0.08); --radius: 16px;
+    }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--dark); color: var(--text); min-height: 100vh; }
+
+    nav { display: flex; align-items: center; justify-content: space-between; padding: 20px 40px; border-bottom: 1px solid var(--border); }
+    .logo { font-size: 1.3rem; font-weight: 800; }
+    .logo span { color: var(--brand); }
+    .nav-back { color: var(--muted); font-size: 0.9rem; text-decoration: none; }
+    .nav-back:hover { color: var(--text); }
+
+    .container { max-width: 900px; margin: 0 auto; padding: 48px 24px; }
+    h1 { font-size: 2rem; font-weight: 900; letter-spacing: -1px; margin-bottom: 8px; }
+    .subtitle { color: var(--muted); margin-bottom: 48px; }
+
+    /* FORM GRID */
+    .form-section { background: var(--dark2); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; margin-bottom: 24px; }
+    .form-section h2 { font-size: 1rem; font-weight: 700; color: var(--brand-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 24px; display: flex; align-items: center; gap: 8px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .form-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+    .form-full { grid-column: 1 / -1; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 0.78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .field input, .field select, .field textarea {
+      padding: 11px 14px; background: var(--dark3); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text); font-size: 0.95rem; outline: none;
+      transition: border-color 0.2s; font-family: inherit;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--brand); }
+    .field textarea { resize: vertical; min-height: 80px; }
+    .field select option { background: var(--dark3); }
+
+    /* COMPETENCES */
+    .comp-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+    .comp-chip {
+      padding: 6px 14px; background: var(--dark3); border: 1px solid var(--border);
+      border-radius: 100px; font-size: 0.82rem; cursor: pointer; transition: all 0.15s;
+      user-select: none;
+    }
+    .comp-chip.selected { background: var(--brand); border-color: var(--brand); color: #fff; }
+
+    /* PREVIEW */
+    .preview-wrap { position: relative; }
+    .preview-toggle {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 16px;
+      background: none; border: 1px solid var(--border); color: var(--muted);
+      padding: 10px 20px; border-radius: 100px; font-size: 0.88rem; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .preview-toggle:hover { border-color: var(--brand); color: var(--brand-light); }
+    .preview-toggle.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+
+    /* CONTRAT PREVIEW */
+    #contrat-preview {
+      display: none; background: #fff; color: #111; border-radius: var(--radius);
+      padding: 60px; font-family: 'Times New Roman', serif; font-size: 11pt; line-height: 1.7;
+      border: 1px solid var(--border);
+    }
+    #contrat-preview.visible { display: block; }
+    #contrat-preview h1 { font-size: 15pt; text-align: center; margin-bottom: 6pt; color: #111; letter-spacing: 0; font-weight: bold; }
+    #contrat-preview h2 { font-size: 11pt; font-weight: bold; margin: 20pt 0 8pt; color: #111; border-bottom: 1px solid #ccc; padding-bottom: 4pt; }
+    #contrat-preview p { margin-bottom: 8pt; }
+    #contrat-preview .center { text-align: center; }
+    #contrat-preview .field-val { font-weight: bold; text-decoration: underline; color: #333; }
+    #contrat-preview .sig-row { display: flex; gap: 60px; margin-top: 40pt; }
+    #contrat-preview .sig-box { flex: 1; }
+    #contrat-preview .sig-line { border-bottom: 1px solid #999; margin-top: 40pt; margin-bottom: 4pt; }
+
+    /* BUTTONS */
+    .actions { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 32px; }
+    .btn { padding: 14px 28px; border-radius: 100px; font-size: 0.95rem; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
+    .btn-primary { background: var(--brand); color: #fff; }
+    .btn-primary:hover { background: var(--brand-light); }
+    .btn-accent { background: var(--accent); color: #0A0A0F; }
+    .btn-accent:hover { opacity: 0.9; }
+    .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .btn-outline:hover { border-color: var(--brand); color: var(--brand-light); }
+
+    .info-box { background: rgba(108,71,255,0.08); border: 1px solid rgba(108,71,255,0.25); border-radius: 10px; padding: 14px 18px; font-size: 0.87rem; color: var(--muted); margin-top: 16px; }
+    .info-box strong { color: var(--brand-light); }
+
+    @media print {
+      nav, .container > *:not(#print-area) { display: none !important; }
+      #contrat-preview { display: block !important; border: none; padding: 20mm; }
+      body { background: #fff; }
+    }
+    @media (max-width: 640px) {
+      .form-grid, .form-grid.three { grid-template-columns: 1fr; }
+      nav { padding: 16px 20px; }
+      #contrat-preview { padding: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Flex<span>Money</span></div>
+  <a href="index.html" class="nav-back">← Retour à l'accueil</a>
+</nav>
+
+<div class="container">
+  <h1>📝 Générateur de contrat flexi-job</h1>
+  <p class="subtitle">Remplissez les informations — le contrat conforme à la loi belge se génère automatiquement.</p>
+
+  <!-- EMPLOYEUR -->
+  <div class="form-section">
+    <h2>🏢 Employeur</h2>
+    <div class="form-grid">
+      <div class="field">
+        <label>Dénomination sociale</label>
+        <input type="text" id="emp-nom" placeholder="Ex: Ma Société SA" oninput="updatePreview()" />
+      </div>
+      <div class="field">
+        <label>Numéro BCE</label>
+        <input type="text" id="emp-bce" placeholder="Ex: 0123.456.789" oninput="updatePreview()" />
+      </div>
+      <div class="field">
+        <label>Adresse siège social</label>
+        <input type="text" id="emp-adresse" placeholder="Rue, numéro, code postal, ville" oninput="updatePreview()" />
+      </div>
+      <div class="field">
+        <label>Commission paritaire (CP)</label>
+        <select id="emp-cp" onchange="updatePreview()">
+          <option value="">-- Sélectionnez --</option>
+          <option value="CP200 — Employés secteur privé">CP200 — Employés secteur privé</option>
+          <option value="CP201 — Employés industrie alimentaire">CP201 — Industrie alimentaire</option>
+          <option value="CP202 — Employés industrie chimique">CP202 — Industrie chimique</option>
+          <option value="CP218 — Employés commerce">CP218 — Commerce</option>
+          <option value="CP220 — Employés secteur financier">CP220 — Secteur financier</option>
+          <option value="CP226 — Employés informatique">CP226 — Informatique</option>
+          <option value="CP302 — Hôtellerie et restauration">CP302 — Hôtellerie et restauration</option>
+          <option value="CP310 — Banques">CP310 — Banques</option>
+          <option value="CP336 — Établissements et services de santé">CP336 — Soins de santé</option>
+          <option value="Autre (à préciser)">Autre</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Représentant légal (nom + fonction)</label>
+        <input type="text" id="emp-rep" placeholder="Ex: Jean Dupont, Directeur Général" oninput="updatePreview()" />
+      </div>
+      <div class="field">
+        <label>Numéro ONSS employeur</label>
+        <input type="text" id="emp-onss" placeholder="Ex: 123/456789-01" oninput="updatePreview()" />
+      </div>
+    </div>
+  </div>
+
+  <!-- TRAVAILLEUR -->
+  <div class="form-section">
+    <h2>👤 Travailleur flexi</h2>
+    <div class="form-grid">
+      <div class="field">
+        <label>Prénom et nom</label>
+        <input type="text" id="wrk-nom" placeholder="Ex: Marie Martin" oninput="updatePreview()" />
+      </div>
+      <div class="field">
+        <label>Date de naissance</label>
+        <input type="date" id="wrk-ddn" oninput="updatePreview()" />
+      </div>
+      <div class="field">
+        <label>Adresse complète</label>
+        <input type="text" id="wrk-adresse" placeholder="Rue, numéro, code postal, ville" oninput="updatePreview()" />
+      </div>
+      <div class="field">
+        <label>Numéro NISS</label>
+        <input type="text" id="wrk-niss" placeholder="Ex: 90.01.01-123.45" oninput="updatePreview()" />
+      </div>
+      <div class="field">
+        <label>Statut principal</label>
+        <select id="wrk-statut" onchange="updatePreview()">
+          <option value="">-- Sélectionnez --</option>
+          <option value="salarié à 4/5e">Salarié à 4/5e minimum</option>
+          <option value="pensionné">Pensionné</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Employeur principal (si salarié)</label>
+        <input type="text" id="wrk-emp-principal" placeholder="Ex: Autre Société SPRL" oninput="updatePreview()" />
+      </div>
+      <div class="field">
+        <label>Numéro de compte bancaire (IBAN)</label>
+        <input type="text" id="wrk-iban" placeholder="Ex: BE12 3456 7890 1234" oninput="updatePreview()" />
+      </div>
+      <div class="field">
+        <label>Numéro de compte (BIC)</label>
+        <input type="text" id="wrk-bic" placeholder="Ex: GEBABEBB" oninput="updatePreview()" />
+      </div>
+    </div>
+  </div>
+
+  <!-- MISSION -->
+  <div class="form-section">
+    <h2>📋 Mission</h2>
+    <div class="form-grid">
+      <div class="field">
+        <label>Description de la fonction</label>
+        <input type="text" id="mis-fonction" placeholder="Ex: Assistant administratif back-office" oninput="updatePreview()" />
+      </div>
+      <div class="field">
+        <label>Lieu de travail</label>
+        <select id="mis-lieu-type" onchange="toggleLieu(); updatePreview()">
+          <option value="teletravail">Télétravail (domicile du travailleur)</option>
+          <option value="presentiel">Présentiel</option>
+        </select>
+      </div>
+      <div class="field" id="lieu-adresse-wrap" style="display:none">
+        <label>Adresse du lieu de travail</label>
+        <input type="text" id="mis-lieu-adresse" placeholder="Rue, numéro, code postal, ville" oninput="updatePreview()" />
+      </div>
+      <div class="field">
+        <label>Date de début</label>
+        <input type="date" id="mis-debut" oninput="updatePreview()" />
+      </div>
+      <div class="field">
+        <label>Date de fin</label>
+        <input type="date" id="mis-fin" oninput="updatePreview()" />
+      </div>
+      <div class="field">
+        <label>Horaire (ex: 9h00 - 17h00)</label>
+        <input type="text" id="mis-horaire" placeholder="Ex: 9h00 - 13h00" oninput="updatePreview()" />
+      </div>
+      <div class="field">
+        <label>Salaire horaire brut (€)</label>
+        <input type="number" id="mis-salaire" placeholder="Ex: 20.00" min="12" step="0.50" oninput="updatePreview()" />
+      </div>
+      <div class="field">
+        <label>Nombre d'heures total</label>
+        <input type="number" id="mis-heures" placeholder="Ex: 8" min="1" oninput="updatePreview()" />
+      </div>
+    </div>
+
+    <div style="margin-top: 20px;">
+      <label style="font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:10px;">Compétences requises</label>
+      <div class="comp-chips" id="comp-chips">
+        <span class="comp-chip" onclick="toggleComp(this)">Administration</span>
+        <span class="comp-chip" onclick="toggleComp(this)">Comptabilité</span>
+        <span class="comp-chip" onclick="toggleComp(this)">Excel / Tableur</span>
+        <span class="comp-chip" onclick="toggleComp(this)">Saisie de données</span>
+        <span class="comp-chip" onclick="toggleComp(this)">Service client</span>
+        <span class="comp-chip" onclick="toggleComp(this)">Rédaction</span>
+        <span class="comp-chip" onclick="toggleComp(this)">Marketing digital</span>
+        <span class="comp-chip" onclick="toggleComp(this)">Gestion emails</span>
+        <span class="comp-chip" onclick="toggleComp(this)">Traduction FR/NL</span>
+        <span class="comp-chip" onclick="toggleComp(this)">Traduction FR/EN</span>
+        <span class="comp-chip" onclick="toggleComp(this)">Design graphique</span>
+        <span class="comp-chip" onclick="toggleComp(this)">Développement web</span>
+        <span class="comp-chip" onclick="toggleComp(this)">Analyse de données</span>
+        <span class="comp-chip" onclick="toggleComp(this)">Support IT</span>
+        <span class="comp-chip" onclick="toggleComp(this)">Réseaux sociaux</span>
+      </div>
+    </div>
+
+    <div class="info-box" id="cout-info" style="margin-top:20px;">
+      <strong>💰 Coût estimé employeur :</strong> <span id="cout-val">Remplissez salaire et heures pour calculer</span>
+    </div>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="actions">
+    <button class="btn btn-primary" onclick="togglePreview()">👁 Prévisualiser le contrat</button>
+    <button class="btn btn-accent" onclick="downloadPDF()">⬇ Télécharger le PDF</button>
+    <button class="btn btn-outline" onclick="window.print()">🖨 Imprimer</button>
+  </div>
+
+  <!-- CONTRAT PREVIEW -->
+  <div id="print-area">
+    <div id="contrat-preview"></div>
+  </div>
+</div>
+
+<script>
+  function v(id) { return (document.getElementById(id)?.value || '').trim(); }
+
+  function toggleLieu() {
+    const isPresentiel = v('mis-lieu-type') === 'presentiel';
+    document.getElementById('lieu-adresse-wrap').style.display = isPresentiel ? '' : 'none';
+  }
+
+  function toggleComp(el) {
+    el.classList.toggle('selected');
+    updatePreview();
+  }
+
+  function getSelectedComps() {
+    return [...document.querySelectorAll('.comp-chip.selected')].map(c => c.textContent).join(', ');
+  }
+
+  function calcCout() {
+    const salaire = parseFloat(v('mis-salaire')) || 0;
+    const heures  = parseFloat(v('mis-heures')) || 0;
+    if (!salaire || !heures) return null;
+    const brut = salaire * heures;
+    const onss = brut * 0.25;
+    const commission = brut * 0.10;
+    return { brut, onss, commission, total: brut + onss + commission };
+  }
+
+  function updatePreview() {
+    const cout = calcCout();
+    const coutEl = document.getElementById('cout-val');
+    if (cout) {
+      coutEl.innerHTML = `Salaire brut : <strong>${cout.brut.toFixed(2)}€</strong> + ONSS (25%) : <strong>${cout.onss.toFixed(2)}€</strong> + Commission FlexMoney (10%) : <strong>${cout.commission.toFixed(2)}€</strong> = <strong style="color:var(--accent)">${cout.total.toFixed(2)}€ total</strong>`;
+    }
+
+    const preview = document.getElementById('contrat-preview');
+    if (!preview.classList.contains('visible')) return;
+    preview.innerHTML = buildContrat();
+  }
+
+  function buildContrat() {
+    const today = new Date().toLocaleDateString('fr-BE', { day:'2-digit', month:'long', year:'numeric' });
+    const lieu = v('mis-lieu-type') === 'teletravail'
+      ? 'au domicile du travailleur (télétravail)'
+      : (v('mis-lieu-adresse') || '________________');
+    const comps = getSelectedComps() || '________________';
+    const salaire = parseFloat(v('mis-salaire')) || 0;
+    const heures = parseFloat(v('mis-heures')) || 0;
+    const brut = (salaire * heures).toFixed(2);
+
+    return `
+      <h1>CONTRAT DE TRAVAIL FLEXI-JOB</h1>
+      <p class="center" style="margin-bottom:20pt;font-size:10pt;color:#666;">Conforme à la loi du 24 décembre 2016 relative au flexi-job, modifiée par la loi du 12 mai 2026</p>
+
+      <h2>ARTICLE 1 — PARTIES</h2>
+      <p><strong>L'EMPLOYEUR</strong></p>
+      <p>Dénomination : <span class="field-val">${v('emp-nom') || '________________'}</span><br/>
+      BCE : <span class="field-val">${v('emp-bce') || '________________'}</span><br/>
+      Siège social : <span class="field-val">${v('emp-adresse') || '________________'}</span><br/>
+      ONSS : <span class="field-val">${v('emp-onss') || '________________'}</span><br/>
+      Représenté par : <span class="field-val">${v('emp-rep') || '________________'}</span><br/>
+      Commission paritaire : <span class="field-val">${v('emp-cp') || '________________'}</span></p>
+
+      <p style="margin-top:12pt;"><strong>LE TRAVAILLEUR FLEXI</strong></p>
+      <p>Nom et prénom : <span class="field-val">${v('wrk-nom') || '________________'}</span><br/>
+      Date de naissance : <span class="field-val">${v('wrk-ddn') ? new Date(v('wrk-ddn')).toLocaleDateString('fr-BE') : '________________'}</span><br/>
+      Adresse : <span class="field-val">${v('wrk-adresse') || '________________'}</span><br/>
+      NISS : <span class="field-val">${v('wrk-niss') || '________________'}</span><br/>
+      Statut principal : <span class="field-val">${v('wrk-statut') || '________________'}</span><br/>
+      Employeur principal : <span class="field-val">${v('wrk-emp-principal') || '________________'}</span><br/>
+      IBAN : <span class="field-val">${v('wrk-iban') || '________________'}</span> — BIC : <span class="field-val">${v('wrk-bic') || '________________'}</span></p>
+
+      <h2>ARTICLE 2 — OBJET ET NATURE DU CONTRAT</h2>
+      <p>Le présent contrat est un <strong>contrat de travail flexi-job</strong> au sens de la loi du 24 décembre 2016, modifiée. Il est conclu pour une durée déterminée correspondant à la mission décrite ci-après.</p>
+      <p>Le travailleur remplit les conditions légales d'éligibilité au régime flexi-job et déclare être occupé à <strong>${v('wrk-statut') || '4/5e minimum'}</strong> chez son employeur principal.</p>
+
+      <h2>ARTICLE 3 — MISSION ET LIEU DE TRAVAIL</h2>
+      <p>Fonction : <span class="field-val">${v('mis-fonction') || '________________'}</span></p>
+      <p>Compétences mises en œuvre : <span class="field-val">${comps}</span></p>
+      <p>Lieu d'exécution : <span class="field-val">${lieu}</span></p>
+      <p>Durée de la mission :<br/>
+      — Du : <span class="field-val">${v('mis-debut') ? new Date(v('mis-debut')).toLocaleDateString('fr-BE') : '________________'}</span><br/>
+      — Au : <span class="field-val">${v('mis-fin') ? new Date(v('mis-fin')).toLocaleDateString('fr-BE') : '________________'}</span><br/>
+      — Horaire : <span class="field-val">${v('mis-horaire') || '________________'}</span><br/>
+      — Nombre d'heures total : <span class="field-val">${heures || '___'} heure(s)</span></p>
+
+      <h2>ARTICLE 4 — RÉMUNÉRATION</h2>
+      <p>Salaire horaire brut flexi : <span class="field-val">${salaire.toFixed(2) || '___'}€/heure</span></p>
+      <p>Rémunération brute totale mission : <span class="field-val">${brut}€</span></p>
+      <p>Le salaire flexi est soumis à la cotisation ONSS spéciale employeur (25%) mais exonéré de cotisations personnelles pour le travailleur et imposable à un taux réduit.</p>
+      <p>Le paiement est effectué par virement sur le compte <span class="field-val">${v('wrk-iban') || '________________'}</span> dans les 7 jours suivant la fin de la mission.</p>
+
+      <h2>ARTICLE 5 — OBLIGATIONS LÉGALES</h2>
+      <p><strong>Dimona FLX :</strong> L'employeur s'engage à déclarer le travailleur via Dimona FLX (type FLX) avant le début de chaque prestation, conformément à l'arrêté royal du 5 novembre 2002.</p>
+      <p><strong>Assurance accidents du travail :</strong> L'employeur certifie disposer d'une assurance accidents du travail couvrant le travailleur flexi pour la durée de la mission.</p>
+      <p><strong>Règlement de travail :</strong> Le travailleur déclare avoir pris connaissance du règlement de travail de l'employeur.</p>
+
+      <h2>ARTICLE 6 — CONFIDENTIALITÉ ET DONNÉES PERSONNELLES</h2>
+      <p>Le travailleur s'engage à respecter la confidentialité de toutes les informations auxquelles il aura accès dans le cadre de sa mission. Le traitement des données personnelles est effectué conformément au RGPD (règlement 2016/679).</p>
+
+      <h2>ARTICLE 7 — DISPOSITIONS FINALES</h2>
+      <p>Le présent contrat est régi par le droit belge. Tout litige relève de la compétence exclusive des juridictions du travail de l'arrondissement du siège social de l'employeur.</p>
+      <p>Fait à ________________, le <span class="field-val">${today}</span>, en deux exemplaires originaux.</p>
+
+      <div class="sig-row">
+        <div class="sig-box">
+          <p><strong>L'EMPLOYEUR</strong><br/><em>${v('emp-nom') || '________________'}</em><br/>${v('emp-rep') || ''}</p>
+          <div class="sig-line"></div>
+          <p style="font-size:9pt;color:#666;">Signature et cachet</p>
+        </div>
+        <div class="sig-box">
+          <p><strong>LE TRAVAILLEUR</strong><br/><em>${v('wrk-nom') || '________________'}</em></p>
+          <div class="sig-line"></div>
+          <p style="font-size:9pt;color:#666;">Signature précédée de "lu et approuvé"</p>
+        </div>
+      </div>
+    `;
+  }
+
+  function togglePreview() {
+    const preview = document.getElementById('contrat-preview');
+    const btn = event.currentTarget;
+    const isVisible = preview.classList.contains('visible');
+    if (isVisible) {
+      preview.classList.remove('visible');
+      btn.textContent = '👁 Prévisualiser le contrat';
+    } else {
+      preview.innerHTML = buildContrat();
+      preview.classList.add('visible');
+      btn.textContent = '✕ Masquer le contrat';
+      preview.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  async function downloadPDF() {
+    const preview = document.getElementById('contrat-preview');
+    preview.innerHTML = buildContrat();
+    preview.classList.add('visible');
+
+    // Use browser print-to-PDF
+    const originalTitle = document.title;
+    document.title = `Contrat_FlexiJob_${v('wrk-nom').replace(' ','_') || 'FlexMoney'}_${v('mis-debut') || new Date().toISOString().slice(0,10)}`;
+    window.print();
+    document.title = originalTitle;
+  }
+
+  // Init
+  toggleLieu();
+</script>
+</body>
+</html>
