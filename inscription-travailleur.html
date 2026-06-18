@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FlexMoney — Inscription Travailleur</title>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script src="competences.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -92,18 +93,26 @@
     .radio-card-title { font-weight: 700; font-size: 1rem; margin-bottom: 4px; }
     .radio-card-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
 
-    /* COMPETENCES GRID */
+    /* COMPETENCES — SECTEUR TABS */
     .competences-section { margin-bottom: 24px; }
-    .competences-category { margin-bottom: 20px; }
-    .category-title { font-size: 0.82rem; font-weight: 700; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
-    .competences-list { display: flex; flex-wrap: wrap; gap: 8px; }
-    .competence-chip {
+    .secteur-tabs-wrap { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+    .secteur-tab {
+      padding: 8px 16px; border-radius: 100px; border: 1px solid var(--border);
+      font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+      color: var(--muted); background: transparent; white-space: nowrap;
+    }
+    .secteur-tab:hover { border-color: rgba(108,71,255,0.5); color: var(--text); }
+    .secteur-tab.active { color: #fff !important; }
+    .new-badge { font-size: 0.6rem; background: #ff4d6d; color: #fff; border-radius: 4px; padding: 1px 5px; margin-left: 5px; vertical-align: middle; letter-spacing: 0.5px; }
+    .secteur-desc { font-size: 0.78rem; color: var(--muted); margin-bottom: 14px; font-style: italic; }
+    .competences-list { display: flex; flex-wrap: wrap; gap: 8px; min-height: 60px; }
+    .competence-chip, .comp-chip {
       padding: 8px 16px; border-radius: 100px; border: 1px solid var(--border);
       font-size: 0.85rem; cursor: pointer; transition: all 0.2s; user-select: none;
-      color: var(--muted);
+      color: var(--muted); background: transparent;
     }
-    .competence-chip:hover { border-color: var(--brand); color: var(--brand-light); }
-    .competence-chip.selected { border-color: var(--brand); background: var(--brand-dim); color: var(--brand-light); font-weight: 600; }
+    .competence-chip:hover, .comp-chip:hover { border-color: rgba(108,71,255,0.5); color: var(--text); }
+    .competence-chip.selected, .comp-chip.selected { font-weight: 600; }
 
     /* DISPONIBILITES */
     .dispo-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 16px; }
@@ -385,99 +394,12 @@
     <div class="alert alert-info">💡 Sélectionnez au minimum <strong>3 compétences</strong>. Plus vous en ajoutez, plus vous aurez de missions proposées.</div>
 
     <div class="competences-section">
-
-      <div class="competences-category">
-        <div class="category-title">💼 Administration & Gestion</div>
-        <div class="competences-list">
-          <span class="competence-chip" onclick="toggleComp(this)">Gestion administrative</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Microsoft Word</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Microsoft Excel</span>
-          <span class="competence-chip" onclick="toggleComp(this)">PowerPoint</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Rédaction professionnelle</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Gestion agenda</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Archivage & classement</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Secrétariat</span>
-        </div>
-      </div>
-
-      <div class="competences-category">
-        <div class="category-title">💰 Finance & Comptabilité</div>
-        <div class="competences-list">
-          <span class="competence-chip" onclick="toggleComp(this)">Comptabilité générale</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Facturation</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Déclarations TVA</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Gestion des notes de frais</span>
-          <span class="competence-chip" onclick="toggleComp(this)">SAP</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Exact Online</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Winbooks</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Bilan & clôture</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Paie & RH admin</span>
-        </div>
-      </div>
-
-      <div class="competences-category">
-        <div class="category-title">🖥️ Informatique & Tech</div>
-        <div class="competences-list">
-          <span class="competence-chip" onclick="toggleComp(this)">Support informatique</span>
-          <span class="competence-chip" onclick="toggleComp(this)">HTML / CSS</span>
-          <span class="competence-chip" onclick="toggleComp(this)">JavaScript</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Python</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Saisie de données</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Base de données</span>
-          <span class="competence-chip" onclick="toggleComp(this)">CRM (HubSpot, Salesforce)</span>
-          <span class="competence-chip" onclick="toggleComp(this)">ERP</span>
-        </div>
-      </div>
-
-      <div class="competences-category">
-        <div class="category-title">📢 Marketing & Communication</div>
-        <div class="competences-list">
-          <span class="competence-chip" onclick="toggleComp(this)">Réseaux sociaux</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Rédaction de contenu</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Email marketing</span>
-          <span class="competence-chip" onclick="toggleComp(this)">SEO</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Google Ads</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Meta Ads</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Canva / Design graphique</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Community management</span>
-        </div>
-      </div>
-
-      <div class="competences-category">
-        <div class="category-title">🤝 Service Client & Support</div>
-        <div class="competences-list">
-          <span class="competence-chip" onclick="toggleComp(this)">Support client</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Chat en ligne</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Téléphonie / Call center</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Gestion des réclamations</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Help desk</span>
-        </div>
-      </div>
-
-      <div class="competences-category">
-        <div class="category-title">🌍 Langues</div>
-        <div class="competences-list">
-          <span class="competence-chip" onclick="toggleComp(this)">Français (natif)</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Néerlandais</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Anglais</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Allemand</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Espagnol</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Italien</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Autre langue</span>
-        </div>
-      </div>
-
-      <div class="competences-category">
-        <div class="category-title">📊 Data & Analyse</div>
-        <div class="competences-list">
-          <span class="competence-chip" onclick="toggleComp(this)">Excel avancé / Power Query</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Power BI</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Google Analytics</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Analyse de données</span>
-          <span class="competence-chip" onclick="toggleComp(this)">Reporting</span>
-        </div>
-      </div>
-
+      <!-- Onglets secteurs (générés par competences.js) -->
+      <div class="secteur-tabs-wrap" id="secteur-tabs-ins"></div>
+      <!-- Description du secteur actif -->
+      <div class="secteur-desc" id="secteur-desc-ins"></div>
+      <!-- Chips compétences du secteur actif -->
+      <div class="competences-list" id="competences-chips-ins"></div>
     </div>
 
     <div class="field">
@@ -719,15 +641,74 @@
   }
 
   // ── STEP 3 COMPÉTENCES ──────────────────────────────────
-  function toggleComp(el) {
-    el.classList.toggle('selected');
-    const comp = el.textContent;
-    if (el.classList.contains('selected')) {
-      if (!selectedComps.includes(comp)) selectedComps.push(comp);
-    } else {
-      selectedComps = selectedComps.filter(c => c !== comp);
-    }
+  let currentSecteurIns = FLEXMONEY_SECTEURS[0].id;
+
+  function initCompetenceTabs() {
+    // Render tabs
+    const tabsWrap = document.getElementById('secteur-tabs-ins');
+    tabsWrap.innerHTML = FLEXMONEY_SECTEURS.map((s, i) => `
+      <button class="secteur-tab${i === 0 ? ' active' : ''}"
+        data-id="${s.id}"
+        style="${i === 0 ? `background:${s.couleur};color:#fff;border-color:${s.couleur}` : 'border-color:rgba(255,255,255,0.1)'}"
+        onclick="switchSecteurIns('${s.id}', this, '${s.couleur}')">
+        ${s.label}${s.featured ? ' <span class="new-badge">NOUVEAU</span>' : ''}
+      </button>
+    `).join('');
+    renderSecteurChipsIns(FLEXMONEY_SECTEURS[0]);
   }
+
+  function switchSecteurIns(secteurId, btn, couleur) {
+    currentSecteurIns = secteurId;
+    document.querySelectorAll('#secteur-tabs-ins .secteur-tab').forEach(t => {
+      t.classList.remove('active');
+      t.style.background = 'transparent';
+      t.style.color = '';
+      t.style.borderColor = 'rgba(255,255,255,0.1)';
+    });
+    btn.classList.add('active');
+    btn.style.background = couleur;
+    btn.style.color = '#fff';
+    btn.style.borderColor = couleur;
+    const secteur = FLEXMONEY_SECTEURS.find(s => s.id === secteurId);
+    renderSecteurChipsIns(secteur);
+  }
+
+  function renderSecteurChipsIns(secteur) {
+    document.getElementById('secteur-desc-ins').textContent = secteur.desc;
+    const container = document.getElementById('competences-chips-ins');
+    container.innerHTML = secteur.competences.map(c => {
+      const sel = selectedComps.includes(c);
+      return `<span class="comp-chip${sel ? ' selected' : ''}"
+        style="${sel ? `background:${secteur.couleur}22;border-color:${secteur.couleur};color:${secteur.couleur}` : ''}"
+        onclick="toggleComp('${c.replace(/'/g, "\\'")}', this, '${secteur.couleur}')">${c}</span>`;
+    }).join('');
+  }
+
+  function toggleComp(compName, el, couleur) {
+    const idx = selectedComps.indexOf(compName);
+    if (idx === -1) {
+      selectedComps.push(compName);
+      el.classList.add('selected');
+      el.style.background = couleur + '22';
+      el.style.borderColor = couleur;
+      el.style.color = couleur;
+    } else {
+      selectedComps.splice(idx, 1);
+      el.classList.remove('selected');
+      el.style.background = '';
+      el.style.borderColor = '';
+      el.style.color = '';
+    }
+    updateCompCount();
+  }
+
+  function updateCompCount() {
+    const msg = document.getElementById('comp-count-msg');
+    if (msg) msg.style.display = selectedComps.length < 3 ? 'block' : 'none';
+  }
+
+  // Init tabs quand le DOM est prêt
+  document.addEventListener('DOMContentLoaded', initCompetenceTabs);
 
   function validateStep3() {
     const autre = document.getElementById('comp-autre').value.trim();

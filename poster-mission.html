@@ -31,15 +31,25 @@
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .form-group small { font-size: 12px; color: #94a3b8; margin-top: 4px; display: block; }
 
+    .secteur-tabs-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .secteur-tab {
+      padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+      border: 1.5px solid #e2e8f0; cursor: pointer; transition: all 0.15s;
+      background: #fff; color: #64748b; white-space: nowrap;
+    }
+    .secteur-tab:hover { border-color: #6366f1; color: #6366f1; }
+    .secteur-tab.active { color: #fff !important; }
+    .new-badge { font-size: 0.55rem; background: #ef4444; color: #fff; border-radius: 3px; padding: 1px 4px; margin-left: 4px; vertical-align: middle; }
+    .secteur-desc-pm { font-size: 11px; color: #94a3b8; margin-bottom: 8px; font-style: italic; }
     .competences-grid {
-      display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;
+      display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; min-height: 40px;
     }
     .comp-chip {
       padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;
       border: 2px solid #e2e8f0; cursor: pointer; transition: all 0.15s;
       background: #fff; color: #64748b;
     }
-    .comp-chip.selected { background: #6366f1; color: #fff; border-color: #6366f1; }
+    .comp-chip.selected { color: #fff; }
 
     .lieu-toggle { display: flex; gap: 0; border: 1.5px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
     .lieu-btn { flex: 1; padding: 10px; text-align: center; font-size: 14px; font-weight: 600; cursor: pointer; background: #fff; color: #64748b; border: none; transition: all 0.2s; }
@@ -129,6 +139,8 @@
       </div>
       <div class="form-group">
         <label>Compétences recherchées *</label>
+        <div class="secteur-tabs-wrap" id="secteur-tabs-pm"></div>
+        <div class="secteur-desc-pm" id="secteur-desc-pm"></div>
         <div class="competences-grid" id="competencesGrid"></div>
         <small>Sélectionnez au moins une compétence pour activer le matching</small>
       </div>
@@ -222,40 +234,73 @@
   </div>
 </div>
 
+<script src="competences.js"></script>
 <script>
   const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
 
-  const COMPETENCES = [
-    'Comptabilité','Encodage','TVA','Bilan annuel','Payroll','Audit',
-    'Excel / Reporting','Back-office','Administration','Support client',
-    'Marketing digital','Réseaux sociaux','SEO','IT / Développement',
-    'Gestion de projet','Rédaction','Traduction','Design graphique'
-  ];
-
   let selectedCompetences = [];
   let lieuMode = 'remote';
+  let currentSecteurPm = FLEXMONEY_SECTEURS[0].id;
 
-  // Init compétences
-  const grid = document.getElementById('competencesGrid');
-  COMPETENCES.forEach(c => {
-    const chip = document.createElement('div');
-    chip.className = 'comp-chip';
-    chip.textContent = c;
-    chip.onclick = () => toggleComp(c, chip);
-    grid.appendChild(chip);
-  });
+  // Init secteur tabs
+  function initSecteurTabsPm() {
+    const tabsWrap = document.getElementById('secteur-tabs-pm');
+    tabsWrap.innerHTML = FLEXMONEY_SECTEURS.map((s, i) => `
+      <button class="secteur-tab${i === 0 ? ' active' : ''}"
+        style="${i === 0 ? `background:${s.couleur};color:#fff;border-color:${s.couleur}` : ''}"
+        onclick="switchSecteurPm('${s.id}', this, '${s.couleur}')">
+        ${s.label}${s.featured ? ' <span class="new-badge">NOUVEAU</span>' : ''}
+      </button>
+    `).join('');
+    renderChipsPm(FLEXMONEY_SECTEURS[0]);
+  }
+
+  function switchSecteurPm(secteurId, btn, couleur) {
+    currentSecteurPm = secteurId;
+    document.querySelectorAll('#secteur-tabs-pm .secteur-tab').forEach(t => {
+      t.classList.remove('active');
+      t.style.background = '#fff';
+      t.style.color = '#64748b';
+      t.style.borderColor = '#e2e8f0';
+    });
+    btn.classList.add('active');
+    btn.style.background = couleur;
+    btn.style.color = '#fff';
+    btn.style.borderColor = couleur;
+    const secteur = FLEXMONEY_SECTEURS.find(s => s.id === secteurId);
+    renderChipsPm(secteur);
+  }
+
+  function renderChipsPm(secteur) {
+    document.getElementById('secteur-desc-pm').textContent = secteur.desc;
+    const grid = document.getElementById('competencesGrid');
+    grid.innerHTML = secteur.competences.map(c => {
+      const sel = selectedCompetences.includes(c);
+      return `<div class="comp-chip${sel ? ' selected' : ''}"
+        style="${sel ? `background:${secteur.couleur};border-color:${secteur.couleur}` : ''}"
+        onclick="toggleComp('${c.replace(/'/g, "\\'")}', this, '${secteur.couleur}')">${c}</div>`;
+    }).join('');
+  }
+
+  document.addEventListener('DOMContentLoaded', initSecteurTabsPm);
 
   // Date min = aujourd'hui
-  document.getElementById('dateMission').min = new Date().toISOString().split('T')[0];
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('dateMission').min = new Date().toISOString().split('T')[0];
+  });
 
-  function toggleComp(c, chip) {
+  function toggleComp(c, chip, couleur) {
     if (selectedCompetences.includes(c)) {
       selectedCompetences = selectedCompetences.filter(x => x !== c);
       chip.classList.remove('selected');
+      chip.style.background = '#fff';
+      chip.style.borderColor = '#e2e8f0';
     } else {
       selectedCompetences.push(c);
       chip.classList.add('selected');
+      chip.style.background = couleur;
+      chip.style.borderColor = couleur;
     }
   }
 

@@ -30,9 +30,13 @@
     .filter-group input, .filter-group select { width: 100%; padding: 9px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 13px; font-family: inherit; }
     .filter-group input:focus, .filter-group select:focus { outline: none; border-color: #6366f1; }
 
-    .comp-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .secteur-tabs-filter { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+    .s-tab { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; border: 1.5px solid #e2e8f0; cursor: pointer; background: #fff; color: #64748b; transition: all 0.15s; white-space: nowrap; }
+    .s-tab.active { color: #fff !important; }
+    .new-badge { font-size: 0.5rem; background: #ef4444; color: #fff; border-radius: 3px; padding: 1px 4px; margin-left: 3px; vertical-align: middle; }
+    .comp-chips { display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; }
     .f-chip { padding: 5px 10px; border-radius: 16px; font-size: 12px; font-weight: 600; border: 1.5px solid #e2e8f0; cursor: pointer; background: #fff; color: #64748b; transition: all 0.15s; }
-    .f-chip.on { background: #6366f1; color: #fff; border-color: #6366f1; }
+    .f-chip.on { color: #fff; }
     .btn-reset { width: 100%; padding: 10px; background: #f1f5f9; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; color: #64748b; cursor: pointer; margin-top: 8px; }
 
     /* Grille travailleurs */
@@ -138,6 +142,7 @@
 
     <div class="filter-group">
       <label>Compétences</label>
+      <div class="secteur-tabs-filter" id="secteur-tabs-filter"></div>
       <div class="comp-chips" id="filterChips"></div>
     </div>
 
@@ -196,31 +201,72 @@
   </div>
 </div>
 
+<script src="competences.js"></script>
 <script>
   const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
 
-  const COMPETENCES = ['Comptabilité','Encodage','TVA','Bilan annuel','Payroll','Audit',
-    'Excel / Reporting','Back-office','Administration','Support client',
-    'Marketing digital','IT / Développement','Design graphique','Rédaction'];
-
   let allWorkers = [];
   let filterComps = [];
   let selectedWorker = null;
+  let currentFilterSecteur = FLEXMONEY_SECTEURS[0].id;
 
-  // Init filter chips
-  const chipsContainer = document.getElementById('filterChips');
-  COMPETENCES.forEach(c => {
-    const chip = document.createElement('div');
-    chip.className = 'f-chip';
-    chip.textContent = c;
-    chip.onclick = () => {
-      chip.classList.toggle('on');
-      filterComps = [...chipsContainer.querySelectorAll('.f-chip.on')].map(el => el.textContent);
-      applyFilters();
-    };
-    chipsContainer.appendChild(chip);
-  });
+  function initFilterTabs() {
+    const tabsWrap = document.getElementById('secteur-tabs-filter');
+    tabsWrap.innerHTML = FLEXMONEY_SECTEURS.map((s, i) => `
+      <button class="s-tab${i === 0 ? ' active' : ''}"
+        style="${i === 0 ? `background:${s.couleur};color:#fff;border-color:${s.couleur}` : ''}"
+        onclick="switchFilterSecteur('${s.id}', this, '${s.couleur}')">
+        ${s.label}${s.featured ? ' <span class="new-badge">NEW</span>' : ''}
+      </button>
+    `).join('');
+    renderFilterChips(FLEXMONEY_SECTEURS[0]);
+  }
+
+  function switchFilterSecteur(secteurId, btn, couleur) {
+    currentFilterSecteur = secteurId;
+    document.querySelectorAll('#secteur-tabs-filter .s-tab').forEach(t => {
+      t.classList.remove('active');
+      t.style.background = '#fff';
+      t.style.color = '#64748b';
+      t.style.borderColor = '#e2e8f0';
+    });
+    btn.classList.add('active');
+    btn.style.background = couleur;
+    btn.style.color = '#fff';
+    btn.style.borderColor = couleur;
+    renderFilterChips(FLEXMONEY_SECTEURS.find(s => s.id === secteurId));
+  }
+
+  function renderFilterChips(secteur) {
+    const chipsContainer = document.getElementById('filterChips');
+    chipsContainer.innerHTML = secteur.competences.map(c => {
+      const on = filterComps.includes(c);
+      return `<div class="f-chip${on ? ' on' : ''}"
+        style="${on ? `background:${secteur.couleur};border-color:${secteur.couleur}` : ''}"
+        data-comp="${c}" data-couleur="${secteur.couleur}"
+        onclick="toggleFilterChip(this)">${c}</div>`;
+    }).join('');
+  }
+
+  function toggleFilterChip(chip) {
+    const c = chip.dataset.comp;
+    const couleur = chip.dataset.couleur;
+    if (filterComps.includes(c)) {
+      filterComps = filterComps.filter(x => x !== c);
+      chip.classList.remove('on');
+      chip.style.background = '#fff';
+      chip.style.borderColor = '#e2e8f0';
+    } else {
+      filterComps.push(c);
+      chip.classList.add('on');
+      chip.style.background = couleur;
+      chip.style.borderColor = couleur;
+    }
+    applyFilters();
+  }
+
+  document.addEventListener('DOMContentLoaded', initFilterTabs);
 
   document.getElementById('contactDate').min = new Date().toISOString().split('T')[0];
 
@@ -326,7 +372,11 @@
     document.getElementById('searchInput').value = '';
     document.getElementById('villeFilter').value = '';
     document.getElementById('teletravailFilter').value = '';
-    document.querySelectorAll('.f-chip.on').forEach(el => el.classList.remove('on'));
+    document.querySelectorAll('.f-chip.on').forEach(el => {
+      el.classList.remove('on');
+      el.style.background = '#fff';
+      el.style.borderColor = '#e2e8f0';
+    });
     filterComps = [];
     applyFilters();
   }
