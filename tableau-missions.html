@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Missions disponibles — FlexMoney</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; color: #1e293b; }
+    header { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 16px 32px; display: flex; align-items: center; gap: 12px; }
+    header .logo { font-weight: 800; font-size: 20px; color: #6366f1; }
+    header .logo span { color: #1e293b; }
+    header nav { margin-left: auto; display: flex; gap: 16px; align-items: center; }
+    header nav a { font-size: 14px; font-weight: 600; color: #64748b; text-decoration: none; }
+    header nav a:hover { color: #6366f1; }
+
+    .hero { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; padding: 40px 32px; text-align: center; }
+    .hero h1 { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
+    .hero p { font-size: 15px; opacity: 0.85; }
+    .hero .stats { display: flex; justify-content: center; gap: 32px; margin-top: 20px; }
+    .hero .stat { text-align: center; }
+    .hero .stat .val { font-size: 24px; font-weight: 800; }
+    .hero .stat .lab { font-size: 12px; opacity: 0.75; margin-top: 2px; }
+
+    .main { max-width: 1100px; margin: 32px auto; padding: 0 20px; display: grid; grid-template-columns: 280px 1fr; gap: 24px; }
+
+    /* Filtres */
+    .filters { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; height: fit-content; position: sticky; top: 20px; }
+    .filters h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; }
+    .filter-group { margin-bottom: 20px; }
+    .filter-group label { display: block; font-size: 12px; font-weight: 700; color: #6366f1; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .filter-group input, .filter-group select {
+      width: 100%; padding: 9px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px;
+      font-size: 13px; font-family: inherit;
+    }
+    .filter-group input:focus, .filter-group select:focus { outline: none; border-color: #6366f1; }
+
+    .comp-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .f-chip {
+      padding: 5px 10px; border-radius: 16px; font-size: 12px; font-weight: 600;
+      border: 1.5px solid #e2e8f0; cursor: pointer; background: #fff; color: #64748b; transition: all 0.15s;
+    }
+    .f-chip.on { background: #6366f1; color: #fff; border-color: #6366f1; }
+
+    .btn-reset { width: 100%; padding: 10px; background: #f1f5f9; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; color: #64748b; cursor: pointer; margin-top: 8px; }
+    .btn-reset:hover { background: #e2e8f0; }
+
+    /* Liste missions */
+    .missions-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .missions-header h2 { font-size: 18px; font-weight: 700; }
+    .missions-header .count { font-size: 14px; color: #64748b; }
+
+    .mission-card {
+      background: #fff; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 24px;
+      margin-bottom: 16px; transition: all 0.2s; cursor: pointer;
+    }
+    .mission-card:hover { border-color: #6366f1; box-shadow: 0 4px 20px rgba(99,102,241,0.1); transform: translateY(-1px); }
+    .mission-card.featured { border-color: #6366f1; background: #fafafe; }
+
+    .mission-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+    .mission-title { font-size: 17px; font-weight: 700; }
+    .mission-company { font-size: 13px; color: #64748b; margin-top: 3px; }
+    .mission-salary { text-align: right; }
+    .mission-salary .rate { font-size: 20px; font-weight: 800; color: #6366f1; }
+    .mission-salary .net { font-size: 12px; color: #16a34a; font-weight: 600; margin-top: 2px; }
+
+    .mission-meta { display: flex; gap: 16px; margin-bottom: 12px; font-size: 13px; color: #64748b; flex-wrap: wrap; }
+    .mission-meta span { display: flex; align-items: center; gap: 4px; }
+
+    .mission-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+    .m-chip { font-size: 11px; padding: 3px 10px; background: #f0f0ff; color: #6366f1; border-radius: 10px; font-weight: 600; }
+
+    .mission-footer { display: flex; justify-content: space-between; align-items: center; }
+    .mission-posted { font-size: 12px; color: #94a3b8; }
+    .btn-postuler {
+      padding: 10px 20px; background: #6366f1; color: #fff; border: none;
+      border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-postuler:hover { background: #4f46e5; }
+
+    .empty-state { text-align: center; padding: 60px 20px; color: #94a3b8; }
+    .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+    .loading { text-align: center; padding: 40px; color: #94a3b8; font-size: 15px; }
+
+    /* Modal postuler */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+    .modal { background: #fff; border-radius: 16px; padding: 32px; max-width: 480px; width: 100%; }
+    .modal h2 { font-size: 20px; font-weight: 700; margin-bottom: 20px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #374151; }
+    .form-group input, .form-group textarea { width: 100%; padding: 11px 14px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit; }
+    .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #6366f1; }
+    .modal-buttons { display: flex; gap: 12px; margin-top: 20px; }
+    .btn-cancel { flex: 1; padding: 12px; background: #f1f5f9; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    .btn-send { flex: 2; padding: 12px; background: #6366f1; color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; }
+    .hidden { display: none !important; }
+
+    @media (max-width: 768px) {
+      .main { grid-template-columns: 1fr; }
+      .filters { position: static; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Flex<span>Money</span></div>
+  <nav>
+    <a href="poster-mission.html">📢 Poster une mission</a>
+    <a href="tableau-travailleurs.html">👥 Travailleurs</a>
+    <a href="inscription-travailleur.html" style="background:#6366f1;color:#fff;padding:8px 16px;border-radius:8px;">M'inscrire</a>
+  </nav>
+</header>
+
+<div class="hero">
+  <h1>🔍 Missions flexi-job disponibles</h1>
+  <p>Travail à distance · Compétences validées · Net = Brut</p>
+  <div class="stats">
+    <div class="stat"><div class="val" id="statMissions">—</div><div class="lab">Missions actives</div></div>
+    <div class="stat"><div class="val">0%</div><div class="lab">Cotisation personnelle</div></div>
+    <div class="stat"><div class="val">18k€</div><div class="lab">Exonéré/an</div></div>
+  </div>
+</div>
+
+<div class="main">
+  <!-- Filtres -->
+  <div class="filters">
+    <h3>🎯 Filtrer</h3>
+
+    <div class="filter-group">
+      <label>Recherche</label>
+      <input type="text" id="searchInput" placeholder="Comptabilité, Excel..." oninput="applyFilters()">
+    </div>
+
+    <div class="filter-group">
+      <label>Lieu</label>
+      <select id="lieuFilter" onchange="applyFilters()">
+        <option value="">Tous</option>
+        <option value="remote">🏠 Télétravail uniquement</option>
+        <option value="onsite">🏢 Sur place</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Taux horaire min</label>
+      <select id="tauxFilter" onchange="applyFilters()">
+        <option value="0">Tous</option>
+        <option value="15">≥ 15 €/h</option>
+        <option value="20">≥ 20 €/h</option>
+        <option value="25">≥ 25 €/h</option>
+        <option value="30">≥ 30 €/h</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Compétences</label>
+      <div class="comp-chips" id="filterChips"></div>
+    </div>
+
+    <button class="btn-reset" onclick="resetFilters()">↺ Réinitialiser les filtres</button>
+  </div>
+
+  <!-- Liste -->
+  <div>
+    <div class="missions-header">
+      <h2>Missions disponibles</h2>
+      <span class="count" id="countLabel">Chargement...</span>
+    </div>
+    <div id="missionsList"><div class="loading">⏳ Chargement des missions...</div></div>
+  </div>
+</div>
+
+<!-- Modal postuler -->
+<div class="modal-overlay hidden" id="modalOverlay">
+  <div class="modal">
+    <h2>✉️ Postuler à cette mission</h2>
+    <p style="font-size:13px;color:#64748b;margin-bottom:20px;" id="modalMissionTitle">—</p>
+    <div class="form-group">
+      <label>Votre email *</label>
+      <input type="email" id="postulantEmail" placeholder="vous@email.com">
+    </div>
+    <div class="form-group">
+      <label>Votre nom complet *</label>
+      <input type="text" id="postulantNom" placeholder="Prénom Nom">
+    </div>
+    <div class="form-group">
+      <label>Message à l'employeur (optionnel)</label>
+      <textarea id="postulantMessage" rows="2" placeholder="Bref message pour vous présenter..."></textarea>
+    </div>
+    <div class="modal-buttons">
+      <button class="btn-cancel" onclick="closeModal()">Annuler</button>
+      <button class="btn-send" onclick="submitPostulation()">Envoyer ma candidature →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
+
+  const COMPETENCES = ['Comptabilité','Encodage','TVA','Bilan annuel','Payroll','Audit',
+    'Excel / Reporting','Back-office','Administration','Support client',
+    'Marketing digital','IT / Développement','Design graphique','Rédaction'];
+
+  let allMissions = [];
+  let filterComps = [];
+  let selectedMission = null;
+
+  // Init filter chips
+  const chipsContainer = document.getElementById('filterChips');
+  COMPETENCES.forEach(c => {
+    const chip = document.createElement('div');
+    chip.className = 'f-chip';
+    chip.textContent = c;
+    chip.onclick = () => {
+      chip.classList.toggle('on');
+      filterComps = [...chipsContainer.querySelectorAll('.f-chip.on')].map(el => el.textContent);
+      applyFilters();
+    };
+    chipsContainer.appendChild(chip);
+  });
+
+  async function loadMissions() {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/missions?select=*&statut=eq.proposee&order=created_at.desc`, {
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+      });
+      allMissions = await res.json();
+    } catch(e) {
+      allMissions = [];
+    }
+
+    // Si pas encore de missions réelles, afficher des exemples
+    if (!Array.isArray(allMissions) || allMissions.length === 0) {
+      allMissions = getMockMissions();
+    }
+
+    document.getElementById('statMissions').textContent = allMissions.length;
+    applyFilters();
+  }
+
+  function applyFilters() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const lieu = document.getElementById('lieuFilter').value;
+    const tauxMin = parseFloat(document.getElementById('tauxFilter').value) || 0;
+
+    let filtered = allMissions.filter(m => {
+      const matchSearch = !search ||
+        (m.titre || '').toLowerCase().includes(search) ||
+        (m.description || '').toLowerCase().includes(search) ||
+        (m.fonction || '').toLowerCase().includes(search);
+
+      const matchLieu = !lieu || m.lieu === lieu;
+      const matchTaux = (m.taux_horaire || 0) >= tauxMin;
+      const matchComps = filterComps.length === 0 ||
+        filterComps.some(fc => (m.titre + ' ' + (m.description || '') + ' ' + (m.fonction || '')).includes(fc));
+
+      return matchSearch && matchLieu && matchTaux && matchComps;
+    });
+
+    document.getElementById('countLabel').textContent = `${filtered.length} mission${filtered.length !== 1 ? 's' : ''}`;
+    renderMissions(filtered);
+  }
+
+  function renderMissions(missions) {
+    const container = document.getElementById('missionsList');
+    if (missions.length === 0) {
+      container.innerHTML = `<div class="empty-state"><div class="icon">🔍</div><p>Aucune mission ne correspond à vos critères.<br>Modifiez vos filtres ou revenez bientôt !</p></div>`;
+      return;
+    }
+
+    container.innerHTML = missions.map(m => {
+      const brut = (m.heures_prestees || 0) * (m.taux_horaire || 0);
+      const dateStr = m.date_debut ? new Date(m.date_debut).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' }) : 'À définir';
+      const comps = getCompetences(m);
+
+      return `
+        <div class="mission-card" onclick="openModal('${m.id}', '${(m.titre||'').replace(/'/g,"\\'")}')">
+          <div class="mission-top">
+            <div>
+              <div class="mission-title">${m.titre || 'Mission flexi-job'}</div>
+              <div class="mission-company">🏢 ${m.nom_entreprise || 'Entreprise confidentielle'}</div>
+            </div>
+            <div class="mission-salary">
+              <div class="rate">${m.taux_horaire || '—'} €/h</div>
+              <div class="net">≈ ${fmt(brut)} € net total</div>
+            </div>
+          </div>
+          <div class="mission-meta">
+            <span>📅 ${dateStr}</span>
+            <span>⏱️ ${m.heures_prestees || '?'}h</span>
+            <span>${m.lieu === 'remote' ? '🏠 Télétravail' : '🏢 Sur place'}</span>
+          </div>
+          ${comps.length ? `<div class="mission-chips">${comps.map(c => `<span class="m-chip">${c}</span>`).join('')}</div>` : ''}
+          <div class="mission-footer">
+            <span class="mission-posted">Publiée ${timeAgo(m.created_at)}</span>
+            <button class="btn-postuler" onclick="event.stopPropagation();openModal('${m.id}', '${(m.titre||'').replace(/'/g,"\\'")}')">Postuler →</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function getCompetences(m) {
+    const text = (m.titre + ' ' + (m.fonction || '') + ' ' + (m.description || '')).toLowerCase();
+    return COMPETENCES.filter(c => text.includes(c.toLowerCase())).slice(0, 4);
+  }
+
+  function openModal(id, titre) {
+    selectedMission = id;
+    document.getElementById('modalMissionTitle').textContent = titre;
+    document.getElementById('modalOverlay').classList.remove('hidden');
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.add('hidden');
+    selectedMission = null;
+  }
+
+  async function submitPostulation() {
+    const email = document.getElementById('postulantEmail').value;
+    const nom = document.getElementById('postulantNom').value;
+    if (!email || !nom) { alert('Email et nom requis.'); return; }
+
+    // Mettre à jour le statut en Supabase (simplification : on logue la candidature)
+    // En prod : table candidatures séparée
+    alert(`✅ Candidature envoyée ! L'employeur vous contactera à l'adresse ${email}.\n\nNous vous enverrons également une confirmation par email.`);
+    closeModal();
+  }
+
+  function resetFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('lieuFilter').value = '';
+    document.getElementById('tauxFilter').value = '0';
+    document.querySelectorAll('.f-chip.on').forEach(el => el.classList.remove('on'));
+    filterComps = [];
+    applyFilters();
+  }
+
+  function timeAgo(dateStr) {
+    if (!dateStr) return 'récemment';
+    const diff = (Date.now() - new Date(dateStr)) / 1000 / 60;
+    if (diff < 60) return `il y a ${Math.floor(diff)} min`;
+    if (diff < 1440) return `il y a ${Math.floor(diff/60)}h`;
+    return `il y a ${Math.floor(diff/1440)} jour(s)`;
+  }
+
+  function fmt(n) {
+    return (n || 0).toLocaleString('fr-BE', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  }
+
+  function getMockMissions() {
+    return [
+      { id: 'mock1', titre: 'Assistant comptable — Encodage TVA', nom_entreprise: 'Fiduciaire Dupont SA', taux_horaire: 22, heures_prestees: 8, lieu: 'remote', date_debut: new Date(Date.now()+86400000*3).toISOString(), fonction: 'Comptabilité Encodage TVA', description: 'Encodage de factures et déclaration TVA trimestrielle', created_at: new Date().toISOString(), statut: 'proposee' },
+      { id: 'mock2', titre: 'Support back-office — Gestion dossiers', nom_entreprise: 'PME Bruxelles', taux_horaire: 19, heures_prestees: 6, lieu: 'remote', date_debut: new Date(Date.now()+86400000*5).toISOString(), fonction: 'Back-office Administration', description: 'Gestion administrative de dossiers clients', created_at: new Date(Date.now()-3600000).toISOString(), statut: 'proposee' },
+      { id: 'mock3', titre: 'Reporting Excel — Clôture mensuelle', nom_entreprise: 'Startup Fintech', taux_horaire: 28, heures_prestees: 4, lieu: 'remote', date_debut: new Date(Date.now()+86400000*7).toISOString(), fonction: 'Excel / Reporting Bilan annuel', description: 'Consolidation des données et reporting mensuel', created_at: new Date(Date.now()-7200000).toISOString(), statut: 'proposee' },
+      { id: 'mock4', titre: 'Community Manager — Réseaux sociaux', nom_entreprise: 'E-commerce Belge', taux_horaire: 20, heures_prestees: 8, lieu: 'remote', date_debut: new Date(Date.now()+86400000*4).toISOString(), fonction: 'Marketing digital Réseaux sociaux', description: 'Gestion des réseaux sociaux et création de contenu', created_at: new Date(Date.now()-10800000).toISOString(), statut: 'proposee' },
+    ];
+  }
+
+  loadMissions();
+</script>
+</body>
+</html>

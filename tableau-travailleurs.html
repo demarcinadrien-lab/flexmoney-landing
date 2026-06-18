@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Travailleurs disponibles — FlexMoney</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; color: #1e293b; }
+    header { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 16px 32px; display: flex; align-items: center; gap: 12px; }
+    header .logo { font-weight: 800; font-size: 20px; color: #6366f1; }
+    header .logo span { color: #1e293b; }
+    header nav { margin-left: auto; display: flex; gap: 16px; align-items: center; }
+    header nav a { font-size: 14px; font-weight: 600; color: #64748b; text-decoration: none; }
+    header nav a:hover { color: #6366f1; }
+
+    .hero { background: linear-gradient(135deg, #0f172a, #1e3a5f); color: #fff; padding: 40px 32px; text-align: center; }
+    .hero h1 { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
+    .hero p { font-size: 15px; opacity: 0.8; }
+    .hero .stats { display: flex; justify-content: center; gap: 40px; margin-top: 20px; }
+    .hero .stat .val { font-size: 24px; font-weight: 800; }
+    .hero .stat .lab { font-size: 12px; opacity: 0.7; margin-top: 2px; }
+
+    .main { max-width: 1100px; margin: 32px auto; padding: 0 20px; display: grid; grid-template-columns: 260px 1fr; gap: 24px; }
+
+    .filters { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; height: fit-content; position: sticky; top: 20px; }
+    .filters h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; }
+    .filter-group { margin-bottom: 20px; }
+    .filter-group label { display: block; font-size: 12px; font-weight: 700; color: #6366f1; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .filter-group input, .filter-group select { width: 100%; padding: 9px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 13px; font-family: inherit; }
+    .filter-group input:focus, .filter-group select:focus { outline: none; border-color: #6366f1; }
+
+    .comp-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .f-chip { padding: 5px 10px; border-radius: 16px; font-size: 12px; font-weight: 600; border: 1.5px solid #e2e8f0; cursor: pointer; background: #fff; color: #64748b; transition: all 0.15s; }
+    .f-chip.on { background: #6366f1; color: #fff; border-color: #6366f1; }
+    .btn-reset { width: 100%; padding: 10px; background: #f1f5f9; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; color: #64748b; cursor: pointer; margin-top: 8px; }
+
+    /* Grille travailleurs */
+    .workers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+
+    .worker-card {
+      background: #fff; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 24px;
+      transition: all 0.2s; cursor: pointer;
+    }
+    .worker-card:hover { border-color: #6366f1; box-shadow: 0 4px 20px rgba(99,102,241,0.1); transform: translateY(-2px); }
+
+    .worker-top { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+    .avatar { width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; color: #fff; flex-shrink: 0; }
+    .worker-name { font-size: 16px; font-weight: 700; }
+    .worker-status { font-size: 12px; color: #64748b; margin-top: 2px; }
+    .badge-eligible { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; color: #16a34a; background: #f0fdf4; padding: 2px 8px; border-radius: 10px; margin-top: 4px; }
+
+    .worker-location { font-size: 13px; color: #64748b; margin-bottom: 10px; }
+
+    .chips-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 14px; }
+    .w-chip { font-size: 11px; padding: 3px 8px; background: #f0f0ff; color: #6366f1; border-radius: 8px; font-weight: 600; }
+
+    .dispo-row { font-size: 12px; color: #64748b; margin-bottom: 14px; }
+    .dispo-tag { display: inline-block; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 2px 7px; margin: 2px; font-size: 11px; }
+
+    .worker-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #f1f5f9; }
+    .taux-range { font-size: 13px; color: #374151; font-weight: 600; }
+    .btn-contact { padding: 8px 16px; background: #6366f1; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.2s; }
+    .btn-contact:hover { background: #4f46e5; }
+
+    .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .list-header h2 { font-size: 18px; font-weight: 700; }
+    .loading { text-align: center; padding: 40px; color: #94a3b8; }
+    .empty-state { text-align: center; padding: 60px 20px; color: #94a3b8; grid-column: 1/-1; }
+
+    /* Modal contacter */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+    .modal { background: #fff; border-radius: 16px; padding: 32px; max-width: 500px; width: 100%; }
+    .modal h2 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+    .modal .sub { font-size: 13px; color: #64748b; margin-bottom: 20px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #374151; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 11px 14px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #6366f1; }
+    .modal-buttons { display: flex; gap: 12px; margin-top: 20px; }
+    .btn-cancel { flex: 1; padding: 12px; background: #f1f5f9; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    .btn-send { flex: 2; padding: 12px; background: #6366f1; color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; }
+    .alert-warning { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; padding: 12px 16px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
+    .hidden { display: none !important; }
+
+    @media (max-width: 768px) {
+      .main { grid-template-columns: 1fr; }
+      .filters { position: static; }
+      .workers-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Flex<span>Money</span></div>
+  <nav>
+    <a href="poster-mission.html">📢 Poster une mission</a>
+    <a href="tableau-missions.html">📋 Missions</a>
+    <a href="inscription-employeur.html" style="background:#6366f1;color:#fff;padding:8px 16px;border-radius:8px;">M'inscrire employeur</a>
+  </nav>
+</header>
+
+<div class="hero">
+  <h1>👥 Travailleurs flexi disponibles</h1>
+  <p>Profils vérifiés · Compétences validées · Disponibles rapidement</p>
+  <div class="stats">
+    <div class="stat"><div class="val" id="statWorkers">—</div><div class="lab">Profils actifs</div></div>
+    <div class="stat"><div class="val" id="statRemote">—</div><div class="lab">Télétravail</div></div>
+    <div class="stat"><div class="val">24h</div><div class="lab">Délai moyen</div></div>
+  </div>
+</div>
+
+<div class="main">
+  <!-- Filtres -->
+  <div class="filters">
+    <h3>🎯 Filtrer les profils</h3>
+
+    <div class="filter-group">
+      <label>Recherche</label>
+      <input type="text" id="searchInput" placeholder="Comptable, Excel..." oninput="applyFilters()">
+    </div>
+
+    <div class="filter-group">
+      <label>Ville / Région</label>
+      <input type="text" id="villeFilter" placeholder="Bruxelles, Liège..." oninput="applyFilters()">
+    </div>
+
+    <div class="filter-group">
+      <label>Disponibilité télétravail</label>
+      <select id="teletravailFilter" onchange="applyFilters()">
+        <option value="">Tous</option>
+        <option value="oui">🏠 Télétravail uniquement</option>
+        <option value="hybride">🔄 Hybride</option>
+        <option value="non">🏢 Sur place</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Compétences</label>
+      <div class="comp-chips" id="filterChips"></div>
+    </div>
+
+    <button class="btn-reset" onclick="resetFilters()">↺ Réinitialiser</button>
+  </div>
+
+  <!-- Liste -->
+  <div>
+    <div class="list-header">
+      <h2>Profils disponibles</h2>
+      <span style="font-size:14px;color:#64748b;" id="countLabel">Chargement...</span>
+    </div>
+    <div class="workers-grid" id="workersList">
+      <div class="loading" style="grid-column:1/-1;">⏳ Chargement des profils...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal contacter -->
+<div class="modal-overlay hidden" id="modalOverlay">
+  <div class="modal">
+    <h2 id="modalWorkerName">Contacter ce travailleur</h2>
+    <p class="sub">FlexMoney transmet votre demande de mission. Le travailleur vous répondra directement.</p>
+
+    <div class="alert-warning">
+      🛡️ <strong>Rappel légal :</strong> Assurez-vous que votre assurance accidents du travail couvre les travailleurs flexi-job avant toute mission.
+    </div>
+
+    <div class="form-group">
+      <label>Votre email *</label>
+      <input type="email" id="contactEmail" placeholder="rh@monentreprise.be">
+    </div>
+    <div class="form-group">
+      <label>Votre entreprise *</label>
+      <input type="text" id="contactEntreprise" placeholder="Nom de votre société">
+    </div>
+    <div class="form-group">
+      <label>Date souhaitée *</label>
+      <input type="date" id="contactDate">
+    </div>
+    <div class="form-group">
+      <label>Nombre d'heures</label>
+      <select id="contactHeures">
+        <option value="2">2h</option><option value="4">4h</option><option value="6">6h</option>
+        <option value="8" selected>8h (journée)</option><option value="10">10h</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Description de la mission</label>
+      <textarea id="contactDesc" rows="2" placeholder="Encodage TVA du trimestre, reporting mensuel..."></textarea>
+    </div>
+    <div class="modal-buttons">
+      <button class="btn-cancel" onclick="closeModal()">Annuler</button>
+      <button class="btn-send" onclick="submitContact()">Envoyer la proposition →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
+
+  const COMPETENCES = ['Comptabilité','Encodage','TVA','Bilan annuel','Payroll','Audit',
+    'Excel / Reporting','Back-office','Administration','Support client',
+    'Marketing digital','IT / Développement','Design graphique','Rédaction'];
+
+  let allWorkers = [];
+  let filterComps = [];
+  let selectedWorker = null;
+
+  // Init filter chips
+  const chipsContainer = document.getElementById('filterChips');
+  COMPETENCES.forEach(c => {
+    const chip = document.createElement('div');
+    chip.className = 'f-chip';
+    chip.textContent = c;
+    chip.onclick = () => {
+      chip.classList.toggle('on');
+      filterComps = [...chipsContainer.querySelectorAll('.f-chip.on')].map(el => el.textContent);
+      applyFilters();
+    };
+    chipsContainer.appendChild(chip);
+  });
+
+  document.getElementById('contactDate').min = new Date().toISOString().split('T')[0];
+
+  async function loadWorkers() {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/workers_inscription?select=*&eligible=eq.true&order=created_at.desc`, {
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+      });
+      allWorkers = await res.json();
+    } catch(e) { allWorkers = []; }
+
+    if (!Array.isArray(allWorkers) || allWorkers.length === 0) {
+      allWorkers = getMockWorkers();
+    }
+
+    const remoteCount = allWorkers.filter(w => w.teletravail_preference === 'oui' || w.teletravail_preference === 'uniquement').length;
+    document.getElementById('statWorkers').textContent = allWorkers.length;
+    document.getElementById('statRemote').textContent = remoteCount;
+    applyFilters();
+  }
+
+  function applyFilters() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const ville = document.getElementById('villeFilter').value.toLowerCase();
+    const teletravail = document.getElementById('teletravailFilter').value;
+
+    let filtered = allWorkers.filter(w => {
+      const comps = (w.competences || []).join(' ').toLowerCase();
+      const matchSearch = !search || comps.includes(search) || (w.prenom + ' ' + w.nom).toLowerCase().includes(search);
+      const matchVille = !ville || (w.ville || '').toLowerCase().includes(ville);
+      const matchTele = !teletravail || w.teletravail_preference === teletravail || (teletravail === 'oui' && w.teletravail_preference === 'uniquement');
+      const matchComps = filterComps.length === 0 || filterComps.some(fc => (w.competences || []).includes(fc));
+      return matchSearch && matchVille && matchTele && matchComps;
+    });
+
+    document.getElementById('countLabel').textContent = `${filtered.length} profil${filtered.length !== 1 ? 's' : ''}`;
+    renderWorkers(filtered);
+  }
+
+  function renderWorkers(workers) {
+    const container = document.getElementById('workersList');
+    if (workers.length === 0) {
+      container.innerHTML = `<div class="empty-state"><div style="font-size:48px;margin-bottom:12px;">🔍</div><p>Aucun profil ne correspond à vos critères.<br>Modifiez vos filtres ou postez une mission — nous notifions les travailleurs.</p></div>`;
+      return;
+    }
+
+    container.innerHTML = workers.map(w => {
+      const initials = ((w.prenom || '?')[0] + (w.nom || '?')[0]).toUpperCase();
+      const comps = (w.competences || []).slice(0, 5);
+      const dispos = w.disponibilites ? Object.keys(w.disponibilites).filter(k => w.disponibilites[k]).slice(0, 3) : [];
+      const tauxMin = getTauxMin(comps);
+
+      return `
+        <div class="worker-card" onclick="openModal('${w.id}', '${(w.prenom + ' ' + w.nom).replace(/'/g,"\\'")}')">
+          <div class="worker-top">
+            <div class="avatar">${initials}</div>
+            <div>
+              <div class="worker-name">${w.prenom} ${w.nom[0]}.</div>
+              <div class="worker-status">${w.regime_travail || 'Salarié 4/5e'}</div>
+              ${w.eligible ? '<div class="badge-eligible">✅ Éligible flexi</div>' : ''}
+            </div>
+          </div>
+          <div class="worker-location">📍 ${w.ville || '—'} · ${w.teletravail_preference === 'oui' || w.teletravail_preference === 'uniquement' ? '🏠 Télétravail' : '🔄 Hybride'}</div>
+          ${comps.length ? `<div class="chips-row">${comps.map(c => `<span class="w-chip">${c}</span>`).join('')}</div>` : ''}
+          ${dispos.length ? `<div class="dispo-row">📅 Dispo : ${dispos.map(d => `<span class="dispo-tag">${d}</span>`).join('')}</div>` : ''}
+          <div class="worker-footer">
+            <span class="taux-range">~${tauxMin}–${tauxMin+8} €/h</span>
+            <button class="btn-contact" onclick="event.stopPropagation();openModal('${w.id}', '${(w.prenom + ' ' + w.nom).replace(/'/g,"\\'")}')">Contacter →</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function getTauxMin(comps) {
+    if (comps.some(c => ['Audit','Bilan annuel','Payroll'].includes(c))) return 25;
+    if (comps.some(c => ['Comptabilité','TVA','IT / Développement'].includes(c))) return 20;
+    return 17;
+  }
+
+  function openModal(id, name) {
+    selectedWorker = id;
+    document.getElementById('modalWorkerName').textContent = '📩 Proposer une mission à ' + name;
+    document.getElementById('modalOverlay').classList.remove('hidden');
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.add('hidden');
+    selectedWorker = null;
+  }
+
+  async function submitContact() {
+    const email = document.getElementById('contactEmail').value;
+    const ent = document.getElementById('contactEntreprise').value;
+    const date = document.getElementById('contactDate').value;
+    if (!email || !ent || !date) { alert('Veuillez remplir les champs obligatoires.'); return; }
+
+    alert(`✅ Proposition envoyée ! Le travailleur sera notifié et vous contactera à l'adresse ${email} dans les 24h.\n\nVous pouvez aussi poster une mission complète pour toucher plusieurs profils.`);
+    closeModal();
+  }
+
+  function resetFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('villeFilter').value = '';
+    document.getElementById('teletravailFilter').value = '';
+    document.querySelectorAll('.f-chip.on').forEach(el => el.classList.remove('on'));
+    filterComps = [];
+    applyFilters();
+  }
+
+  function getMockWorkers() {
+    return [
+      { id: 'w1', prenom: 'Sophie', nom: 'Martin', ville: 'Bruxelles', regime_travail: 'Salariée 4/5e', eligible: true, competences: ['Comptabilité','TVA','Encodage','Excel / Reporting'], teletravail_preference: 'oui', disponibilites: { 'Samedi': true, 'Mercredi après-midi': true }, created_at: new Date().toISOString() },
+      { id: 'w2', prenom: 'Thomas', nom: 'Lejeune', ville: 'Liège', regime_travail: 'Salarié 4/5e', eligible: true, competences: ['Payroll','Back-office','Administration'], teletravail_preference: 'oui', disponibilites: { 'Vendredi': true, 'Weekend': true }, created_at: new Date().toISOString() },
+      { id: 'w3', prenom: 'Marie', nom: 'Dubois', ville: 'Gand', regime_travail: 'Pensionnée', eligible: true, competences: ['Bilan annuel','Audit','Comptabilité','Payroll'], teletravail_preference: 'oui', disponibilites: { 'Tous les jours': true }, created_at: new Date().toISOString() },
+      { id: 'w4', prenom: 'Kevin', nom: 'Peeters', ville: 'Anvers', regime_travail: 'Salarié 4/5e', eligible: true, competences: ['Marketing digital','Réseaux sociaux','Design graphique'], teletravail_preference: 'oui', disponibilites: { 'Samedi': true }, created_at: new Date().toISOString() },
+      { id: 'w5', prenom: 'Julie', nom: 'Renard', ville: 'Namur', regime_travail: 'Salariée 4/5e', eligible: true, competences: ['Support client','Back-office','Administration','Excel / Reporting'], teletravail_preference: 'hybride', disponibilites: { 'Mercredi': true, 'Weekend': true }, created_at: new Date().toISOString() },
+      { id: 'w6', prenom: 'Ahmed', nom: 'Benali', ville: 'Bruxelles', regime_travail: 'Salarié 4/5e', eligible: true, competences: ['IT / Développement','Excel / Reporting','Back-office'], teletravail_preference: 'oui', disponibilites: { 'Vendredi': true, 'Samedi': true }, created_at: new Date().toISOString() },
+    ];
+  }
+
+  loadWorkers();
+</script>
+</body>
+</html>
