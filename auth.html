@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion — FlexMoney</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #f0f0ff 0%, #f8fafc 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+
+    .card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 20px;
+      padding: 40px; width: 100%; max-width: 440px;
+      box-shadow: 0 20px 60px rgba(99,102,241,0.1);
+    }
+
+    .logo { font-weight: 800; font-size: 24px; color: #6366f1; margin-bottom: 6px; }
+    .logo span { color: #1e293b; }
+    .tagline { font-size: 13px; color: #94a3b8; margin-bottom: 28px; }
+
+    h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+    .sub { font-size: 14px; color: #64748b; margin-bottom: 28px; }
+
+    /* Tabs rôle */
+    .role-tabs { display: flex; background: #f1f5f9; border-radius: 10px; padding: 4px; margin-bottom: 28px; gap: 4px; }
+    .role-tab {
+      flex: 1; padding: 10px; text-align: center; font-size: 14px; font-weight: 600;
+      border-radius: 7px; cursor: pointer; transition: all 0.2s; color: #64748b; border: none; background: none;
+    }
+    .role-tab.active { background: #fff; color: #6366f1; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+
+    .form-group { margin-bottom: 18px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+    .form-group input {
+      width: 100%; padding: 12px 14px; border: 1.5px solid #e2e8f0; border-radius: 9px;
+      font-size: 15px; font-family: inherit; transition: border-color 0.2s;
+    }
+    .form-group input:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
+
+    .btn {
+      width: 100%; padding: 14px; border: none; border-radius: 10px;
+      font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-primary { background: #6366f1; color: #fff; margin-bottom: 12px; }
+    .btn-primary:hover { background: #4f46e5; }
+    .btn-primary:disabled { background: #a5b4fc; cursor: not-allowed; }
+
+    .divider { display: flex; align-items: center; gap: 12px; margin: 16px 0; color: #94a3b8; font-size: 13px; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #e2e8f0; }
+
+    .btn-magic { background: #f8fafc; color: #374151; border: 1.5px solid #e2e8f0; margin-bottom: 0; }
+    .btn-magic:hover { background: #f1f5f9; border-color: #6366f1; }
+
+    .alert {
+      padding: 14px 16px; border-radius: 10px; font-size: 14px; margin-bottom: 16px;
+      display: none;
+    }
+    .alert.show { display: block; }
+    .alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+    .alert-error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+    .alert-info { background: #f0f9ff; border: 1px solid #bae6fd; color: #0369a1; }
+
+    .footer-link { text-align: center; font-size: 13px; color: #64748b; margin-top: 20px; }
+    .footer-link a { color: #6366f1; font-weight: 600; text-decoration: none; }
+
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .success-state { text-align: center; padding: 20px 0; }
+    .success-state .icon { font-size: 56px; margin-bottom: 16px; }
+    .success-state h2 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .success-state p { font-size: 14px; color: #64748b; line-height: 1.6; }
+    .success-state .email-shown { font-weight: 700; color: #6366f1; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="logo">Flex<span>Money</span></div>
+  <div class="tagline">La plateforme belge du flexi-job par compétences</div>
+
+  <!-- État normal -->
+  <div id="formState">
+    <h1>Connexion / Inscription</h1>
+    <p class="sub">Pas besoin de mot de passe — on vous envoie un lien magique.</p>
+
+    <!-- Sélection rôle -->
+    <div class="role-tabs">
+      <button class="role-tab active" id="tabTravailleur" onclick="setRole('travailleur')">👤 Je suis travailleur</button>
+      <button class="role-tab" id="tabEmployeur" onclick="setRole('employeur')">🏢 Je suis employeur</button>
+    </div>
+
+    <div id="alertBox" class="alert"></div>
+
+    <div class="form-group">
+      <label>Votre adresse email</label>
+      <input type="email" id="emailInput" placeholder="vous@email.com" onkeydown="if(event.key==='Enter') sendMagicLink()">
+    </div>
+
+    <button class="btn btn-primary" id="btnMagic" onclick="sendMagicLink()">
+      ✉️ Recevoir mon lien de connexion
+    </button>
+
+    <div class="divider">ou</div>
+
+    <button class="btn btn-magic" onclick="showPasswordForm()">
+      🔑 Connexion avec mot de passe
+    </button>
+
+    <!-- Formulaire mot de passe (caché par défaut) -->
+    <div id="passwordForm" class="hidden" style="margin-top:16px;">
+      <div class="form-group">
+        <label>Mot de passe</label>
+        <input type="password" id="passwordInput" placeholder="••••••••" onkeydown="if(event.key==='Enter') signInWithPassword()">
+      </div>
+      <button class="btn btn-primary" onclick="signInWithPassword()">Se connecter</button>
+      <div style="text-align:center;margin-top:10px;">
+        <a href="#" onclick="showPasswordForm()" style="font-size:13px;color:#6366f1;text-decoration:none;">← Retour au lien magique</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- État après envoi magic link -->
+  <div id="successState" class="hidden success-state">
+    <div class="icon">📬</div>
+    <h2>Vérifiez votre boîte mail !</h2>
+    <p>Un lien de connexion a été envoyé à<br><span class="email-shown" id="emailShown">—</span></p>
+    <p style="margin-top:12px;font-size:13px;color:#94a3b8;">Cliquez sur le lien dans l'email pour accéder à votre espace. Le lien expire dans 1 heure.</p>
+    <button class="btn btn-magic" onclick="resetForm()" style="margin-top:20px;width:100%;padding:12px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;font-weight:600;cursor:pointer;">← Changer d'email</button>
+  </div>
+
+  <div class="footer-link">
+    <a href="index.html">← Retour à l'accueil</a>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  let currentRole = 'travailleur';
+  let passwordFormVisible = false;
+
+  // Vérifier si déjà connecté → redirect
+  (async () => {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) redirectByRole(session.user);
+  })();
+
+  // Écouter le retour du magic link
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' && session) {
+      await saveRole(session.user);
+      redirectByRole(session.user);
+    }
+  });
+
+  function setRole(role) {
+    currentRole = role;
+    document.getElementById('tabTravailleur').classList.toggle('active', role === 'travailleur');
+    document.getElementById('tabEmployeur').classList.toggle('active', role === 'employeur');
+  }
+
+  function showPasswordForm() {
+    passwordFormVisible = !passwordFormVisible;
+    document.getElementById('passwordForm').classList.toggle('hidden', !passwordFormVisible);
+  }
+
+  async function sendMagicLink() {
+    const email = document.getElementById('emailInput').value.trim();
+    if (!email || !email.includes('@')) {
+      showAlert('Veuillez entrer une adresse email valide.', 'error');
+      return;
+    }
+
+    const btn = document.getElementById('btnMagic');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Envoi en cours...';
+    hideAlert();
+
+    const redirectTo = window.location.origin + '/auth.html';
+
+    const { error } = await sb.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: redirectTo,
+        data: { role: currentRole }
+      }
+    });
+
+    if (error) {
+      showAlert('Erreur : ' + error.message, 'error');
+      btn.disabled = false;
+      btn.innerHTML = '✉️ Recevoir mon lien de connexion';
+    } else {
+      document.getElementById('emailShown').textContent = email;
+      document.getElementById('formState').classList.add('hidden');
+      document.getElementById('successState').classList.remove('hidden');
+    }
+  }
+
+  async function signInWithPassword() {
+    const email = document.getElementById('emailInput').value.trim();
+    const password = document.getElementById('passwordInput').value;
+    if (!email || !password) { showAlert('Email et mot de passe requis.', 'error'); return; }
+
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) {
+      // Si pas de compte, créer
+      if (error.message.includes('Invalid login')) {
+        const { data: signUpData, error: signUpError } = await sb.auth.signUp({ email, password, options: { data: { role: currentRole } } });
+        if (signUpError) { showAlert(signUpError.message, 'error'); return; }
+        showAlert('Compte créé ! Vérifiez votre email pour confirmer.', 'success');
+      } else {
+        showAlert(error.message, 'error');
+      }
+    } else {
+      await saveRole(data.user);
+      redirectByRole(data.user);
+    }
+  }
+
+  async function saveRole(user) {
+    // Sauvegarder le rôle dans les métadonnées utilisateur
+    const role = user.user_metadata?.role || currentRole;
+    if (!user.user_metadata?.role) {
+      await sb.auth.updateUser({ data: { role: currentRole } });
+    }
+  }
+
+  async function redirectByRole(user) {
+    const role = user.user_metadata?.role || currentRole;
+    if (role === 'employeur') {
+      window.location.href = 'dashboard-employeur.html';
+    } else {
+      window.location.href = 'dashboard-travailleur.html';
+    }
+  }
+
+  function resetForm() {
+    document.getElementById('formState').classList.remove('hidden');
+    document.getElementById('successState').classList.add('hidden');
+    document.getElementById('emailInput').value = '';
+  }
+
+  function showAlert(msg, type) {
+    const box = document.getElementById('alertBox');
+    box.textContent = msg;
+    box.className = `alert alert-${type} show`;
+  }
+
+  function hideAlert() {
+    document.getElementById('alertBox').className = 'alert';
+  }
+</script>
+</body>
+</html>

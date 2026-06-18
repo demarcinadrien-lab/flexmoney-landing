@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mon espace — FlexMoney</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; color: #1e293b; }
+
+    header {
+      background: #fff; border-bottom: 1px solid #e2e8f0;
+      padding: 0 32px; display: flex; align-items: center; gap: 16px; height: 60px;
+    }
+    .logo { font-weight: 800; font-size: 20px; color: #6366f1; }
+    .logo span { color: #1e293b; }
+    nav { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+    .nav-btn {
+      padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
+      cursor: pointer; border: none; text-decoration: none; transition: all 0.2s;
+    }
+    .nav-btn-ghost { background: none; color: #64748b; }
+    .nav-btn-ghost:hover { background: #f1f5f9; color: #1e293b; }
+    .nav-btn-primary { background: #6366f1; color: #fff; }
+    .user-badge { font-size: 13px; color: #64748b; padding: 6px 12px; background: #f8fafc; border-radius: 20px; border: 1px solid #e2e8f0; }
+
+    .hero-banner {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: #fff; padding: 28px 32px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .hero-banner h1 { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+    .hero-banner p { font-size: 14px; opacity: 0.85; }
+    .hero-stats { display: flex; gap: 24px; }
+    .h-stat { text-align: center; background: rgba(255,255,255,0.15); border-radius: 10px; padding: 12px 20px; }
+    .h-stat .val { font-size: 22px; font-weight: 800; }
+    .h-stat .lab { font-size: 11px; opacity: 0.8; margin-top: 2px; }
+
+    .container { max-width: 1100px; margin: 28px auto; padding: 0 20px; }
+    .grid { display: grid; grid-template-columns: 320px 1fr; gap: 24px; }
+
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px; margin-bottom: 20px; }
+    .card h2 { font-size: 16px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+    /* Profil */
+    .profile-avatar { width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; color: #fff; margin: 0 auto 12px; }
+    .profile-name { font-size: 18px; font-weight: 700; text-align: center; margin-bottom: 4px; }
+    .profile-email { font-size: 13px; color: #64748b; text-align: center; margin-bottom: 16px; }
+    .profile-field { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+    .profile-field:last-child { border-bottom: none; }
+    .profile-field .lbl { color: #94a3b8; }
+    .profile-field .val { font-weight: 600; }
+
+    .badge-eligible { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; color: #16a34a; background: #f0fdf4; padding: 4px 10px; border-radius: 12px; margin: 8px auto; }
+    .badge-pending { color: #92400e; background: #fffbeb; }
+
+    .comp-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .comp-chip { font-size: 11px; padding: 3px 10px; background: #f0f0ff; color: #6366f1; border-radius: 10px; font-weight: 600; }
+
+    /* Missions */
+    .mission-item {
+      padding: 16px; border: 1.5px solid #e2e8f0; border-radius: 10px; margin-bottom: 10px;
+      transition: border-color 0.2s; cursor: pointer;
+    }
+    .mission-item:hover { border-color: #6366f1; }
+    .mission-item .top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+    .mission-item .titre { font-weight: 700; font-size: 15px; }
+    .mission-item .company { font-size: 13px; color: #64748b; margin-top: 2px; }
+    .mission-item .meta { display: flex; gap: 12px; font-size: 12px; color: #64748b; margin-bottom: 8px; }
+    .mission-item .footer { display: flex; justify-content: space-between; align-items: center; }
+    .status-badge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 10px; }
+    .status-proposee { background: #f0f9ff; color: #0369a1; }
+    .status-acceptee { background: #f0fdf4; color: #16a34a; }
+    .status-cloturee { background: #f1f5f9; color: #64748b; }
+    .taux { font-size: 16px; font-weight: 800; color: #6366f1; }
+
+    .btn { padding: 10px 18px; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .btn-primary { background: #6366f1; color: #fff; }
+    .btn-primary:hover { background: #4f46e5; }
+    .btn-outline { background: #fff; color: #6366f1; border: 1.5px solid #6366f1; }
+    .btn-green { background: #16a34a; color: #fff; }
+
+    .empty { text-align: center; padding: 32px; color: #94a3b8; font-size: 14px; }
+    .empty .icon { font-size: 36px; margin-bottom: 8px; }
+
+    .earning-box { background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 1px solid #bbf7d0; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 16px; }
+    .earning-box .amount { font-size: 32px; font-weight: 800; color: #16a34a; }
+    .earning-box .label { font-size: 13px; color: #166534; margin-top: 4px; }
+    .earning-box .sub { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+
+    .alert-info { background: #f0f9ff; border: 1px solid #bae6fd; color: #0369a1; padding: 12px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 16px; }
+
+    .loading { text-align: center; padding: 40px; color: #94a3b8; }
+    .hidden { display: none !important; }
+
+    @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } .hero-stats { display: none; } }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Flex<span>Money</span></div>
+  <span class="user-badge" id="userBadge">Chargement...</span>
+  <nav>
+    <a href="tableau-missions.html" class="nav-btn nav-btn-ghost">📋 Missions disponibles</a>
+    <button class="nav-btn nav-btn-ghost" onclick="signOut()">Déconnexion</button>
+  </nav>
+</header>
+
+<div class="hero-banner">
+  <div>
+    <h1>Bonjour, <span id="heroName">—</span> 👋</h1>
+    <p>Votre espace travailleur flexi-job</p>
+  </div>
+  <div class="hero-stats">
+    <div class="h-stat"><div class="val" id="statMissions">0</div><div class="lab">Missions réalisées</div></div>
+    <div class="h-stat"><div class="val" id="statGains">0 €</div><div class="lab">Gains nets</div></div>
+    <div class="h-stat"><div class="val" id="statNote">—</div><div class="lab">Note moyenne</div></div>
+  </div>
+</div>
+
+<div class="container">
+  <div id="loadingState" class="loading">⏳ Chargement de votre profil...</div>
+
+  <div id="mainContent" class="grid hidden">
+    <!-- Colonne gauche : profil -->
+    <div>
+      <div class="card">
+        <div class="profile-avatar" id="profileAvatar">?</div>
+        <div class="profile-name" id="profileName">—</div>
+        <div class="profile-email" id="profileEmail">—</div>
+        <div style="text-align:center;margin-bottom:16px;">
+          <span class="badge-eligible" id="eligibleBadge">⏳ Vérification en cours</span>
+        </div>
+
+        <div class="profile-field">
+          <span class="lbl">Ville</span><span class="val" id="pVille">—</span>
+        </div>
+        <div class="profile-field">
+          <span class="lbl">Régime</span><span class="val" id="pRegime">—</span>
+        </div>
+        <div class="profile-field">
+          <span class="lbl">Télétravail</span><span class="val" id="pTele">—</span>
+        </div>
+        <div class="profile-field">
+          <span class="lbl">Inscrit le</span><span class="val" id="pDate">—</span>
+        </div>
+
+        <div style="margin-top:16px;">
+          <div style="font-size:12px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Compétences</div>
+          <div class="comp-chips" id="compChips"></div>
+        </div>
+
+        <div style="margin-top:20px;">
+          <a href="inscription-travailleur.html"><button class="btn btn-outline" style="width:100%;">✏️ Modifier mon profil</button></a>
+        </div>
+      </div>
+
+      <!-- Gains -->
+      <div class="card">
+        <h2>💰 Mes gains flexi</h2>
+        <div class="earning-box">
+          <div class="amount" id="gainsTotal">0,00 €</div>
+          <div class="label">Net encaissé (Net = Brut)</div>
+          <div class="sub">Exonéré d'impôts jusqu'à 18 000 €/an</div>
+        </div>
+        <div class="profile-field">
+          <span class="lbl">Ce mois</span><span class="val" id="gainsMois">0,00 €</span>
+        </div>
+        <div class="profile-field">
+          <span class="lbl">Plafond annuel restant</span><span class="val" id="gainsRestant" style="color:#16a34a;">18 000,00 €</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Colonne droite : missions -->
+    <div>
+      <!-- Missions suggérées -->
+      <div class="card">
+        <h2>🎯 Missions pour vous</h2>
+        <p style="font-size:13px;color:#64748b;margin-bottom:16px;">Sélectionnées selon vos compétences déclarées.</p>
+        <div id="suggestedMissions"><div class="loading">Chargement...</div></div>
+        <div style="margin-top:12px;">
+          <a href="tableau-missions.html"><button class="btn btn-outline" style="width:100%;">Voir toutes les missions →</button></a>
+        </div>
+      </div>
+
+      <!-- Mes missions actives -->
+      <div class="card">
+        <h2>⚡ Mes missions actives</h2>
+        <div id="activeMissions"><div class="empty"><div class="icon">📭</div>Aucune mission en cours.<br>Postulez à une mission disponible !</div></div>
+      </div>
+
+      <!-- Historique -->
+      <div class="card">
+        <h2>📋 Historique des missions</h2>
+        <div id="historyMissions"><div class="empty"><div class="icon">🕒</div>Votre historique apparaîtra ici après votre première mission.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pas de profil trouvé -->
+  <div id="noProfileState" class="hidden">
+    <div class="card" style="text-align:center;padding:40px;max-width:500px;margin:0 auto;">
+      <div style="font-size:48px;margin-bottom:16px;">👋</div>
+      <h2 style="margin-bottom:8px;">Bienvenue sur FlexMoney !</h2>
+      <p style="color:#64748b;margin-bottom:24px;">Vous êtes connecté mais n'avez pas encore créé votre profil travailleur. Complétez-le pour accéder aux missions !</p>
+      <a href="inscription-travailleur.html"><button class="btn btn-primary" style="width:100%;">Créer mon profil travailleur →</button></a>
+    </div>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  let currentUser = null;
+  let workerProfile = null;
+
+  async function init() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'auth.html'; return; }
+
+    currentUser = session.user;
+    document.getElementById('userBadge').textContent = currentUser.email;
+    document.getElementById('profileEmail').textContent = currentUser.email;
+
+    // Charger le profil depuis workers_inscription
+    const { data: workers } = await sb.from('workers_inscription')
+      .select('*')
+      .eq('email', currentUser.email)
+      .limit(1);
+
+    document.getElementById('loadingState').classList.add('hidden');
+
+    if (!workers || workers.length === 0) {
+      document.getElementById('noProfileState').classList.remove('hidden');
+      return;
+    }
+
+    workerProfile = workers[0];
+    renderProfile();
+    loadMissions();
+  }
+
+  function renderProfile() {
+    const w = workerProfile;
+    const initials = ((w.prenom || '?')[0] + (w.nom || '?')[0]).toUpperCase();
+    const name = w.prenom + ' ' + w.nom;
+
+    document.getElementById('profileAvatar').textContent = initials;
+    document.getElementById('profileName').textContent = name;
+    document.getElementById('heroName').textContent = w.prenom;
+    document.getElementById('pVille').textContent = w.ville || '—';
+    document.getElementById('pRegime').textContent = w.regime_travail || '—';
+    document.getElementById('pTele').textContent = w.teletravail_preference === 'oui' ? '✅ Oui' : '🔄 Hybride';
+    document.getElementById('pDate').textContent = new Date(w.created_at).toLocaleDateString('fr-BE');
+
+    const badge = document.getElementById('eligibleBadge');
+    if (w.eligible) {
+      badge.textContent = '✅ Éligible flexi-job';
+      badge.classList.add('badge-eligible');
+      badge.classList.remove('badge-pending');
+    } else {
+      badge.textContent = '⏳ Vérification en cours';
+      badge.classList.add('badge-pending');
+    }
+
+    const comps = w.competences || [];
+    document.getElementById('compChips').innerHTML = comps.map(c => `<span class="comp-chip">${c}</span>`).join('');
+  }
+
+  async function loadMissions() {
+    const w = workerProfile;
+    const comps = w.competences || [];
+
+    // Missions suggérées (depuis la table missions)
+    const { data: missions } = await sb.from('missions')
+      .select('*').eq('statut', 'proposee').order('created_at', { ascending: false }).limit(20);
+
+    const allMissions = missions && missions.length > 0 ? missions : getMockMissions();
+
+    // Scorer et filtrer
+    const scored = allMissions.map(m => {
+      const text = ((m.titre || '') + ' ' + (m.fonction || '') + ' ' + (m.description || '')).toLowerCase();
+      const score = comps.filter(c => text.includes(c.toLowerCase())).length;
+      return { ...m, score };
+    }).filter(m => m.score > 0 || comps.length === 0).sort((a, b) => b.score - a.score).slice(0, 4);
+
+    const suggestedContainer = document.getElementById('suggestedMissions');
+    if (scored.length === 0) {
+      suggestedContainer.innerHTML = `<div class="empty"><div class="icon">🔍</div>Aucune mission ne correspond encore à vos compétences. Revenez bientôt !</div>`;
+    } else {
+      suggestedContainer.innerHTML = scored.map(m => missionCard(m, 'postuler')).join('');
+    }
+
+    // Mes missions actives (worker_id ou email)
+    const { data: myMissions } = await sb.from('missions')
+      .select('*')
+      .eq('email_travailleur', w.email)
+      .in('statut', ['acceptee', 'en_cours', 'attente_validation']);
+
+    const activeContainer = document.getElementById('activeMissions');
+    if (!myMissions || myMissions.length === 0) {
+      activeContainer.innerHTML = `<div class="empty"><div class="icon">📭</div>Aucune mission en cours.</div>`;
+    } else {
+      activeContainer.innerHTML = myMissions.map(m => missionCard(m, 'valider')).join('');
+      document.getElementById('statMissions').textContent = myMissions.length;
+    }
+
+    document.getElementById('mainContent').classList.remove('hidden');
+  }
+
+  function missionCard(m, action) {
+    const brut = (m.heures_prestees || 0) * (m.taux_horaire || 0);
+    const statusMap = { proposee: ['Ouverte', 'status-proposee'], acceptee: ['Acceptée', 'status-acceptee'], cloturee: ['Clôturée', 'status-cloturee'] };
+    const [statusLabel, statusClass] = statusMap[m.statut] || ['—', ''];
+    const actionBtn = action === 'postuler'
+      ? `<button class="btn btn-primary" onclick="postuler('${m.id}')">Postuler →</button>`
+      : `<button class="btn btn-green" onclick="window.location.href='validation-mission.html'">Valider ✓</button>`;
+
+    return `
+      <div class="mission-item">
+        <div class="top">
+          <div>
+            <div class="titre">${m.titre || 'Mission flexi'}</div>
+            <div class="company">🏢 ${m.nom_entreprise || 'Employeur'}</div>
+          </div>
+          <span class="taux">${m.taux_horaire || '—'} €/h</span>
+        </div>
+        <div class="meta">
+          <span>📅 ${m.date_debut ? new Date(m.date_debut).toLocaleDateString('fr-BE') : '—'}</span>
+          <span>⏱️ ${m.heures_prestees || '?'}h</span>
+          <span>${m.lieu === 'remote' ? '🏠 Télétravail' : '🏢 Sur place'}</span>
+          <span>≈ ${fmt(brut)} € net</span>
+        </div>
+        <div class="footer">
+          <span class="status-badge ${statusClass}">${statusLabel}</span>
+          ${actionBtn}
+        </div>
+      </div>`;
+  }
+
+  async function postuler(missionId) {
+    if (!workerProfile) return;
+    alert(`✅ Candidature envoyée !\n\nL'employeur sera notifié et vous contactera à l'adresse ${workerProfile.email}.`);
+  }
+
+  async function signOut() {
+    await sb.auth.signOut();
+    window.location.href = 'auth.html';
+  }
+
+  function fmt(n) {
+    return (n || 0).toLocaleString('fr-BE', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  }
+
+  function getMockMissions() {
+    return [
+      { id: 'mock1', titre: 'Assistant comptable — Encodage TVA', nom_entreprise: 'Fiduciaire Dupont SA', taux_horaire: 22, heures_prestees: 8, lieu: 'remote', date_debut: new Date(Date.now()+86400000*3).toISOString(), fonction: 'Comptabilité Encodage TVA', statut: 'proposee' },
+      { id: 'mock2', titre: 'Reporting Excel mensuel', nom_entreprise: 'Startup Fintech', taux_horaire: 26, heures_prestees: 4, lieu: 'remote', date_debut: new Date(Date.now()+86400000*5).toISOString(), fonction: 'Excel Reporting', statut: 'proposee' },
+    ];
+  }
+
+  init();
+</script>
+</body>
+</html>

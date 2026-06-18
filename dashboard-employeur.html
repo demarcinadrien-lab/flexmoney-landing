@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Espace employeur — FlexMoney</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; color: #1e293b; }
+    header { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 0 32px; display: flex; align-items: center; gap: 16px; height: 60px; }
+    .logo { font-weight: 800; font-size: 20px; color: #6366f1; }
+    .logo span { color: #1e293b; }
+    nav { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+    .nav-btn { padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; text-decoration: none; transition: all 0.2s; }
+    .nav-ghost { background: none; color: #64748b; }
+    .nav-ghost:hover { background: #f1f5f9; color: #1e293b; }
+    .nav-primary { background: #6366f1; color: #fff; }
+    .user-badge { font-size: 13px; color: #64748b; padding: 6px 12px; background: #f8fafc; border-radius: 20px; border: 1px solid #e2e8f0; }
+
+    .hero-banner { background: linear-gradient(135deg, #0f172a, #1e3a5f); color: #fff; padding: 28px 32px; display: flex; justify-content: space-between; align-items: center; }
+    .hero-banner h1 { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+    .hero-banner p { font-size: 14px; opacity: 0.75; }
+    .hero-stats { display: flex; gap: 20px; }
+    .h-stat { text-align: center; background: rgba(255,255,255,0.1); border-radius: 10px; padding: 12px 20px; }
+    .h-stat .val { font-size: 22px; font-weight: 800; }
+    .h-stat .lab { font-size: 11px; opacity: 0.7; margin-top: 2px; }
+
+    .container { max-width: 1100px; margin: 28px auto; padding: 0 20px; }
+
+    .quick-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+    .qa-card {
+      background: #fff; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 20px;
+      text-align: center; cursor: pointer; transition: all 0.2s; text-decoration: none; color: inherit;
+    }
+    .qa-card:hover { border-color: #6366f1; box-shadow: 0 4px 20px rgba(99,102,241,0.1); transform: translateY(-2px); }
+    .qa-card .icon { font-size: 32px; margin-bottom: 10px; }
+    .qa-card .label { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+    .qa-card .desc { font-size: 12px; color: #64748b; }
+    .qa-card.featured { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; border-color: transparent; }
+    .qa-card.featured .desc { color: rgba(255,255,255,0.8); }
+
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px; margin-bottom: 20px; }
+    .card h2 { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+
+    .mission-row {
+      display: flex; align-items: center; gap: 16px; padding: 14px;
+      border: 1.5px solid #e2e8f0; border-radius: 10px; margin-bottom: 8px;
+      transition: border-color 0.2s; cursor: pointer;
+    }
+    .mission-row:hover { border-color: #6366f1; }
+    .mission-row .info { flex: 1; }
+    .mission-row .titre { font-weight: 700; font-size: 14px; }
+    .mission-row .meta { font-size: 12px; color: #64748b; margin-top: 3px; }
+    .status-badge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 10px; white-space: nowrap; }
+    .s-proposee { background: #f0f9ff; color: #0369a1; }
+    .s-acceptee { background: #f0fdf4; color: #16a34a; }
+    .s-validation { background: #fffbeb; color: #92400e; }
+    .s-cloturee { background: #f1f5f9; color: #64748b; }
+
+    .btn { padding: 9px 16px; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .btn-primary { background: #6366f1; color: #fff; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+    .btn-outline { background: #fff; color: #6366f1; border: 1.5px solid #6366f1; }
+    .btn-green { background: #16a34a; color: #fff; }
+
+    /* Candidats */
+    .candidate-row { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid #f1f5f9; border-radius: 8px; margin-bottom: 8px; }
+    .c-avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; font-size: 14px; flex-shrink: 0; }
+    .c-info { flex: 1; }
+    .c-name { font-weight: 700; font-size: 14px; }
+    .c-meta { font-size: 12px; color: #64748b; }
+    .c-chips { display: flex; gap: 4px; margin-top: 4px; }
+    .c-chip { font-size: 10px; padding: 2px 6px; background: #f0f0ff; color: #6366f1; border-radius: 8px; font-weight: 600; }
+    .match-pct { font-size: 12px; font-weight: 700; color: #16a34a; background: #f0fdf4; padding: 3px 8px; border-radius: 10px; }
+
+    .empty { text-align: center; padding: 28px; color: #94a3b8; font-size: 14px; }
+    .empty .icon { font-size: 32px; margin-bottom: 8px; }
+
+    .alert-warning { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; padding: 12px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 16px; }
+
+    .loading { text-align: center; padding: 40px; color: #94a3b8; }
+    .hidden { display: none !important; }
+
+    @media (max-width: 768px) { .quick-actions { grid-template-columns: 1fr; } .grid2 { grid-template-columns: 1fr; } .hero-stats { display: none; } }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Flex<span>Money</span></div>
+  <span class="user-badge" id="userBadge">Chargement...</span>
+  <nav>
+    <a href="tableau-travailleurs.html" class="nav-btn nav-ghost">👥 Travailleurs</a>
+    <button class="nav-btn nav-ghost" onclick="signOut()">Déconnexion</button>
+  </nav>
+</header>
+
+<div class="hero-banner">
+  <div>
+    <h1>Bonjour, <span id="heroName">—</span> 👋</h1>
+    <p>Espace employeur FlexMoney</p>
+  </div>
+  <div class="hero-stats">
+    <div class="h-stat"><div class="val" id="statMissions">0</div><div class="lab">Missions postées</div></div>
+    <div class="h-stat"><div class="val" id="statActives">0</div><div class="lab">En cours</div></div>
+    <div class="h-stat"><div class="val" id="statCommission">0 €</div><div class="lab">Commission totale</div></div>
+  </div>
+</div>
+
+<div class="container">
+  <div id="loadingState" class="loading">⏳ Chargement...</div>
+
+  <div id="mainContent" class="hidden">
+    <!-- Actions rapides -->
+    <div class="quick-actions">
+      <a href="poster-mission.html" class="qa-card featured">
+        <div class="icon">📢</div>
+        <div class="label">Poster une mission</div>
+        <div class="desc">Trouver un travailleur en 24h</div>
+      </a>
+      <a href="tableau-travailleurs.html" class="qa-card">
+        <div class="icon">👥</div>
+        <div class="label">Parcourir les profils</div>
+        <div class="desc">Travailleurs disponibles</div>
+      </a>
+      <a href="validation-mission.html" class="qa-card">
+        <div class="icon">✅</div>
+        <div class="label">Valider une mission</div>
+        <div class="desc">Post-prestation & récap social</div>
+      </a>
+    </div>
+
+    <div class="alert-warning">
+      🛡️ <strong>Rappel légal :</strong> Vérifiez que votre <strong>assurance accidents du travail</strong> couvre les travailleurs flexi avant chaque mission. Effectuez la <strong>déclaration Dimona FLX</strong> avant chaque prestation sur <a href="https://www.socialsecurity.be" target="_blank" style="color:#92400e;">socialsecurity.be</a>.
+    </div>
+
+    <div class="grid2">
+      <!-- Mes missions -->
+      <div class="card">
+        <h2>📋 Mes missions</h2>
+        <div id="myMissions"><div class="empty"><div class="icon">📭</div>Aucune mission postée.<br><a href="poster-mission.html" style="color:#6366f1;font-weight:600;">Postez votre première mission →</a></div></div>
+      </div>
+
+      <!-- Candidats récents -->
+      <div class="card">
+        <h2>🎯 Profils suggérés pour vos missions</h2>
+        <div id="suggestedWorkers"><div class="loading">Chargement...</div></div>
+        <div style="margin-top:12px;">
+          <a href="tableau-travailleurs.html"><button class="btn btn-outline" style="width:100%;">Voir tous les profils →</button></a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profil entreprise -->
+    <div class="card">
+      <h2>🏢 Profil entreprise</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+        <div>
+          <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">Entreprise</div>
+          <div style="font-weight:700;" id="pEntreprise">—</div>
+        </div>
+        <div>
+          <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">BCE</div>
+          <div style="font-weight:700;" id="pBCE">—</div>
+        </div>
+        <div>
+          <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">Secteur</div>
+          <div style="font-weight:700;" id="pSecteur">—</div>
+        </div>
+        <div>
+          <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">Contact</div>
+          <div style="font-weight:700;" id="pContact">—</div>
+        </div>
+        <div>
+          <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">Email</div>
+          <div style="font-weight:700;" id="pEmail">—</div>
+        </div>
+        <div>
+          <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">Statut</div>
+          <div style="font-weight:700;color:#16a34a;" id="pStatut">✅ Inscrit</div>
+        </div>
+      </div>
+      <div style="margin-top:16px;">
+        <a href="inscription-employeur.html"><button class="btn btn-outline btn-sm">✏️ Modifier le profil</button></a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pas de profil -->
+  <div id="noProfileState" class="hidden">
+    <div class="card" style="text-align:center;padding:40px;max-width:500px;margin:0 auto;">
+      <div style="font-size:48px;margin-bottom:16px;">🏢</div>
+      <h2 style="margin-bottom:8px;">Bienvenue !</h2>
+      <p style="color:#64748b;margin-bottom:24px;">Complétez votre profil employeur pour commencer à poster des missions et accéder aux travailleurs flexi.</p>
+      <a href="inscription-employeur.html"><button class="btn btn-primary" style="width:100%;">Créer mon profil employeur →</button></a>
+    </div>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  let currentUser = null;
+  let employerProfile = null;
+
+  async function init() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'auth.html'; return; }
+
+    currentUser = session.user;
+    document.getElementById('userBadge').textContent = currentUser.email;
+
+    const { data: employers } = await sb.from('employers_inscription')
+      .select('*').eq('email_contact', currentUser.email).limit(1);
+
+    document.getElementById('loadingState').classList.add('hidden');
+
+    if (!employers || employers.length === 0) {
+      document.getElementById('noProfileState').classList.remove('hidden');
+      return;
+    }
+
+    employerProfile = employers[0];
+    renderProfile();
+    loadData();
+    document.getElementById('mainContent').classList.remove('hidden');
+  }
+
+  function renderProfile() {
+    const e = employerProfile;
+    document.getElementById('heroName').textContent = e.prenom_contact || e.nom_entreprise;
+    document.getElementById('pEntreprise').textContent = e.nom_entreprise || '—';
+    document.getElementById('pBCE').textContent = e.numero_bce || '—';
+    document.getElementById('pSecteur').textContent = e.secteur || '—';
+    document.getElementById('pContact').textContent = (e.prenom_contact || '') + ' ' + (e.nom_contact || '');
+    document.getElementById('pEmail').textContent = e.email_contact || '—';
+  }
+
+  async function loadData() {
+    // Mes missions
+    const { data: missions } = await sb.from('missions')
+      .select('*').eq('email_employeur', currentUser.email)
+      .order('created_at', { ascending: false });
+
+    const myMissionsEl = document.getElementById('myMissions');
+    const mList = missions && missions.length > 0 ? missions : [];
+
+    document.getElementById('statMissions').textContent = mList.length;
+    const actives = mList.filter(m => ['proposee','acceptee','en_cours'].includes(m.statut));
+    document.getElementById('statActives').textContent = actives.length;
+    const totalComm = mList.reduce((s, m) => s + (m.commission_montant || 0), 0);
+    document.getElementById('statCommission').textContent = fmt(totalComm) + ' €';
+
+    if (mList.length === 0) {
+      myMissionsEl.innerHTML = `<div class="empty"><div class="icon">📭</div>Aucune mission postée.<br><a href="poster-mission.html" style="color:#6366f1;font-weight:600;">Postez votre première mission →</a></div>`;
+    } else {
+      myMissionsEl.innerHTML = mList.slice(0, 6).map(m => {
+        const statusMap = {
+          proposee: ['Ouverte', 's-proposee'],
+          acceptee: ['Acceptée', 's-acceptee'],
+          attente_validation: ['À valider', 's-validation'],
+          cloturee: ['Clôturée', 's-cloturee']
+        };
+        const [sLabel, sClass] = statusMap[m.statut] || ['—', ''];
+        const btn = m.statut === 'attente_validation'
+          ? `<a href="validation-mission.html"><button class="btn btn-green btn-sm">Valider</button></a>`
+          : `<span class="status-badge ${sClass}">${sLabel}</span>`;
+        return `
+          <div class="mission-row">
+            <div class="info">
+              <div class="titre">${m.titre || 'Mission'}</div>
+              <div class="meta">📅 ${m.date_debut ? new Date(m.date_debut).toLocaleDateString('fr-BE') : '—'} · ⏱️ ${m.heures_prestees || '?'}h · ${m.taux_horaire || '?'} €/h</div>
+            </div>
+            ${btn}
+          </div>`;
+      }).join('');
+    }
+
+    // Profils suggérés (basé sur le secteur de l'employeur)
+    const { data: workers } = await sb.from('workers_inscription')
+      .select('*').eq('eligible', true).order('created_at', { ascending: false }).limit(20);
+
+    const wList = workers && workers.length > 0 ? workers : getMockWorkers();
+    const suggestedEl = document.getElementById('suggestedWorkers');
+
+    suggestedEl.innerHTML = wList.slice(0, 5).map(w => {
+      const initials = ((w.prenom || '?')[0] + (w.nom || '?')[0]).toUpperCase();
+      const comps = (w.competences || []).slice(0, 3);
+      return `
+        <div class="candidate-row">
+          <div class="c-avatar">${initials}</div>
+          <div class="c-info">
+            <div class="c-name">${w.prenom} ${w.nom[0]}. <span style="font-size:11px;color:#94a3b8;">· ${w.ville || '—'}</span></div>
+            <div class="c-meta">${w.regime_travail || 'Salarié'} · ${w.teletravail_preference === 'oui' ? '🏠 Télétravail' : '🔄 Hybride'}</div>
+            <div class="c-chips">${comps.map(c => `<span class="c-chip">${c}</span>`).join('')}</div>
+          </div>
+          <button class="btn btn-sm btn-primary" onclick="contactWorker('${w.prenom} ${w.nom}')">Contacter</button>
+        </div>`;
+    }).join('');
+  }
+
+  function contactWorker(name) {
+    if (confirm(`Proposer une mission à ${name} ?\n\nVous serez redirigé vers la page de tableau des travailleurs pour envoyer votre proposition.`)) {
+      window.location.href = 'tableau-travailleurs.html';
+    }
+  }
+
+  async function signOut() {
+    await sb.auth.signOut();
+    window.location.href = 'auth.html';
+  }
+
+  function fmt(n) {
+    return (n || 0).toLocaleString('fr-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function getMockWorkers() {
+    return [
+      { prenom: 'Sophie', nom: 'Martin', ville: 'Bruxelles', eligible: true, regime_travail: 'Salariée 4/5e', competences: ['Comptabilité','TVA','Encodage'], teletravail_preference: 'oui' },
+      { prenom: 'Thomas', nom: 'Lejeune', ville: 'Liège', eligible: true, regime_travail: 'Salarié 4/5e', competences: ['Payroll','Back-office'], teletravail_preference: 'oui' },
+      { prenom: 'Marie', nom: 'Dubois', ville: 'Gand', eligible: true, regime_travail: 'Pensionnée', competences: ['Audit','Bilan annuel'], teletravail_preference: 'oui' },
+    ];
+  }
+
+  init();
+</script>
+</body>
+</html>
