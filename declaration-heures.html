@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Déclaration d'heures — FlexMoney</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --brand: #6366f1; --brand-dim: rgba(99,102,241,0.1);
+      --success: #16a34a; --warning: #f59e0b; --error: #ef4444;
+      --dark: #1e293b; --muted: #64748b; --border: #e2e8f0; --bg: #f8fafc;
+    }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--dark); min-height: 100vh; }
+
+    header { background: #fff; border-bottom: 1px solid var(--border); padding: 16px 32px; display: flex; align-items: center; gap: 12px; }
+    .logo { font-weight: 800; font-size: 20px; color: var(--brand); }
+    .logo span { color: var(--dark); }
+
+    .hero { background: linear-gradient(135deg, #1e293b, #334155); color: #fff; padding: 28px 32px; text-align: center; }
+    .hero h1 { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+    .hero p { font-size: 14px; opacity: 0.75; }
+
+    .main { max-width: 560px; margin: 36px auto; padding: 0 20px 80px; }
+
+    /* Mission card */
+    .mission-card { background: #fff; border: 1.5px solid var(--border); border-radius: 14px; padding: 20px 24px; margin-bottom: 28px; }
+    .mission-label { font-size: 11px; font-weight: 700; color: var(--brand); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .mission-title { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+    .mission-meta { font-size: 13px; color: var(--muted); }
+
+    /* Heures prévues */
+    .heures-prevues-card { background: var(--brand-dim); border: 1.5px solid rgba(99,102,241,0.25); border-radius: 14px; padding: 20px 24px; margin-bottom: 24px; }
+    .hp-label { font-size: 11px; font-weight: 700; color: var(--brand); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+    .hp-row { display: flex; justify-content: space-between; font-size: 14px; padding: 6px 0; }
+    .hp-row .k { color: var(--muted); }
+    .hp-row .v { font-weight: 700; color: var(--dark); }
+    .hp-total { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(99,102,241,0.2); display: flex; justify-content: space-between; font-size: 15px; font-weight: 800; color: var(--brand); }
+
+    /* Form */
+    .section-title { font-size: 16px; font-weight: 800; margin-bottom: 6px; color: var(--dark); }
+    .section-sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+    .field { margin-bottom: 18px; }
+    .field label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 7px; color: var(--dark); }
+    .field label .hint { font-weight: 400; color: var(--muted); font-size: 12px; margin-left: 6px; }
+    .field input, .field textarea { width: 100%; padding: 12px 16px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; font-family: inherit; outline: none; transition: border-color 0.2s; background: #fff; }
+    .field input:focus, .field textarea:focus { border-color: var(--brand); }
+    .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    /* Calcul dynamique */
+    .calc-card { background: #fff; border: 1.5px solid var(--border); border-radius: 14px; padding: 20px 24px; margin-bottom: 24px; }
+    .calc-row { display: flex; justify-content: space-between; font-size: 14px; padding: 7px 0; border-bottom: 1px solid var(--border); }
+    .calc-row:last-child { border-bottom: none; }
+    .calc-row .k { color: var(--muted); }
+    .calc-row .v { font-weight: 700; }
+    .calc-net { background: #f0fdf4; border-radius: 10px; padding: 12px 16px; margin-top: 12px; font-size: 14px; color: var(--success); font-weight: 700; text-align: center; }
+
+    /* Diff badge */
+    .diff-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 10px; margin-left: 8px; vertical-align: middle; }
+    .diff-ok { background: #dcfce7; color: #15803d; }
+    .diff-warn { background: #fef3c7; color: #92400e; }
+    .diff-over { background: #fee2e2; color: #b91c1c; }
+
+    /* Info */
+    .info-box { border-radius: 10px; padding: 12px 16px; font-size: 13px; line-height: 1.6; margin-bottom: 20px; }
+    .info-amber { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+    .info-blue { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+
+    /* Bouton */
+    .btn-submit { width: 100%; padding: 15px; background: var(--brand); color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 800; cursor: pointer; transition: background 0.2s; }
+    .btn-submit:hover { background: #4f46e5; }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Succès */
+    .success-wrap { text-align: center; padding: 40px 20px; }
+    .success-icon { font-size: 64px; margin-bottom: 16px; }
+    .success-title { font-size: 22px; font-weight: 800; margin-bottom: 10px; }
+    .success-sub { font-size: 14px; color: var(--muted); line-height: 1.7; }
+
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Flex<span>Money</span></div>
+  <span style="margin-left:auto;font-size:13px;color:var(--muted);">Déclaration d'heures</span>
+</header>
+
+<div class="hero">
+  <h1>⏱️ Déclarez vos heures de travail</h1>
+  <p>Indiquez vos heures réelles — l'employeur les validera avant le paiement.</p>
+</div>
+
+<div class="main">
+
+  <!-- Formulaire -->
+  <div id="formWrap">
+
+    <!-- Info mission -->
+    <div class="mission-card" id="missionCard">
+      <div class="mission-label">Mission</div>
+      <div class="mission-title" id="missionTitre">Chargement...</div>
+      <div class="mission-meta" id="missionMeta">—</div>
+    </div>
+
+    <!-- Heures prévues (pré-remplies depuis DIMONA) -->
+    <div class="heures-prevues-card">
+      <div class="hp-label">📋 Heures prévues au contrat / DIMONA</div>
+      <div class="hp-row"><span class="k">Date</span><span class="v" id="prevDate">—</span></div>
+      <div class="hp-row"><span class="k">Début prévu</span><span class="v" id="prevDebut">—</span></div>
+      <div class="hp-row"><span class="k">Fin prévue</span><span class="v" id="prevFin">—</span></div>
+      <div class="hp-total"><span>Total prévu</span><span id="prevTotal">— h</span></div>
+    </div>
+
+    <!-- Saisie heures réelles -->
+    <div class="section-title">⏱️ Vos heures réelles</div>
+    <p class="section-sub">Indiquez les heures auxquelles vous avez réellement commencé et terminé. Si elles correspondent exactement au contrat, laissez les valeurs pré-remplies.</p>
+
+    <div class="time-row">
+      <div class="field">
+        <label>Heure de début réelle</label>
+        <input type="time" id="heureDebutReelle" oninput="updateCalc()">
+      </div>
+      <div class="field">
+        <label>Heure de fin réelle</label>
+        <input type="time" id="heureFinReelle" oninput="updateCalc()">
+      </div>
+    </div>
+
+    <!-- Calcul dynamique -->
+    <div class="calc-card">
+      <div class="calc-row">
+        <span class="k">Durée réelle</span>
+        <span class="v" id="calcDuree">— <span id="diffBadge"></span></span>
+      </div>
+      <div class="calc-row">
+        <span class="k">Taux horaire</span>
+        <span class="v" id="calcTaux">— €/h</span>
+      </div>
+      <div class="calc-row">
+        <span class="k">Salaire brut flexi</span>
+        <span class="v" id="calcBrut">— €</span>
+      </div>
+      <div class="calc-net" id="calcNet">
+        💚 Vous recevrez <strong id="calcNetVal">—</strong> net (brut = net pour les flexi-jobs)
+      </div>
+    </div>
+
+    <!-- Commentaire optionnel -->
+    <div class="field">
+      <label>Commentaire <span class="hint">— optionnel, transmis à l'employeur</span></label>
+      <textarea id="commentaire" rows="2" placeholder="Ex: J'ai terminé 30 min plus tôt à la demande de l'employeur..."></textarea>
+    </div>
+
+    <!-- Bannière contestation (masquée par défaut) -->
+    <div class="info-box" id="contestBanner" style="display:none;background:#fff5f5;border-color:#fecaca;color:#b91c1c;margin-bottom:16px;">
+      ❌ <strong>Vos heures ont été contestées par l'employeur.</strong><br>
+      <span id="contestMotif" style="font-size:13px;margin-top:4px;display:block;"></span><br>
+      Corrigez vos heures ci-dessous et re-soumettez.
+    </div>
+
+    <div class="info-box info-amber">
+      ℹ️ Vos heures seront considérées comme <strong>acceptées automatiquement</strong>. L'employeur sera notifié et n'a besoin d'agir que s'il conteste.
+    </div>
+
+    <button class="btn-submit" id="btnSubmit" onclick="submitDeclaration()">
+      📤 Soumettre ma déclaration d'heures
+    </button>
+  </div>
+
+  <!-- Succès -->
+  <div id="successWrap" class="hidden">
+    <div class="success-wrap">
+      <div class="success-icon">✅</div>
+      <div class="success-title" id="successTitle">Déclaration envoyée !</div>
+      <p class="success-sub">
+        Un récapitulatif complet a été envoyé à l'employeur.<br><br>
+        Les heures sont <strong>considérées comme acceptées</strong> sauf contestation dans les 48h.<br>
+        Vous serez notifié par email en cas de contestation.<br><br>
+        <strong style="color:var(--success)">Heures déclarées : <span id="successHeures">—</span> · Salaire estimé : <span id="successSalaire">—</span> net</strong>
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
+  const EJS_PUBLIC_KEY = 'YAyl_sI2uC4Q2YCCF';
+  const EJS_SERVICE_ID = 'service_2749nt8';
+  const EJS_TPL_EMPLOYEUR = 'template_y3zn6ll';
+  emailjs.init(EJS_PUBLIC_KEY);
+
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const params = new URLSearchParams(window.location.search);
+  const candidatureId = params.get('cid');
+
+  let candidatureData = null;
+  let missionData = null;
+  let dimonaData = null;
+  let tauxHoraire = 0;
+  let resubmitDeclId = null; // ID de la déclaration contestée à re-soumettre
+
+  async function init() {
+    if (!candidatureId) {
+      // Mode démo
+      loadDemo();
+      return;
+    }
+
+    const { data: cand } = await sb.from('candidatures').select('*').eq('id', candidatureId).single();
+    candidatureData = cand;
+
+    if (cand?.mission_id) {
+      const { data: mission } = await sb.from('missions').select('*').eq('id', cand.mission_id).single();
+      missionData = mission;
+      if (mission) {
+        tauxHoraire = parseFloat(mission.taux_horaire) || 0;
+        document.getElementById('missionTitre').textContent = mission.titre || 'Mission flexi-job';
+        const dateStr = mission.date_debut ? new Date(mission.date_debut).toLocaleDateString('fr-BE', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) : '—';
+        document.getElementById('missionMeta').textContent = `${mission.nom_entreprise || '—'} · ${tauxHoraire} €/h`;
+        document.getElementById('calcTaux').textContent = fmt(tauxHoraire) + ' €/h';
+      }
+    }
+
+    // Chercher les heures dans dimona_dossiers
+    const { data: dossier } = await sb.from('dimona_dossiers')
+      .select('*').eq('candidature_id', candidatureId).order('created_at', { ascending: false }).limit(1).single();
+    dimonaData = dossier;
+
+    // Pré-remplir heures prévues
+    const hdebPrev = dossier?.heure_debut || cand?.heure_debut || null;
+    const hfinPrev = dossier?.heure_fin   || cand?.heure_fin   || null;
+    const datePrev = dossier?.date_debut  || cand?.date_test   || missionData?.date_debut || null;
+
+    const dateLabel = datePrev ? new Date(datePrev).toLocaleDateString('fr-BE', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) : '—';
+    document.getElementById('prevDate').textContent = dateLabel;
+    document.getElementById('prevDebut').textContent = hdebPrev ? hdebPrev.slice(0,5) : '—';
+    document.getElementById('prevFin').textContent   = hfinPrev ? hfinPrev.slice(0,5) : '—';
+
+    if (hdebPrev && hfinPrev) {
+      const diff = heuresDiff(hdebPrev, hfinPrev);
+      document.getElementById('prevTotal').textContent = formatH(diff);
+    }
+
+    // Pré-remplir les champs heures réelles
+    if (hdebPrev) document.getElementById('heureDebutReelle').value = hdebPrev.slice(0,5);
+    if (hfinPrev) document.getElementById('heureFinReelle').value   = hfinPrev.slice(0,5);
+
+    updateCalc();
+
+    // Vérifier s'il existe une déclaration contestée pour cette candidature (re-soumission)
+    const { data: declContestee } = await sb.from('declarations_heures')
+      .select('*')
+      .eq('candidature_id', candidatureId)
+      .eq('statut', 'contestee')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (declContestee) {
+      resubmitDeclId = declContestee.id;
+      // Pré-remplir avec les heures précédemment soumises
+      if (declContestee.heure_debut_reelle) document.getElementById('heureDebutReelle').value = declContestee.heure_debut_reelle.slice(0,5);
+      if (declContestee.heure_fin_reelle)   document.getElementById('heureFinReelle').value   = declContestee.heure_fin_reelle.slice(0,5);
+      if (declContestee.commentaire_travailleur) document.getElementById('commentaire').value  = declContestee.commentaire_travailleur;
+      // Afficher la bannière de contestation
+      document.getElementById('contestBanner').style.display = 'block';
+      document.getElementById('contestMotif').textContent = declContestee.motif_contestation
+        ? `Motif : "${declContestee.motif_contestation}"`
+        : '';
+      document.getElementById('btnSubmit').textContent = '🔄 Re-soumettre ma déclaration corrigée';
+      updateCalc();
+    }
+  }
+
+  function loadDemo() {
+    tauxHoraire = 22;
+    document.getElementById('missionTitre').textContent = 'Assistant comptable (démo)';
+    document.getElementById('missionMeta').textContent = 'Fiduciaire Dupont · 22 €/h';
+    document.getElementById('calcTaux').textContent = '22,00 €/h';
+    document.getElementById('prevDate').textContent = 'Vendredi 19 juin 2026';
+    document.getElementById('prevDebut').textContent = '08:00';
+    document.getElementById('prevFin').textContent = '16:00';
+    document.getElementById('prevTotal').textContent = '8h00';
+    document.getElementById('heureDebutReelle').value = '08:00';
+    document.getElementById('heureFinReelle').value = '16:00';
+    updateCalc();
+  }
+
+  function updateCalc() {
+    const hdeb = document.getElementById('heureDebutReelle').value;
+    const hfin = document.getElementById('heureFinReelle').value;
+    if (!hdeb || !hfin) return;
+
+    const heures = heuresDiff(hdeb, hfin);
+    if (heures <= 0) {
+      document.getElementById('calcDuree').innerHTML = '<span style="color:var(--error)">Heure de fin avant heure de début</span>';
+      return;
+    }
+
+    const brut = heures * tauxHoraire;
+
+    // Badge diff vs prévu
+    const prevDebut = document.getElementById('prevDebut').textContent;
+    const prevFin   = document.getElementById('prevFin').textContent;
+    let diffHtml = '';
+    if (prevDebut !== '—' && prevFin !== '—') {
+      const heuresPrev = heuresDiff(prevDebut, prevFin);
+      const delta = heures - heuresPrev;
+      if (Math.abs(delta) < 0.05) {
+        diffHtml = `<span class="diff-badge diff-ok">✓ Conforme au contrat</span>`;
+      } else if (delta > 0) {
+        diffHtml = `<span class="diff-badge diff-warn">+${formatH(delta)} vs contrat</span>`;
+      } else {
+        diffHtml = `<span class="diff-badge diff-over">${formatH(delta)} vs contrat</span>`;
+      }
+    }
+
+    document.getElementById('calcDuree').innerHTML = `<strong>${formatH(heures)}</strong> ${diffHtml}`;
+    document.getElementById('calcBrut').textContent = fmt(brut) + ' €';
+    document.getElementById('calcNetVal').textContent = fmt(brut) + ' €';
+  }
+
+  async function submitDeclaration() {
+    const hdeb = document.getElementById('heureDebutReelle').value;
+    const hfin = document.getElementById('heureFinReelle').value;
+    const commentaire = document.getElementById('commentaire').value.trim();
+
+    if (!hdeb || !hfin) { alert('Indiquez vos heures de début et de fin.'); return; }
+    const heures = heuresDiff(hdeb, hfin);
+    if (heures <= 0) { alert("L'heure de fin doit être après l'heure de début."); return; }
+
+    const btn = document.getElementById('btnSubmit');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Envoi en cours...';
+
+    const brut = heures * tauxHoraire;
+    const cotisationsPatronales = brut * 0.25; // estimation
+    const coutTotal = brut + cotisationsPatronales;
+    const workerName = `${candidatureData?.worker_prenom || ''} ${candidatureData?.worker_nom || ''}`.trim()
+      || candidatureData?.worker_email || 'Travailleur';
+
+    const hdebuPrev = dimonaData?.heure_debut || candidatureData?.heure_debut || null;
+    const hfinPrev  = dimonaData?.heure_fin   || candidatureData?.heure_fin   || null;
+    const heuresPrev = (hdebuPrev && hfinPrev) ? heuresDiff(hdebuPrev, hfinPrev) : null;
+    const datePrest  = dimonaData?.date_debut  || candidatureData?.date_test   || null;
+
+    const payload = {
+      candidature_id:          candidatureId || null,
+      mission_id:              missionData?.id || null,
+      worker_email:            candidatureData?.worker_email || '',
+      worker_nom:              workerName,
+      employer_email:          missionData?.email_employeur || '',
+      heure_debut_prevue:      hdebuPrev || null,
+      heure_fin_prevue:        hfinPrev  || null,
+      heures_prevues:          heuresPrev,
+      date_prestation:         datePrest || null,
+      taux_horaire:            tauxHoraire,
+      heure_debut_reelle:      hdeb,
+      heure_fin_reelle:        hfin,
+      heures_reelles:          heures,
+      commentaire_travailleur: commentaire || null,
+      salaire_brut:            brut,
+      statut:                  'en_attente'
+    };
+
+    try {
+      if (resubmitDeclId) {
+        // Re-soumission après contestation : mettre à jour l'enregistrement existant
+        await sb.from('declarations_heures').update({
+          heure_debut_reelle:      hdeb,
+          heure_fin_reelle:        hfin,
+          heures_reelles:          heures,
+          commentaire_travailleur: commentaire || null,
+          salaire_brut:            brut,
+          motif_contestation:      null,
+          statut:                  'en_attente',
+          updated_at:              new Date().toISOString()
+        }).eq('id', resubmitDeclId);
+      } else {
+        await sb.from('declarations_heures').insert(payload);
+      }
+    } catch(e) { console.warn('Supabase:', e); }
+
+    // Email récapitulatif riche à l'employeur
+    if (missionData?.email_employeur) {
+      const dateLabel = datePrest
+        ? new Date(datePrest).toLocaleDateString('fr-BE', { weekday:'long', day:'numeric', month:'long', year:'numeric' })
+        : '—';
+      const portailUrl = `${window.location.origin}/dashboard-employeur.html`;
+      const diffNote = heuresPrev !== null
+        ? (Math.abs(heures - heuresPrev) < 0.05
+            ? '✓ Conforme aux heures prévues dans le contrat/DIMONA'
+            : heures > heuresPrev
+              ? `⚠️ +${formatH(heures - heuresPrev)} de plus que prévu (${formatH(heuresPrev)} prévues)`
+              : `⚠️ ${formatH(heures - heuresPrev)} de moins que prévu (${formatH(heuresPrev)} prévues)`)
+        : '';
+
+      const isResubmit = !!resubmitDeclId;
+
+      try {
+        await emailjs.send(EJS_SERVICE_ID, EJS_TPL_EMPLOYEUR, {
+          to_email:   missionData.email_employeur,
+          to_name:    missionData.nom_entreprise || 'Employeur',
+          prenom:     missionData.nom_entreprise || 'Employeur',
+          entreprise: missionData.nom_entreprise || '—',
+          bce:        missionData.titre || '—',
+          secteur: `${isResubmit ? '🔄 HEURES CORRIGÉES après contestation\n\n' : ''}` +
+            `📋 RÉCAPITULATIF DES HEURES PRESTÉES\n` +
+            `━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `Travailleur : ${workerName}\n` +
+            `Mission     : ${missionData.titre || '—'}\n` +
+            `Date        : ${dateLabel}\n\n` +
+            `⏰ HEURES DÉCLARÉES\n` +
+            `Début : ${hdeb}  ·  Fin : ${hfin}\n` +
+            `Total : ${formatH(heures)}\n` +
+            `${diffNote ? diffNote + '\n' : ''}` +
+            `${commentaire ? `\n💬 Commentaire travailleur : "${commentaire}"\n` : ''}` +
+            `\n💰 CALCUL DU COÛT\n` +
+            `Taux horaire           : ${fmt(tauxHoraire)} €/h\n` +
+            `Salaire brut flexi     : ${fmt(brut)} €\n` +
+            `Cot. patronale (~25%)  : ${fmt(cotisationsPatronales)} €\n` +
+            `Coût total estimé      : ${fmt(coutTotal)} €\n` +
+            `(Le travailleur reçoit ${fmt(brut)} € net — brut = net en flexi-job)\n` +
+            `\n✅ ACCEPTATION AUTOMATIQUE\n` +
+            `Ces heures sont considérées comme acceptées dans les 48h.\n` +
+            `Vous pouvez transmettre ce récapitulatif à votre secrétariat social.\n` +
+            `\n❌ Vous n'êtes pas d'accord ?\n` +
+            `Accédez à votre portail employeur pour contester :\n` +
+            portailUrl,
+          dimona_url: portailUrl,
+          reply_to:   'contact.flexmoney@gmail.com'
+        });
+      } catch(e) { console.warn('Email employeur:', e); }
+    }
+
+    // Afficher succès
+    document.getElementById('successHeures').textContent = formatH(heures);
+    document.getElementById('successSalaire').textContent = fmt(brut) + ' €';
+    if (resubmitDeclId) {
+      document.getElementById('successTitle').textContent = '🔄 Déclaration corrigée envoyée !';
+    }
+    document.getElementById('formWrap').classList.add('hidden');
+    document.getElementById('successWrap').classList.remove('hidden');
+  }
+
+  /* ===== Utils ===== */
+  function heuresDiff(hdeb, hfin) {
+    const [h1, m1] = hdeb.split(':').map(Number);
+    const [h2, m2] = hfin.split(':').map(Number);
+    return ((h2 * 60 + m2) - (h1 * 60 + m1)) / 60;
+  }
+
+  function formatH(h) {
+    if (h === null || isNaN(h)) return '—';
+    const sign = h < 0 ? '-' : '';
+    const abs = Math.abs(h);
+    const hh = Math.floor(abs);
+    const mm = Math.round((abs - hh) * 60);
+    return `${sign}${hh}h${mm > 0 ? mm.toString().padStart(2,'0') : '00'}`;
+  }
+
+  function fmt(n) {
+    return (n || 0).toLocaleString('fr-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  init();
+</script>
+</body>
+</html>
