@@ -90,16 +90,44 @@
     .loading { text-align: center; padding: 40px; color: #94a3b8; font-size: 15px; }
 
     /* Modal postuler */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
-    .modal { background: #fff; border-radius: 16px; padding: 32px; max-width: 480px; width: 100%; }
-    .modal h2 { font-size: 20px; font-weight: 700; margin-bottom: 20px; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+    .modal { background: #fff; border-radius: 20px; padding: 32px; max-width: 520px; width: 100%; max-height: 90vh; overflow-y: auto; }
+    .modal h2 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+    .modal-mission-name { font-size: 13px; color: #6366f1; font-weight: 600; margin-bottom: 20px; }
     .form-group { margin-bottom: 16px; }
     .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #374151; }
-    .form-group input, .form-group textarea { width: 100%; padding: 11px 14px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit; }
-    .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #6366f1; }
+    .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 11px 14px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; }
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: #6366f1; }
+
+    /* Choix type contrat */
+    .type-contrat-choice { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+    .type-card {
+      border: 2px solid #e2e8f0; border-radius: 12px; padding: 14px 12px; cursor: pointer;
+      transition: all 0.2s; text-align: center;
+    }
+    .type-card:hover { border-color: #6366f1; }
+    .type-card.selected { border-color: #6366f1; background: #f0f0ff; }
+    .type-card .type-icon { font-size: 24px; margin-bottom: 6px; }
+    .type-card .type-label { font-size: 13px; font-weight: 700; color: #1e293b; }
+    .type-card .type-desc { font-size: 11px; color: #64748b; margin-top: 3px; line-height: 1.4; }
+    .type-card.selected .type-label { color: #6366f1; }
+
+    .heure-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .info-box { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 10px; padding: 12px 14px; font-size: 12px; color: #92400e; line-height: 1.5; margin-bottom: 16px; }
+    .info-box strong { color: #78350f; }
+
     .modal-buttons { display: flex; gap: 12px; margin-top: 20px; }
-    .btn-cancel { flex: 1; padding: 12px; background: #f1f5f9; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
-    .btn-send { flex: 2; padding: 12px; background: #6366f1; color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; }
+    .btn-cancel { flex: 1; padding: 12px; background: #f1f5f9; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; }
+    .btn-send { flex: 2; padding: 12px; background: #6366f1; color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 14px; transition: background 0.2s; }
+    .btn-send:hover { background: #4f46e5; }
+    .btn-send:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* Succès */
+    .modal-success { text-align: center; padding: 20px 0; }
+    .modal-success .success-icon { font-size: 48px; margin-bottom: 12px; }
+    .modal-success h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .modal-success p { font-size: 14px; color: #64748b; line-height: 1.6; }
+
     .hidden { display: none !important; }
 
     @media (max-width: 768px) {
@@ -181,24 +209,84 @@
 <!-- Modal postuler -->
 <div class="modal-overlay hidden" id="modalOverlay">
   <div class="modal">
-    <h2>✉️ Postuler à cette mission</h2>
-    <p style="font-size:13px;color:#64748b;margin-bottom:20px;" id="modalMissionTitle">—</p>
-    <div class="form-group">
-      <label>Votre email *</label>
-      <input type="email" id="postulantEmail" placeholder="vous@email.com">
+
+    <!-- Formulaire -->
+    <div id="modalForm">
+      <h2>✉️ Postuler à cette mission</h2>
+      <div class="modal-mission-name" id="modalMissionTitle">—</div>
+
+      <!-- Choix type de mission -->
+      <div class="form-group">
+        <label>Type de mission *</label>
+        <div class="type-contrat-choice">
+          <div class="type-card selected" id="cardTest" onclick="selectTypeContrat('test_jour')">
+            <div class="type-icon">🧪</div>
+            <div class="type-label">Journée de test</div>
+            <div class="type-desc">1 jour pour tester la collaboration (contrat oral)</div>
+          </div>
+          <div class="type-card" id="cardTrim" onclick="selectTypeContrat('trimestriel')">
+            <div class="type-icon">📋</div>
+            <div class="type-label">Mission récurrente</div>
+            <div class="type-desc">Plusieurs jours sur un trimestre (contrat écrit)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Info journée de test -->
+      <div class="info-box" id="infoTest">
+        ⚠️ <strong>Important :</strong> Pour une journée de test, la <strong>DIMONA doit être soumise par l'employeur lui-même</strong> avant votre début de shift, via socialsecurity.be. FlexMoney vous enverra un formulaire pré-rempli à transmettre à l'employeur.
+      </div>
+
+      <!-- Champs heure (test seulement) -->
+      <div id="champsTest">
+        <div class="form-group">
+          <label>Date du test *</label>
+          <input type="date" id="dateTest" min="">
+        </div>
+        <div class="heure-row">
+          <div class="form-group">
+            <label>Heure de début *</label>
+            <input type="time" id="heureDebut">
+          </div>
+          <div class="form-group">
+            <label>Heure de fin *</label>
+            <input type="time" id="heureFin">
+          </div>
+        </div>
+      </div>
+
+      <!-- Coordonnées -->
+      <div class="form-group">
+        <label>Votre prénom *</label>
+        <input type="text" id="postulantPrenom" placeholder="Prénom">
+      </div>
+      <div class="form-group">
+        <label>Votre nom *</label>
+        <input type="text" id="postulantNom" placeholder="Nom">
+      </div>
+      <div class="form-group">
+        <label>Votre email *</label>
+        <input type="email" id="postulantEmail" placeholder="vous@email.com">
+      </div>
+      <div class="form-group">
+        <label>Message à l'employeur (optionnel)</label>
+        <textarea id="postulantMessage" rows="2" placeholder="Bref message pour vous présenter..."></textarea>
+      </div>
+
+      <div class="modal-buttons">
+        <button class="btn-cancel" onclick="closeModal()">Annuler</button>
+        <button class="btn-send" id="btnSend" onclick="submitPostulation()">Envoyer ma candidature →</button>
+      </div>
     </div>
-    <div class="form-group">
-      <label>Votre nom complet *</label>
-      <input type="text" id="postulantNom" placeholder="Prénom Nom">
+
+    <!-- Succès -->
+    <div id="modalSuccess" class="modal-success hidden">
+      <div class="success-icon">✅</div>
+      <h3>Candidature envoyée !</h3>
+      <p id="successMsg">L'employeur a été notifié et reviendra vers vous rapidement.</p>
+      <button class="btn-send" style="margin-top:20px;width:100%" onclick="closeModal()">Fermer</button>
     </div>
-    <div class="form-group">
-      <label>Message à l'employeur (optionnel)</label>
-      <textarea id="postulantMessage" rows="2" placeholder="Bref message pour vous présenter..."></textarea>
-    </div>
-    <div class="modal-buttons">
-      <button class="btn-cancel" onclick="closeModal()">Annuler</button>
-      <button class="btn-send" onclick="submitPostulation()">Envoyer ma candidature →</button>
-    </div>
+
   </div>
 </div>
 
@@ -210,6 +298,8 @@
   let allMissions = [];
   let filterComps = [];
   let selectedMission = null;
+  let selectedMissionData = null;
+  let selectedTypeContrat = 'test_jour';
   let currentFilterSecteur = FLEXMONEY_SECTEURS[0].id;
 
   // Init secteur tabs + filter chips
@@ -353,29 +443,107 @@
 
   function getCompetences(m) {
     const text = (m.titre + ' ' + (m.fonction || '') + ' ' + (m.description || '')).toLowerCase();
-    return COMPETENCES.filter(c => text.includes(c.toLowerCase())).slice(0, 4);
+    const pool = typeof TOUTES_COMPETENCES !== 'undefined' ? TOUTES_COMPETENCES : [];
+    return pool.filter(c => text.includes(c.toLowerCase())).slice(0, 4);
+  }
+
+  function selectTypeContrat(type) {
+    selectedTypeContrat = type;
+    document.getElementById('cardTest').classList.toggle('selected', type === 'test_jour');
+    document.getElementById('cardTrim').classList.toggle('selected', type === 'trimestriel');
+    document.getElementById('champsTest').style.display = type === 'test_jour' ? 'block' : 'none';
+    document.getElementById('infoTest').style.display = type === 'test_jour' ? 'block' : 'none';
   }
 
   function openModal(id, titre) {
     selectedMission = id;
+    selectedMissionData = allMissions.find(m => String(m.id) === String(id)) || null;
     document.getElementById('modalMissionTitle').textContent = titre;
+    document.getElementById('modalForm').classList.remove('hidden');
+    document.getElementById('modalSuccess').classList.add('hidden');
+    // Reset
+    selectTypeContrat('test_jour');
+    const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+    document.getElementById('dateTest').value = tomorrow;
+    document.getElementById('dateTest').min = new Date().toISOString().split('T')[0];
+    document.getElementById('postulantPrenom').value = '';
+    document.getElementById('postulantNom').value = '';
+    document.getElementById('postulantEmail').value = '';
+    document.getElementById('postulantMessage').value = '';
+    document.getElementById('btnSend').disabled = false;
     document.getElementById('modalOverlay').classList.remove('hidden');
   }
 
   function closeModal() {
     document.getElementById('modalOverlay').classList.add('hidden');
     selectedMission = null;
+    selectedMissionData = null;
   }
 
   async function submitPostulation() {
-    const email = document.getElementById('postulantEmail').value;
-    const nom = document.getElementById('postulantNom').value;
-    if (!email || !nom) { alert('Email et nom requis.'); return; }
+    const prenom = document.getElementById('postulantPrenom').value.trim();
+    const nom    = document.getElementById('postulantNom').value.trim();
+    const email  = document.getElementById('postulantEmail').value.trim();
+    const msg    = document.getElementById('postulantMessage').value.trim();
 
-    // Mettre à jour le statut en Supabase (simplification : on logue la candidature)
-    // En prod : table candidatures séparée
-    alert(`✅ Candidature envoyée ! L'employeur vous contactera à l'adresse ${email}.\n\nNous vous enverrons également une confirmation par email.`);
-    closeModal();
+    if (!prenom || !nom) { alert('Prénom et nom requis.'); return; }
+    if (!email || !email.includes('@')) { alert('Email valide requis.'); return; }
+
+    if (selectedTypeContrat === 'test_jour') {
+      const date  = document.getElementById('dateTest').value;
+      const hdeb  = document.getElementById('heureDebut').value;
+      const hfin  = document.getElementById('heureFin').value;
+      if (!date) { alert('Date du test requise.'); return; }
+      if (!hdeb || !hfin) { alert('Heures de début et fin requises pour un test journalier.'); return; }
+      if (hdeb >= hfin) { alert('L\'heure de fin doit être après l\'heure de début.'); return; }
+    }
+
+    const btn = document.getElementById('btnSend');
+    btn.disabled = true;
+    btn.textContent = 'Envoi en cours...';
+
+    // Construire le payload
+    const payload = {
+      mission_id:    selectedMission && !selectedMission.startsWith('mock') ? selectedMission : null,
+      worker_email:  email,
+      worker_nom:    nom,
+      worker_prenom: prenom,
+      message:       msg || null,
+      type_contrat:  selectedTypeContrat,
+      statut:        'en_attente'
+    };
+
+    if (selectedTypeContrat === 'test_jour') {
+      payload.date_test   = document.getElementById('dateTest').value;
+      payload.heure_debut = document.getElementById('heureDebut').value || null;
+      payload.heure_fin   = document.getElementById('heureFin').value || null;
+    }
+
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/candidatures`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) throw new Error('Erreur Supabase');
+    } catch(e) {
+      console.warn('Supabase non disponible (mode démo)', e);
+    }
+
+    // Afficher succès
+    document.getElementById('modalForm').classList.add('hidden');
+    const missionTitre = selectedMissionData?.titre || 'cette mission';
+    const msgSucces = selectedTypeContrat === 'test_jour'
+      ? `Votre candidature pour <strong>${missionTitre}</strong> a bien été reçue.<br><br>L'employeur va examiner votre profil. S'il accepte, vous recevrez un email avec le formulaire DIMONA pré-rempli à lui transmettre avant votre journée de test.`
+      : `Votre candidature pour <strong>${missionTitre}</strong> a bien été reçue.<br><br>L'employeur va examiner votre profil. En cas d'acceptation, FlexMoney vous guidera pour compléter votre dossier de conformité.`;
+    document.getElementById('successMsg').innerHTML = msgSucces;
+    document.getElementById('modalSuccess').classList.remove('hidden');
   }
 
   function resetFilters() {

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Espace employeur — FlexMoney</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; color: #1e293b; }
@@ -83,6 +84,76 @@
     .loading { text-align: center; padding: 40px; color: #94a3b8; }
     .hidden { display: none !important; }
 
+    /* === CANDIDATURES === */
+    .candidatures-section { margin-bottom: 24px; }
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .section-header h2 { font-size: 17px; font-weight: 700; }
+    .badge-count { background: #6366f1; color: #fff; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; margin-left: 8px; }
+
+    .cand-card {
+      background: #fff; border: 1.5px solid #e2e8f0; border-radius: 14px;
+      padding: 20px 24px; margin-bottom: 12px; transition: border-color 0.2s;
+    }
+    .cand-card:hover { border-color: #6366f1; }
+    .cand-card.test { border-left: 4px solid #f59e0b; }
+    .cand-card.trimestriel { border-left: 4px solid #6366f1; }
+    .cand-card.acceptee { border-color: #16a34a; background: #f0fdf4; }
+    .cand-card.refusee { opacity: 0.5; }
+
+    .cand-top { display: flex; align-items: flex-start; gap: 14px; }
+    .cand-avatar { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center; font-weight: 800; color: #fff; font-size: 16px; flex-shrink: 0; }
+    .cand-info { flex: 1; }
+    .cand-name { font-weight: 700; font-size: 15px; }
+    .cand-email { font-size: 12px; color: #64748b; margin-top: 2px; }
+    .cand-mission { font-size: 12px; color: #6366f1; font-weight: 600; margin-top: 4px; }
+    .cand-msg { font-size: 13px; color: #374151; margin-top: 8px; font-style: italic; padding: 8px 12px; background: #f8fafc; border-radius: 8px; }
+
+    .cand-type-badge {
+      font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 10px; white-space: nowrap;
+    }
+    .badge-test { background: #fef3c7; color: #92400e; }
+    .badge-trim { background: #ede9fe; color: #6d28d9; }
+    .badge-acceptee { background: #dcfce7; color: #15803d; }
+    .badge-refusee { background: #fee2e2; color: #b91c1c; }
+
+    .cand-details { display: flex; gap: 16px; margin-top: 10px; flex-wrap: wrap; }
+    .cand-detail { font-size: 12px; color: #64748b; display: flex; align-items: center; gap: 4px; }
+
+    .cand-actions { display: flex; gap: 8px; margin-top: 14px; }
+    .btn-accept { padding: 9px 20px; background: #16a34a; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.2s; }
+    .btn-accept:hover { background: #15803d; }
+    .btn-refuse { padding: 9px 16px; background: #fff; color: #ef4444; border: 1.5px solid #fecaca; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .btn-refuse:hover { background: #fee2e2; }
+    .btn-dimona { padding: 9px 16px; background: #fffbeb; color: #92400e; border: 1.5px solid #fde68a; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .btn-compliance { padding: 9px 16px; background: #ede9fe; color: #6d28d9; border: 1.5px solid #ddd6fe; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
+
+    /* === MODAL DIMONA === */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
+    .modal-box { background: #fff; border-radius: 20px; padding: 32px; max-width: 560px; width: 100%; max-height: 90vh; overflow-y: auto; }
+    .modal-box h2 { font-size: 19px; font-weight: 800; margin-bottom: 6px; }
+    .modal-subtitle { font-size: 13px; color: #64748b; margin-bottom: 24px; }
+
+    .dimona-fiche { border: 2px solid #f59e0b; border-radius: 12px; padding: 20px; background: #fffbeb; }
+    .dimona-fiche-title { font-size: 12px; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; }
+    .dimona-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid rgba(251,191,36,0.3); font-size: 13px; }
+    .dimona-row:last-child { border-bottom: none; }
+    .dimona-row .dl { color: #92400e; }
+    .dimona-row .dv { font-weight: 700; color: #1e293b; }
+    .dimona-missing { color: #ef4444; font-style: italic; }
+
+    .dimona-steps { margin-top: 20px; }
+    .dimona-step { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px; color: #374151; }
+    .dimona-step:last-child { border-bottom: none; }
+    .step-num { width: 24px; height: 24px; min-width: 24px; background: #f59e0b; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 11px; }
+
+    .alert-ok { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #15803d; margin-top: 16px; }
+    .alert-warn { background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #92400e; margin-top: 16px; }
+
+    .modal-footer { display: flex; gap: 10px; margin-top: 20px; }
+    .btn-close-modal { flex: 1; padding: 12px; background: #f1f5f9; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    .btn-copy { flex: 2; padding: 12px; background: #f59e0b; color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; }
+    .btn-copy:hover { background: #d97706; }
+
     @media (max-width: 768px) { .quick-actions { grid-template-columns: 1fr; } .grid2 { grid-template-columns: 1fr; } .hero-stats { display: none; } }
   </style>
 </head>
@@ -134,6 +205,16 @@
 
     <div class="alert-warning">
       🛡️ <strong>Rappel légal :</strong> Vérifiez que votre <strong>assurance accidents du travail</strong> couvre les travailleurs flexi avant chaque mission. Effectuez la <strong>déclaration Dimona FLX</strong> avant chaque prestation sur <a href="https://www.socialsecurity.be" target="_blank" style="color:#92400e;">socialsecurity.be</a>.
+    </div>
+
+    <!-- CANDIDATURES REÇUES -->
+    <div class="candidatures-section">
+      <div class="section-header">
+        <h2>📬 Candidatures reçues <span class="badge-count" id="candCount">0</span></h2>
+      </div>
+      <div id="candidaturesList">
+        <div class="loading">⏳ Chargement des candidatures...</div>
+      </div>
     </div>
 
     <div class="grid2">
@@ -188,6 +269,54 @@
     </div>
   </div>
 
+  <!-- MODAL DIMONA -->
+  <div class="modal-overlay hidden" id="dimonaModal">
+    <div class="modal-box">
+      <h2>📋 Fiche DIMONA FLX — Journée de test</h2>
+      <p class="modal-subtitle">Soumettez cette déclaration sur <strong>socialsecurity.be</strong> <u>avant le début du shift</u> du travailleur.</p>
+
+      <div class="dimona-fiche" id="dimonaFicheContent">
+        <!-- Rempli dynamiquement -->
+      </div>
+
+      <div class="dimona-steps">
+        <div style="font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">Comment soumettre :</div>
+        <div class="dimona-step"><div class="step-num">1</div><span>Connectez-vous sur <strong>socialsecurity.be</strong> avec votre accès employeur (carte d'identité électronique ou itsme)</span></div>
+        <div class="dimona-step"><div class="step-num">2</div><span>Choisissez <strong>Dimona → Nouvelle déclaration → Type FLX</strong></span></div>
+        <div class="dimona-step"><div class="step-num">3</div><span>Encodez les données ci-dessus. Si la réponse est <strong style="color:#16a34a;">OK</strong> → le travailleur peut commencer</span></div>
+        <div class="dimona-step"><div class="step-num">4</div><span>Si réponse <strong style="color:#ef4444;">NOK</strong> → le travailleur n'est pas éligible aujourd'hui, contactez FlexMoney</span></div>
+      </div>
+
+      <div class="alert-warn" id="dimonaMissingNiss" style="display:none;">
+        ⚠️ Le numéro <strong>NISS du travailleur</strong> n'est pas encore renseigné. Demandez-le lui directement avant la soumission. Format : <strong>00.00.00-000.00</strong>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-close-modal" onclick="closeDimonaModal()">Fermer</button>
+        <button class="btn-copy" onclick="copyDimonaData()">📋 Copier les données</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL COMPLIANCE -->
+  <div class="modal-overlay hidden" id="complianceModal">
+    <div class="modal-box">
+      <h2>📧 Candidature acceptée</h2>
+      <p class="modal-subtitle">Un email a été envoyé au travailleur avec le lien vers son dossier de conformité.</p>
+      <div class="alert-ok">
+        ✅ <strong>Email envoyé au travailleur.</strong> Il doit compléter son dossier DIMONA avant le début de la mission :<br><br>
+        <strong>• Numéro NISS</strong> (numéro national belge)<br>
+        <strong>• Statut d'éligibilité</strong> (salarié 4/5, pensionné ou indépendant)<br>
+        <strong>• Document de preuve</strong> (contrat, fiche de paie ou attestation pension)<br>
+        <strong>• Coordonnées bancaires IBAN</strong> (pour le paiement)<br><br>
+        Dès que le dossier est complet, vous pourrez voir la fiche DIMONA pré-remplie depuis vos candidatures.
+      </div>
+      <div class="modal-footer">
+        <button class="btn-copy" style="background:#6366f1;" onclick="closeComplianceModal()">Compris →</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Pas de profil -->
   <div id="noProfileState" class="hidden">
     <div class="card" style="text-align:center;padding:40px;max-width:500px;margin:0 auto;">
@@ -202,11 +331,18 @@
 <script>
   const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
+  const EJS_PUBLIC_KEY  = 'YAyl_sI2uC4Q2YCCF';
+  const EJS_SERVICE_ID  = 'service_2749nt8';
+  const EJS_TPL_WORKER  = 'template_0hbqgjd'; // email travailleur
+  emailjs.init(EJS_PUBLIC_KEY);
+
   const { createClient } = supabase;
   const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
   let currentUser = null;
   let employerProfile = null;
+  let myMissionsList = [];
+  let activeDimonaData = null;
 
   async function init() {
     const { data: { session } } = await sb.auth.getSession();
@@ -247,19 +383,19 @@
       .select('*').eq('email_employeur', currentUser.email)
       .order('created_at', { ascending: false });
 
+    myMissionsList = missions && missions.length > 0 ? missions : [];
     const myMissionsEl = document.getElementById('myMissions');
-    const mList = missions && missions.length > 0 ? missions : [];
 
-    document.getElementById('statMissions').textContent = mList.length;
-    const actives = mList.filter(m => ['proposee','acceptee','en_cours'].includes(m.statut));
+    document.getElementById('statMissions').textContent = myMissionsList.length;
+    const actives = myMissionsList.filter(m => ['proposee','acceptee','en_cours'].includes(m.statut));
     document.getElementById('statActives').textContent = actives.length;
-    const totalComm = mList.reduce((s, m) => s + (m.commission_montant || 0), 0);
+    const totalComm = myMissionsList.reduce((s, m) => s + (m.commission_montant || 0), 0);
     document.getElementById('statCommission').textContent = fmt(totalComm) + ' €';
 
-    if (mList.length === 0) {
+    if (myMissionsList.length === 0) {
       myMissionsEl.innerHTML = `<div class="empty"><div class="icon">📭</div>Aucune mission postée.<br><a href="poster-mission.html" style="color:#6366f1;font-weight:600;">Postez votre première mission →</a></div>`;
     } else {
-      myMissionsEl.innerHTML = mList.slice(0, 6).map(m => {
+      myMissionsEl.innerHTML = myMissionsList.slice(0, 6).map(m => {
         const statusMap = {
           proposee: ['Ouverte', 's-proposee'],
           acceptee: ['Acceptée', 's-acceptee'],
@@ -281,7 +417,7 @@
       }).join('');
     }
 
-    // Profils suggérés (basé sur le secteur de l'employeur)
+    // Profils suggérés
     const { data: workers } = await sb.from('workers_inscription')
       .select('*').eq('eligible', true).order('created_at', { ascending: false }).limit(20);
 
@@ -302,12 +438,217 @@
           <button class="btn btn-sm btn-primary" onclick="contactWorker('${w.prenom} ${w.nom}')">Contacter</button>
         </div>`;
     }).join('');
+
+    // Candidatures reçues
+    await loadCandidatures();
+  }
+
+  /* ===== CANDIDATURES ===== */
+
+  async function loadCandidatures() {
+    const missionIds = myMissionsList.map(m => m.id).filter(Boolean);
+
+    let cands = [];
+    if (missionIds.length > 0) {
+      const { data } = await sb.from('candidatures')
+        .select('*')
+        .in('mission_id', missionIds)
+        .order('created_at', { ascending: false });
+      cands = data || [];
+    }
+
+    // Aussi les candidatures sans mission_id mais liées à cet email employeur (mode démo)
+    // Pour l'instant on affiche toutes les candidatures en_attente comme démo si aucune mission
+    if (cands.length === 0 && myMissionsList.length === 0) {
+      const { data: allCands } = await sb.from('candidatures')
+        .select('*').order('created_at', { ascending: false }).limit(10);
+      cands = allCands || [];
+    }
+
+    document.getElementById('candCount').textContent = cands.filter(c => c.statut === 'en_attente').length;
+    renderCandidatures(cands);
+  }
+
+  function renderCandidatures(cands) {
+    const el = document.getElementById('candidaturesList');
+
+    if (cands.length === 0) {
+      el.innerHTML = `<div class="cand-card" style="text-align:center;color:#94a3b8;padding:32px;">
+        <div style="font-size:32px;margin-bottom:8px;">📭</div>
+        Aucune candidature pour le moment.<br>
+        <a href="poster-mission.html" style="color:#6366f1;font-weight:600;">Postez une mission pour recevoir des candidatures →</a>
+      </div>`;
+      return;
+    }
+
+    el.innerHTML = cands.map(c => {
+      const initials = ((c.worker_prenom || '?')[0] + (c.worker_nom || '?')[0]).toUpperCase();
+      const mission = myMissionsList.find(m => m.id === c.mission_id);
+      const isTest = c.type_contrat === 'test_jour';
+      const isPending = c.statut === 'en_attente';
+      const isAccepted = c.statut === 'acceptee';
+      const isRefused = c.statut === 'refusee';
+
+      const badgeClass = isAccepted ? 'badge-acceptee' : isRefused ? 'badge-refusee' : isTest ? 'badge-test' : 'badge-trim';
+      const badgeLabel = isAccepted ? '✅ Acceptée' : isRefused ? '❌ Refusée' : isTest ? '🧪 Journée de test' : '📋 Mission récurrente';
+
+      let dateInfo = '';
+      if (isTest && c.date_test) {
+        const d = new Date(c.date_test).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' });
+        dateInfo = `<div class="cand-detail">📅 ${d}</div>`;
+        if (c.heure_debut && c.heure_fin) {
+          dateInfo += `<div class="cand-detail">🕐 ${c.heure_debut.slice(0,5)} → ${c.heure_fin.slice(0,5)}</div>`;
+        }
+      }
+
+      const actions = isPending ? `
+        <div class="cand-actions">
+          <button class="btn-accept" onclick="accepterCandidature('${c.id}', '${c.type_contrat}')">✅ Accepter</button>
+          <button class="btn-refuse" onclick="refuserCandidature('${c.id}')">❌ Refuser</button>
+        </div>` : isAccepted ? `
+        <div class="cand-actions">
+          ${isTest
+            ? `<button class="btn-dimona" onclick="showDimonaFiche('${c.id}')">📋 Voir fiche DIMONA</button>`
+            : `<button class="btn-compliance" onclick="showComplianceInfo('${c.id}')">📁 Dossier de conformité</button>`
+          }
+        </div>` : '';
+
+      return `
+        <div class="cand-card ${isTest ? 'test' : 'trimestriel'} ${c.statut}">
+          <div class="cand-top">
+            <div class="cand-avatar">${initials}</div>
+            <div class="cand-info">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <span class="cand-name">${c.worker_prenom || ''} ${c.worker_nom || ''}</span>
+                <span class="cand-type-badge ${badgeClass}">${badgeLabel}</span>
+              </div>
+              <div class="cand-email">✉️ ${c.worker_email}</div>
+              ${mission ? `<div class="cand-mission">📌 ${mission.titre}</div>` : ''}
+              ${c.message ? `<div class="cand-msg">"${c.message}"</div>` : ''}
+            </div>
+          </div>
+          <div class="cand-details">
+            ${dateInfo}
+            <div class="cand-detail">🕑 Reçue le ${new Date(c.created_at).toLocaleDateString('fr-BE')}</div>
+          </div>
+          ${actions}
+        </div>`;
+    }).join('');
+  }
+
+  async function accepterCandidature(id, type) {
+    await sb.from('candidatures').update({ statut: 'acceptee', updated_at: new Date().toISOString() }).eq('id', id);
+
+    // Dans les deux cas : envoyer le lien compliance au travailleur
+    const { data: cand } = await sb.from('candidatures').select('*').eq('id', id).single();
+    if (cand) {
+      const complianceUrl = `${window.location.origin}/compliance.html?cid=${cand.id}`;
+      const typeLabel = type === 'test_jour'
+        ? 'journée de test (contrat oral — DIMONA journalière)'
+        : 'mission récurrente (contrat écrit trimestriel)';
+      try {
+        await emailjs.send(EJS_SERVICE_ID, EJS_TPL_WORKER, {
+          to_email:    cand.worker_email,
+          prenom:      cand.worker_prenom || cand.worker_nom,
+          to_name:     `${cand.worker_prenom || ''} ${cand.worker_nom || ''}`,
+          eligible:    `✅ Votre candidature a été acceptée pour une ${typeLabel}. Complétez votre dossier DIMONA ici : ${complianceUrl}`,
+          competences: 'NISS · Éligibilité · Document de preuve · IBAN — obligatoires avant le début de la mission',
+          reply_to:    'contact.flexmoney@gmail.com'
+        });
+      } catch(e) { console.log('Email non bloquant', e); }
+    }
+    document.getElementById('complianceModal').classList.remove('hidden');
+    await loadCandidatures();
+  }
+
+  async function refuserCandidature(id) {
+    if (!confirm('Confirmer le refus de cette candidature ?')) return;
+    await sb.from('candidatures').update({ statut: 'refusee', updated_at: new Date().toISOString() }).eq('id', id);
+    await loadCandidatures();
+  }
+
+  async function showDimonaFiche(candId) {
+    const { data: c } = await sb.from('candidatures').select('*').eq('id', candId).single();
+    if (!c) return;
+
+    // Chercher le dossier compliance s'il existe
+    const { data: dossier } = await sb.from('dimona_dossiers')
+      .select('*').eq('candidature_id', candId).order('created_at', { ascending: false }).limit(1).single();
+
+    const mission = myMissionsList.find(m => m.id === c.mission_id);
+    const emp = employerProfile;
+
+    const dateTest = c.date_test ? new Date(c.date_test).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '—';
+    const hdeb = c.heure_debut ? c.heure_debut.slice(0,5) : null;
+    const hfin = c.heure_fin ? c.heure_fin.slice(0,5) : null;
+
+    const niss = dossier?.niss || null;
+    const complianceDone = !!dossier;
+
+    activeDimonaData = {
+      travailleur: `${c.worker_prenom || ''} ${c.worker_nom || ''}`,
+      email: c.worker_email,
+      niss: niss || '—',
+      entreprise: emp?.nom_entreprise || '—',
+      bce: emp?.numero_bce || '—',
+      date: dateTest, hdeb, hfin,
+      mission: mission?.titre || '—'
+    };
+
+    const missingNiss = !niss;
+    const missingHours = !hdeb || !hfin;
+
+    document.getElementById('dimonaFicheContent').innerHTML = `
+      ${!complianceDone ? `<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#92400e;">
+        ⏳ <strong>Dossier en attente :</strong> Le travailleur n'a pas encore complété son formulaire de conformité (NISS, éligibilité, IBAN). Un email lui a été envoyé.
+      </div>` : `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#15803d;">
+        ✅ <strong>Dossier complet</strong> — Toutes les données sont disponibles pour soumettre la DIMONA.
+      </div>`}
+      <div class="dimona-fiche-title">📋 Déclaration DIMONA FLX — À soumettre avant le début du shift</div>
+      <div class="dimona-row"><span class="dl">Type de travailleur</span><span class="dv">FLX</span></div>
+      <div class="dimona-row"><span class="dl">Commission paritaire</span><span class="dv">XXX</span></div>
+      <div class="dimona-row"><span class="dl">Employeur (BCE)</span><span class="dv">${emp?.numero_bce || '<span class="dimona-missing">Non renseigné</span>'}</span></div>
+      <div class="dimona-row"><span class="dl">Entreprise</span><span class="dv">${emp?.nom_entreprise || '—'}</span></div>
+      <div class="dimona-row"><span class="dl">Travailleur</span><span class="dv">${c.worker_prenom || ''} ${c.worker_nom || ''}</span></div>
+      <div class="dimona-row"><span class="dl">NISS</span><span class="dv">${niss || '<span class="dimona-missing">⏳ En attente du dossier travailleur</span>'}</span></div>
+      <div class="dimona-row"><span class="dl">Date</span><span class="dv">${dateTest}</span></div>
+      <div class="dimona-row"><span class="dl">Heure de début</span><span class="dv">${hdeb || '<span class="dimona-missing">Non renseignée</span>'}</span></div>
+      <div class="dimona-row"><span class="dl">Heure de fin</span><span class="dv">${hfin || '<span class="dimona-missing">Non renseignée</span>'}</span></div>
+      <div class="dimona-row"><span class="dl">Mission</span><span class="dv">${mission?.titre || '—'}</span></div>
+      ${dossier?.iban ? `<div class="dimona-row"><span class="dl">IBAN travailleur</span><span class="dv">${dossier.iban.slice(0,4)} •••• •••• ${dossier.iban.slice(-4)}</span></div>` : ''}
+    `;
+
+    document.getElementById('dimonaMissingNiss').style.display = missingNiss ? 'block' : 'none';
+    document.getElementById('dimonaModal').classList.remove('hidden');
+  }
+
+  function closeDimonaModal() { document.getElementById('dimonaModal').classList.add('hidden'); }
+  function closeComplianceModal() { document.getElementById('complianceModal').classList.add('hidden'); }
+
+  function showComplianceInfo(candId) {
+    document.getElementById('complianceModal').classList.remove('hidden');
+  }
+
+  function copyDimonaData() {
+    if (!activeDimonaData) return;
+    const d = activeDimonaData;
+    const text = `DIMONA FLX — ${d.date}
+Employeur : ${d.entreprise} (BCE: ${d.bce})
+Travailleur : ${d.travailleur} (email: ${d.email})
+NISS : À compléter
+Heure début : ${d.hdeb || '—'}
+Heure fin : ${d.hfin || '—'}
+Commission paritaire : XXX
+Type : FLX`;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.querySelector('.btn-copy');
+      btn.textContent = '✅ Copié !';
+      setTimeout(() => { btn.textContent = '📋 Copier les données'; }, 2000);
+    });
   }
 
   function contactWorker(name) {
-    if (confirm(`Proposer une mission à ${name} ?\n\nVous serez redirigé vers la page de tableau des travailleurs pour envoyer votre proposition.`)) {
-      window.location.href = 'tableau-travailleurs.html';
-    }
+    window.location.href = 'tableau-travailleurs.html';
   }
 
   async function signOut() {

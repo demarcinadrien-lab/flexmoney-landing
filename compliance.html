@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dossier de conformité — FlexMoney</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --brand: #6366f1; --brand-light: #8b5cf6; --brand-dim: rgba(99,102,241,0.1);
+      --success: #16a34a; --warning: #f59e0b; --error: #ef4444;
+      --dark: #1e293b; --muted: #64748b; --border: #e2e8f0; --bg: #f8fafc;
+    }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--dark); min-height: 100vh; }
+
+    header { background: #fff; border-bottom: 1px solid var(--border); padding: 16px 32px; display: flex; align-items: center; gap: 12px; }
+    .logo { font-weight: 800; font-size: 20px; color: var(--brand); }
+    .logo span { color: var(--dark); }
+
+    .hero { background: linear-gradient(135deg, #1e293b, #334155); color: #fff; padding: 32px; text-align: center; }
+    .hero h1 { font-size: 24px; font-weight: 800; margin-bottom: 6px; }
+    .hero p { font-size: 14px; opacity: 0.75; }
+
+    /* Progress */
+    .progress-bar { background: #fff; border-bottom: 1px solid var(--border); padding: 20px 32px; }
+    .steps { display: flex; max-width: 560px; margin: 0 auto; gap: 0; }
+    .step { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; }
+    .step:not(:last-child)::after { content:''; position:absolute; top:16px; left:50%; width:100%; height:2px; background:var(--border); z-index:0; }
+    .step.done:not(:last-child)::after, .step.active:not(:last-child)::after { background: var(--brand); }
+    .step-circle { width:32px; height:32px; border-radius:50%; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:var(--muted); background:#fff; z-index:1; position:relative; transition:all 0.3s; }
+    .step.active .step-circle { border-color:var(--brand); color:var(--brand); background:var(--brand-dim); }
+    .step.done .step-circle { border-color:var(--brand); background:var(--brand); color:#fff; }
+    .step-label { font-size:11px; color:var(--muted); margin-top:6px; text-align:center; font-weight:600; }
+    .step.active .step-label, .step.done .step-label { color:var(--brand); }
+
+    .main { max-width: 600px; margin: 36px auto; padding: 0 20px 80px; }
+
+    /* Mission card */
+    .mission-card { background: #fff; border: 1.5px solid var(--border); border-radius: 14px; padding: 20px 24px; margin-bottom: 28px; }
+    .mission-card .label { font-size: 11px; font-weight: 700; color: var(--brand); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .mission-card .titre { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+    .mission-card .meta { font-size: 13px; color: var(--muted); }
+
+    /* Panels */
+    .panel { display: none; }
+    .panel.active { display: block; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+    .panel-title { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+    .panel-sub { font-size: 14px; color: var(--muted); margin-bottom: 28px; line-height: 1.6; }
+
+    /* Form */
+    .field { margin-bottom: 20px; }
+    .field label { display: block; font-size: 13px; font-weight: 700; color: var(--dark); margin-bottom: 8px; }
+    .field label .req { color: var(--error); margin-left: 3px; }
+    .field label .hint { font-weight: 400; color: var(--muted); font-size: 12px; margin-left: 6px; }
+    .field input, .field select { width: 100%; padding: 12px 16px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; font-family: inherit; outline: none; background: #fff; transition: border-color 0.2s; }
+    .field input:focus, .field select:focus { border-color: var(--brand); }
+    .field input.error { border-color: var(--error); }
+
+    /* NISS */
+    .niss-input { font-family: 'Courier New', monospace; font-size: 16px; letter-spacing: 2px; }
+    .niss-format { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+    /* Statut chips */
+    .statut-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    .statut-card { border: 2px solid var(--border); border-radius: 12px; padding: 16px 12px; cursor: pointer; text-align: center; transition: all 0.2s; }
+    .statut-card:hover { border-color: var(--brand); }
+    .statut-card.selected { border-color: var(--brand); background: var(--brand-dim); }
+    .statut-card .s-icon { font-size: 26px; margin-bottom: 6px; }
+    .statut-card .s-label { font-size: 12px; font-weight: 700; color: var(--dark); }
+    .statut-card .s-desc { font-size: 10px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
+    .statut-card.selected .s-label { color: var(--brand); }
+
+    /* Upload */
+    .upload-zone {
+      border: 2px dashed var(--border); border-radius: 12px; padding: 32px 20px;
+      text-align: center; cursor: pointer; transition: all 0.2s; background: #fff;
+    }
+    .upload-zone:hover, .upload-zone.dragover { border-color: var(--brand); background: var(--brand-dim); }
+    .upload-zone .u-icon { font-size: 36px; margin-bottom: 10px; }
+    .upload-zone .u-label { font-size: 14px; font-weight: 600; color: var(--dark); margin-bottom: 4px; }
+    .upload-zone .u-sub { font-size: 12px; color: var(--muted); }
+    .upload-zone input { display: none; }
+
+    .file-preview { display: none; border: 1.5px solid #bbf7d0; border-radius: 10px; padding: 14px 16px; background: #f0fdf4; margin-top: 12px; }
+    .file-preview.show { display: flex; align-items: center; gap: 12px; }
+    .file-icon { font-size: 28px; }
+    .file-info { flex: 1; }
+    .file-name { font-weight: 700; font-size: 14px; color: var(--success); }
+    .file-size { font-size: 12px; color: var(--muted); }
+    .btn-remove-file { background: none; border: none; color: var(--error); font-size: 18px; cursor: pointer; padding: 0 4px; }
+
+    /* Info boxes */
+    .info-box { border-radius: 10px; padding: 12px 16px; font-size: 13px; line-height: 1.6; margin-bottom: 20px; }
+    .info-box.amber { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+    .info-box.blue { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+    .info-box.green { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; }
+
+    /* Buttons */
+    .btn-next { width: 100%; padding: 14px; background: var(--brand); color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; transition: background 0.2s; margin-top: 8px; }
+    .btn-next:hover { background: #4f46e5; }
+    .btn-next:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-back { background: none; border: none; color: var(--muted); font-size: 13px; cursor: pointer; margin-bottom: 20px; display: flex; align-items: center; gap: 4px; }
+    .btn-back:hover { color: var(--dark); }
+
+    /* Récap */
+    .recap-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    .recap-table tr { border-bottom: 1px solid var(--border); }
+    .recap-table td { padding: 10px 4px; font-size: 13px; }
+    .recap-table td:first-child { color: var(--muted); width: 45%; }
+    .recap-table td:last-child { font-weight: 700; }
+
+    /* Succès */
+    .success-state { text-align: center; padding: 40px 20px; }
+    .success-icon { font-size: 64px; margin-bottom: 16px; }
+    .success-title { font-size: 24px; font-weight: 800; margin-bottom: 10px; }
+    .success-sub { font-size: 15px; color: var(--muted); line-height: 1.7; max-width: 420px; margin: 0 auto; }
+
+    /* Loading */
+    .spinner { display: inline-block; width: 18px; height: 18px; border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 8px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .hidden { display: none !important; }
+    @media (max-width: 600px) { .statut-grid { grid-template-columns: 1fr; } .steps .step-label { font-size: 9px; } }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Flex<span>Money</span></div>
+  <span style="margin-left:auto;font-size:13px;color:var(--muted);">Dossier de conformité flexi-job</span>
+</header>
+
+<div class="hero">
+  <h1>📁 Complétez votre dossier DIMONA</h1>
+  <p>Ces informations permettent à votre employeur de soumettre la déclaration légale obligatoire.</p>
+</div>
+
+<div class="progress-bar">
+  <div class="steps">
+    <div class="step active" id="step-ind-1"><div class="step-circle">1</div><div class="step-label">Identité</div></div>
+    <div class="step" id="step-ind-2"><div class="step-circle">2</div><div class="step-label">Éligibilité</div></div>
+    <div class="step" id="step-ind-3"><div class="step-circle">3</div><div class="step-label">Document</div></div>
+    <div class="step" id="step-ind-4"><div class="step-circle">4</div><div class="step-label">Confirmation</div></div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- Info mission -->
+  <div class="mission-card" id="missionCard">
+    <div class="label">Mission acceptée</div>
+    <div class="titre" id="missionTitre">Chargement...</div>
+    <div class="meta" id="missionMeta">—</div>
+  </div>
+
+  <!-- ÉTAPE 1 : Identité -->
+  <div class="panel active" id="panel1">
+    <div class="panel-title">👤 Vos informations personnelles</div>
+    <div class="panel-sub">Ces données sont nécessaires pour la déclaration DIMONA. Elles ne sont transmises qu'à votre employeur pour cette mission.</div>
+
+    <div class="field">
+      <label>Prénom <span class="req">*</span></label>
+      <input type="text" id="f-prenom" placeholder="Votre prénom">
+    </div>
+    <div class="field">
+      <label>Nom <span class="req">*</span></label>
+      <input type="text" id="f-nom" placeholder="Votre nom">
+    </div>
+    <div class="field">
+      <label>Date de naissance <span class="req">*</span></label>
+      <input type="date" id="f-naissance">
+    </div>
+    <div class="field">
+      <label>Numéro NISS <span class="req">*</span> <span class="hint">— Numéro national belge (carte d'identité)</span></label>
+      <input type="text" id="f-niss" class="niss-input" placeholder="00.00.00-000.00" maxlength="15" oninput="formatNISS(this)">
+      <div class="niss-format">Format : JJ.MM.AA-XXX.CC (ex : 85.03.15-123.45) — Visible au dos de votre carte d'identité</div>
+    </div>
+    <div class="field">
+      <label>Adresse complète <span class="req">*</span></label>
+      <input type="text" id="f-adresse" placeholder="Rue, numéro, code postal, ville">
+    </div>
+
+    <div style="border-top:1px solid var(--border);margin:24px 0;"></div>
+    <div class="panel-title" style="font-size:16px;margin-bottom:6px;">🏦 Coordonnées bancaires</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6;">Nécessaires pour le paiement de votre rémunération flexi-job. Le virement sera effectué après validation de la mission.</p>
+
+    <div class="field">
+      <label>Titulaire du compte <span class="req">*</span></label>
+      <input type="text" id="f-titulaire" placeholder="Nom complet du titulaire">
+    </div>
+    <div class="field">
+      <label>IBAN <span class="req">*</span> <span class="hint">— Numéro de compte bancaire belge ou européen</span></label>
+      <input type="text" id="f-iban" class="niss-input" placeholder="BE00 0000 0000 0000" maxlength="30" oninput="formatIBAN(this)">
+      <div class="niss-format">Format belge : BE + 14 chiffres (ex : BE68 5390 0754 7034) — Visible sur votre app bancaire ou relevé de compte</div>
+    </div>
+
+    <div class="info-box blue">
+      🔒 <strong>Confidentialité :</strong> Votre NISS et IBAN sont chiffrés et uniquement utilisés pour la déclaration DIMONA et le paiement de votre salaire. Ils ne sont jamais revendus ni partagés avec des tiers.
+    </div>
+
+    <button class="btn-next" onclick="goStep2()">Étape suivante →</button>
+  </div>
+
+  <!-- ÉTAPE 2 : Éligibilité -->
+  <div class="panel" id="panel2">
+    <button class="btn-back" onclick="goStep(1)">← Retour</button>
+    <div class="panel-title">✅ Votre statut d'éligibilité</div>
+    <div class="panel-sub">Pour être flexi-jobber, vous devez avoir travaillé à <strong>80% minimum</strong> chez un autre employeur durant le trimestre T-3. Sélectionnez votre situation :</div>
+
+    <div class="statut-grid">
+      <div class="statut-card" id="card-salarie" onclick="selectStatut('salarie_4_5')">
+        <div class="s-icon">💼</div>
+        <div class="s-label">Salarié ≥ 4/5</div>
+        <div class="s-desc">Contrat principal à temps plein ou 4/5e chez un autre employeur</div>
+      </div>
+      <div class="statut-card" id="card-pensionné" onclick="selectStatut('pensionné')">
+        <div class="s-icon">🎓</div>
+        <div class="s-label">Pensionné(e)</div>
+        <div class="s-desc">Vous bénéficiez d'une pension de retraite belge</div>
+      </div>
+      <div class="statut-card" id="card-independant" onclick="selectStatut('independant')">
+        <div class="s-icon">🏢</div>
+        <div class="s-label">Indépendant</div>
+        <div class="s-desc">Activité principale en tant qu'indépendant à titre principal</div>
+      </div>
+    </div>
+
+    <!-- Info dynamique selon statut -->
+    <div class="info-box amber hidden" id="info-salarie">
+      📋 <strong>Règle T-3 :</strong> L'ONSS va vérifier que vous avez travaillé ≥ 80% au trimestre de référence (3 trimestres avant votre mission). Si ce n'est pas le cas, la DIMONA reviendra NOK et vous ne pourrez pas commencer. Vérifiez avec votre employeur principal.
+    </div>
+    <div class="info-box green hidden" id="info-pensionné">
+      ✅ <strong>Pensionnés :</strong> Vous êtes exemptés de la règle T-3. Votre éligibilité sera confirmée automatiquement via votre attestation de pension.
+    </div>
+    <div class="info-box amber hidden" id="info-independant">
+      ℹ️ <strong>Indépendants :</strong> Le flexi-job est accessible aux indépendants à titre principal dans certains secteurs. La vérification se fait au cas par cas via la DIMONA.
+    </div>
+
+    <div style="margin-top:24px;">
+      <button class="btn-next" id="btnStep2" onclick="goStep3()" disabled>Étape suivante →</button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 3 : Document de preuve -->
+  <div class="panel" id="panel3">
+    <button class="btn-back" onclick="goStep(2)">← Retour</button>
+    <div class="panel-title">📎 Document de preuve</div>
+    <div class="panel-sub" id="proofSubtitle">Uploadez un document prouvant votre statut d'éligibilité. Format accepté : PDF, JPG, PNG (max 5 MB).</div>
+
+    <!-- Options document -->
+    <div class="field">
+      <label>Type de document <span class="req">*</span></label>
+      <select id="f-preuve-type" onchange="updateProofHint()">
+        <option value="">Sélectionner...</option>
+        <option value="contrat">Contrat de travail (employeur principal)</option>
+        <option value="fiche_paie">Fiche de salaire récente</option>
+        <option value="attestation_pension">Attestation de pension</option>
+        <option value="declaration_honneur">Déclaration sur l'honneur</option>
+      </select>
+    </div>
+
+    <div class="info-box blue hidden" id="proof-hint"></div>
+
+    <!-- Zone upload -->
+    <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()"
+         ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+      <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png" onchange="handleFile(this.files[0])">
+      <div class="u-icon">📄</div>
+      <div class="u-label">Cliquez ou glissez votre document ici</div>
+      <div class="u-sub">PDF, JPG ou PNG — max 5 MB</div>
+    </div>
+
+    <div class="file-preview" id="filePreview">
+      <div class="file-icon" id="fileIcon">📄</div>
+      <div class="file-info">
+        <div class="file-name" id="fileName">—</div>
+        <div class="file-size" id="fileSize">—</div>
+      </div>
+      <button class="btn-remove-file" onclick="removeFile()">✕</button>
+    </div>
+
+    <div style="margin-top:24px;">
+      <button class="btn-next" id="btnStep3" onclick="goStep4()" disabled>Vérifier et confirmer →</button>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 4 : Récapitulatif -->
+  <div class="panel" id="panel4">
+    <button class="btn-back" onclick="goStep(3)">← Retour</button>
+    <div class="panel-title">🔍 Récapitulatif de votre dossier</div>
+    <div class="panel-sub">Vérifiez vos informations avant de soumettre. Une fois envoyé, votre employeur recevra le dossier complet pour la DIMONA.</div>
+
+    <table class="recap-table" id="recapTable">
+      <!-- Rempli dynamiquement -->
+    </table>
+
+    <div class="info-box amber">
+      ⚖️ <strong>Déclaration sur l'honneur :</strong> En soumettant ce dossier, vous certifiez que toutes les informations sont exactes et conformes à la législation belge sur les flexi-jobs. Toute fausse déclaration engage votre responsabilité.
+    </div>
+
+    <button class="btn-next" id="btnSubmit" onclick="submitDossier()">
+      📤 Soumettre mon dossier DIMONA
+    </button>
+  </div>
+
+  <!-- SUCCÈS -->
+  <div class="panel" id="panelSuccess">
+    <div class="success-state">
+      <div class="success-icon">🎉</div>
+      <div class="success-title">Dossier envoyé !</div>
+      <p class="success-sub">
+        Votre dossier de conformité a été transmis à votre employeur.<br><br>
+        Il peut maintenant soumettre la <strong>DIMONA FLX</strong> sur socialsecurity.be. Vous recevrez une confirmation dès que la déclaration est validée par l'ONSS.<br><br>
+        <strong style="color:var(--success);">Réponse ONSS attendue : OK ou NOK dans les 24h.</strong>
+      </p>
+      <div class="info-box green" style="margin-top:24px;text-align:left;">
+        ✅ <strong>Et ensuite ?</strong> Si la réponse ONSS est OK, vous pouvez commencer votre mission à la date convenue. FlexMoney vous enverra un récapitulatif complet par email.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  let currentStep = 1;
+  let selectedStatut = null;
+  let selectedFile = null;
+  let candidatureData = null;
+  let missionData = null;
+
+  // Récupérer l'ID depuis l'URL
+  const params = new URLSearchParams(window.location.search);
+  const candidatureId = params.get('cid');
+
+  /* ===== INIT ===== */
+  async function init() {
+    if (candidatureId) {
+      const { data: cand } = await sb.from('candidatures').select('*').eq('id', candidatureId).single();
+      if (cand) {
+        candidatureData = cand;
+        // Pré-remplir prénom/nom si dispo
+        if (cand.worker_prenom) document.getElementById('f-prenom').value = cand.worker_prenom;
+        if (cand.worker_nom)    document.getElementById('f-nom').value    = cand.worker_nom;
+      }
+      if (cand?.mission_id) {
+        const { data: mission } = await sb.from('missions').select('*').eq('id', cand.mission_id).single();
+        if (mission) {
+          missionData = mission;
+          document.getElementById('missionTitre').textContent = mission.titre || 'Mission flexi-job';
+          const dateStr = mission.date_debut ? new Date(mission.date_debut).toLocaleDateString('fr-BE', { weekday:'long', day:'numeric', month:'long' }) : '—';
+          document.getElementById('missionMeta').textContent = `${mission.nom_entreprise || '—'} · ${dateStr} · ${mission.taux_horaire || '?'} €/h`;
+        }
+      }
+    } else {
+      // Mode démo sans candidature_id
+      document.getElementById('missionTitre').textContent = 'Mission flexi-job (démo)';
+      document.getElementById('missionMeta').textContent = 'Entreprise · Date à définir';
+    }
+  }
+
+  /* ===== NAVIGATION ===== */
+  function goStep(n) {
+    document.getElementById(`panel${currentStep}`).classList.remove('active');
+    if (currentStep <= 4) document.getElementById(`step-ind-${currentStep}`)?.classList.remove('active');
+
+    currentStep = n;
+
+    const panel = n <= 4 ? `panel${n}` : 'panelSuccess';
+    document.getElementById(panel).classList.add('active');
+    if (n <= 4) {
+      for (let i = 1; i <= 4; i++) {
+        const si = document.getElementById(`step-ind-${i}`);
+        si.classList.remove('active','done');
+        if (i < n) si.classList.add('done');
+        else if (i === n) si.classList.add('active');
+      }
+      // Marquer le step précédent comme done
+      if (n === 5) {
+        for (let i = 1; i <= 4; i++) document.getElementById(`step-ind-${i}`).classList.add('done');
+      }
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function goStep2() {
+    const prenom     = document.getElementById('f-prenom').value.trim();
+    const nom        = document.getElementById('f-nom').value.trim();
+    const naiss      = document.getElementById('f-naissance').value;
+    const niss       = document.getElementById('f-niss').value.trim();
+    const addr       = document.getElementById('f-adresse').value.trim();
+    const titulaire  = document.getElementById('f-titulaire').value.trim();
+    const iban       = document.getElementById('f-iban').value.trim();
+
+    if (!prenom || !nom) { alert('Prénom et nom requis.'); return; }
+    if (!naiss) { alert('Date de naissance requise.'); return; }
+    if (!niss || niss.replace(/[^0-9]/g, '').length < 11) { alert('Numéro NISS invalide. Format : 00.00.00-000.00'); return; }
+    if (!addr) { alert('Adresse complète requise.'); return; }
+    if (!titulaire) { alert('Titulaire du compte requis.'); return; }
+    const ibanClean = iban.replace(/\s/g, '');
+    if (!ibanClean || ibanClean.length < 14) { alert('IBAN invalide. Vérifiez votre numéro de compte.'); return; }
+    goStep(2);
+  }
+
+  function goStep3() {
+    if (!selectedStatut) { alert('Sélectionnez votre statut d\'éligibilité.'); return; }
+    // Adapter le hint de document selon statut
+    updateProofHintForStatut();
+    goStep(3);
+  }
+
+  function goStep4() {
+    const preuveType = document.getElementById('f-preuve-type').value;
+    if (!preuveType) { alert('Sélectionnez le type de document.'); return; }
+    if (!selectedFile) { alert('Veuillez uploader votre document de preuve.'); return; }
+    buildRecap();
+    goStep(4);
+  }
+
+  /* ===== STATUT ===== */
+  function selectStatut(s) {
+    selectedStatut = s;
+    ['salarie_4_5','pensionné','independant'].forEach(k => {
+      const card = document.getElementById(`card-${k}`);
+      card.classList.toggle('selected', k === s);
+    });
+    ['salarie','pensionné','independant'].forEach(k => {
+      document.getElementById(`info-${k}`).classList.toggle('hidden', k !== s.replace('_4_5',''));
+    });
+    document.getElementById('btnStep2').disabled = false;
+  }
+
+  /* ===== DOCUMENT ===== */
+  function updateProofHint() {
+    const type = document.getElementById('f-preuve-type').value;
+    const hintEl = document.getElementById('proof-hint');
+    const hints = {
+      contrat: '📋 Uploadez la <strong>première page de votre contrat de travail</strong> mentionnant le régime de travail (temps plein ou 4/5e). La date et la signature doivent être visibles.',
+      fiche_paie: '💰 Uploadez votre <strong>fiche de salaire du dernier trimestre</strong> chez votre employeur principal. Elle doit mentionner le nombre de jours/heures prestées.',
+      attestation_pension: '🎓 Uploadez votre <strong>attestation de pension</strong> délivrée par le SFP (Service Fédéral des Pensions) ou votre caisse de pension.',
+      declaration_honneur: '✍️ Une <strong>déclaration sur l\'honneur</strong> signée par vous-même, indiquant votre statut professionnel et confirmant votre éligibilité au flexi-job.'
+    };
+    if (hints[type]) {
+      hintEl.innerHTML = hints[type];
+      hintEl.classList.remove('hidden');
+    } else {
+      hintEl.classList.add('hidden');
+    }
+    checkStep3Ready();
+  }
+
+  function updateProofHintForStatut() {
+    const sel = document.getElementById('f-preuve-type');
+    if (selectedStatut === 'pensionné' && !sel.value) {
+      sel.value = 'attestation_pension';
+      updateProofHint();
+    }
+  }
+
+  function handleFile(file) {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { alert('Fichier trop volumineux (max 5 MB).'); return; }
+    const allowed = ['application/pdf','image/jpeg','image/png'];
+    if (!allowed.includes(file.type)) { alert('Format non accepté. PDF, JPG ou PNG uniquement.'); return; }
+    selectedFile = file;
+    document.getElementById('fileIcon').textContent = file.type === 'application/pdf' ? '📄' : '🖼️';
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('fileSize').textContent = (file.size / 1024).toFixed(0) + ' KB';
+    document.getElementById('filePreview').classList.add('show');
+    checkStep3Ready();
+  }
+
+  function removeFile() {
+    selectedFile = null;
+    document.getElementById('fileInput').value = '';
+    document.getElementById('filePreview').classList.remove('show');
+    checkStep3Ready();
+  }
+
+  function checkStep3Ready() {
+    const hasType = !!document.getElementById('f-preuve-type').value;
+    document.getElementById('btnStep3').disabled = !(hasType && selectedFile);
+  }
+
+  function onDragOver(e) { e.preventDefault(); document.getElementById('uploadZone').classList.add('dragover'); }
+  function onDragLeave(e) { document.getElementById('uploadZone').classList.remove('dragover'); }
+  function onDrop(e) {
+    e.preventDefault();
+    document.getElementById('uploadZone').classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  }
+
+  /* ===== RECAP ===== */
+  function buildRecap() {
+    const statutLabels = { salarie_4_5: 'Salarié ≥ 4/5e', pensionné: 'Pensionné(e)', independant: 'Indépendant' };
+    const preuveLabels = { contrat: 'Contrat de travail', fiche_paie: 'Fiche de salaire', attestation_pension: 'Attestation de pension', declaration_honneur: 'Déclaration sur l\'honneur' };
+    const preuveType = document.getElementById('f-preuve-type').value;
+    const typeLabel = candidatureData?.type_contrat === 'test_jour' ? '🧪 Journée de test (contrat oral)' : '📋 Mission récurrente (contrat écrit trimestriel)';
+    const ibanMasked = maskIBAN(document.getElementById('f-iban').value.trim());
+    const rows = [
+      ['Type de mission',    typeLabel],
+      ['Prénom',             document.getElementById('f-prenom').value],
+      ['Nom',                document.getElementById('f-nom').value],
+      ['Date de naissance',  document.getElementById('f-naissance').value ? new Date(document.getElementById('f-naissance').value).toLocaleDateString('fr-BE') : '—'],
+      ['NISS',               document.getElementById('f-niss').value],
+      ['Adresse',            document.getElementById('f-adresse').value],
+      ['Statut éligibilité', statutLabels[selectedStatut] || '—'],
+      ['Document preuve',    preuveLabels[preuveType] || '—'],
+      ['Fichier',            selectedFile?.name || '—'],
+      ['Titulaire compte',   document.getElementById('f-titulaire').value],
+      ['IBAN',               ibanMasked],
+    ];
+    document.getElementById('recapTable').innerHTML = rows.map(([l, v]) =>
+      `<tr><td>${l}</td><td>${v}</td></tr>`
+    ).join('');
+  }
+
+  function maskIBAN(iban) {
+    const clean = iban.replace(/\s/g, '');
+    if (clean.length < 8) return iban;
+    return clean.slice(0, 4) + ' •••• •••• ' + clean.slice(-4);
+  }
+
+  /* ===== SOUMISSION ===== */
+  async function submitDossier() {
+    const btn = document.getElementById('btnSubmit');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Envoi en cours...';
+
+    try {
+      // 1. Upload du fichier dans Supabase Storage
+      let documentUrl = null;
+      if (selectedFile) {
+        const ext = selectedFile.name.split('.').pop();
+        const path = `${candidatureId || 'demo'}/${Date.now()}.${ext}`;
+        const { data: uploadData, error: uploadError } = await sb.storage
+          .from('compliance-docs')
+          .upload(path, selectedFile, { contentType: selectedFile.type, upsert: false });
+
+        if (!uploadError && uploadData) {
+          const { data: urlData } = sb.storage.from('compliance-docs').getPublicUrl(path);
+          documentUrl = urlData?.publicUrl || path;
+        }
+      }
+
+      // 2. Enregistrer dans dimona_dossiers
+      const typeContrat = candidatureData?.type_contrat === 'test_jour' ? 'oral_journalier' : 'ecrit_trimestriel';
+      const payload = {
+        candidature_id:      candidatureId || null,
+        mission_id:          missionData?.id || null,
+        worker_email:        candidatureData?.worker_email || document.getElementById('f-email')?.value || '',
+        niss:                document.getElementById('f-niss').value.trim(),
+        date_naissance:      document.getElementById('f-naissance').value || null,
+        adresse:             document.getElementById('f-adresse').value.trim(),
+        statut_eligibilite:  selectedStatut,
+        type_contrat:        typeContrat,
+        date_debut:          candidatureData?.date_test || null,
+        heure_debut:         candidatureData?.heure_debut || null,
+        heure_fin:           candidatureData?.heure_fin || null,
+        preuve_document_url: documentUrl,
+        preuve_type:         document.getElementById('f-preuve-type').value,
+        iban:                document.getElementById('f-iban').value.replace(/\s/g, ''),
+        titulaire_compte:    document.getElementById('f-titulaire').value.trim(),
+        statut_dimona:       'prete'
+      };
+
+      await sb.from('dimona_dossiers').insert(payload);
+
+      // 3. Marquer compliance complète dans la candidature
+      if (candidatureId) {
+        await sb.from('candidatures').update({
+          compliance_complete: true,
+          updated_at: new Date().toISOString()
+        }).eq('id', candidatureId);
+      }
+
+    } catch(e) {
+      console.warn('Erreur non bloquante :', e);
+    }
+
+    // Afficher succès
+    document.getElementById('panel4').classList.remove('active');
+    for (let i = 1; i <= 4; i++) {
+      const si = document.getElementById(`step-ind-${i}`);
+      si.classList.remove('active');
+      si.classList.add('done');
+    }
+    document.getElementById('panelSuccess').classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /* ===== UTILS ===== */
+  function formatIBAN(input) {
+    let v = input.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+    if (v.length > 24) v = v.slice(0, 24);
+    // Grouper par blocs de 4
+    let formatted = v.match(/.{1,4}/g)?.join(' ') || v;
+    input.value = formatted;
+  }
+
+  function formatNISS(input) {
+    let v = input.value.replace(/[^0-9]/g, '');
+    if (v.length > 11) v = v.slice(0, 11);
+    let formatted = '';
+    if (v.length >= 2) formatted = v.slice(0, 2);
+    if (v.length >= 4) formatted += '.' + v.slice(2, 4);
+    else if (v.length > 2) formatted += '.' + v.slice(2);
+    if (v.length >= 6) formatted += '.' + v.slice(4, 6);
+    else if (v.length > 4) formatted += '.' + v.slice(4);
+    if (v.length >= 9) formatted += '-' + v.slice(6, 9);
+    else if (v.length > 6) formatted += '-' + v.slice(6);
+    if (v.length >= 11) formatted += '.' + v.slice(9, 11);
+    else if (v.length > 9) formatted += '.' + v.slice(9);
+    input.value = formatted;
+  }
+
+  init();
+</script>
+</body>
+</html>
