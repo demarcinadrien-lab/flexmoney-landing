@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Poster une mission — FlexMoney</title>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; color: #1e293b; }
@@ -239,6 +240,13 @@
   const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
 
+  // ── EMAILJS CONFIG ──────────────────────────────────────
+  const EJS_PUBLIC_KEY   = 'YAyl_sI2uC4Q2YCCF';
+  const EJS_SERVICE_ID   = 'service_2749nt8';
+  const EJS_TPL_EMPLOYER = 'template_y3zn6ll';   // confirmation à l'employeur
+  const EJS_TPL_MISSION  = 'template_jsgv5au';   // alerte aux travailleurs matchés
+  emailjs.init(EJS_PUBLIC_KEY);
+
   let selectedCompetences = [];
   let lieuMode = 'remote';
   let currentSecteurPm = FLEXMONEY_SECTEURS[0].id;
@@ -378,12 +386,27 @@
       });
     } catch(e) { console.log('Supabase error', e); }
 
+    // ── Email confirmation à l'employeur ────────────────────
+    try {
+      await emailjs.send(EJS_SERVICE_ID, EJS_TPL_EMPLOYER, {
+        to_email:       email,
+        prenom:         nom,
+        titre_mission:  titre,
+        lieu:           lieuMode === 'remote' ? 'Télétravail' : (document.getElementById('adresse').value || 'Sur place'),
+        date_mission:   date,
+        taux_horaire:   taux + '€/h',
+        heures:         heures + 'h',
+        ref_mission:    ref,
+        reply_to:       'contact.flexmoney@gmail.com'
+      });
+    } catch(e) { console.log('Email employeur non envoyé', e); }
+
     // Afficher résultats
     document.getElementById('missionRef').textContent = ref;
     document.getElementById('formSection').classList.add('hidden');
     document.getElementById('resultSection').classList.remove('hidden');
 
-    // Chercher travailleurs matchés
+    // Chercher travailleurs matchés et les notifier
     await findMatches();
   }
 
@@ -416,6 +439,21 @@
       document.getElementById('noMatch').classList.remove('hidden');
       return;
     }
+
+    // ── Notifier les travailleurs matchés par email (max 10) ──
+    scored.slice(0, 10).forEach(w => {
+      if (w.email) {
+        emailjs.send(EJS_SERVICE_ID, EJS_TPL_MISSION, {
+          to_email:      w.email,
+          prenom:        w.prenom || 'Travailleur',
+          titre_mission: document.getElementById('titre').value,
+          lieu:          lieuMode === 'remote' ? '🏠 Télétravail' : (document.getElementById('adresse').value || 'Sur place'),
+          date_mission:  document.getElementById('dateMission').value,
+          taux_horaire:  document.getElementById('taux').value,
+          reply_to:      'contact.flexmoney@gmail.com'
+        }).catch(() => {});
+      }
+    });
 
     scored.slice(0, 8).forEach(w => {
       const initials = ((w.prenom || '?')[0] + (w.nom || '?')[0]).toUpperCase();
