@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dossier Jour J — FlexMoney</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f1f5f9; color: #1e293b; }
+
+    /* ===== HEADER SCREEN ===== */
+    .screen-header { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 16px 32px; display: flex; align-items: center; gap: 12px; }
+    .logo { font-weight: 800; font-size: 20px; color: #6366f1; }
+    .logo span { color: #1e293b; }
+    .header-actions { margin-left: auto; display: flex; gap: 10px; }
+    .btn-print-all { padding: 9px 20px; background: #6366f1; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
+    .btn-print-section { padding: 7px 14px; background: #fff; color: #6366f1; border: 1.5px solid #6366f1; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .btn-print-section:hover { background: #f0f0ff; }
+
+    /* ===== MAIN ===== */
+    .main { max-width: 860px; margin: 28px auto; padding: 0 20px 60px; }
+
+    .dossier-header { background: linear-gradient(135deg, #1e293b, #334155); color: #fff; border-radius: 16px; padding: 28px 32px; margin-bottom: 28px; display: flex; justify-content: space-between; align-items: center; }
+    .dossier-header h1 { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+    .dossier-header p { font-size: 14px; opacity: 0.75; }
+    .dossier-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+    .d-badge { font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 10px; }
+    .d-badge.green { background: #dcfce7; color: #15803d; }
+    .d-badge.amber { background: #fef3c7; color: #92400e; }
+    .d-badge.blue  { background: #dbeafe; color: #1d4ed8; }
+
+    /* ===== DOCUMENT CARD ===== */
+    .doc-section { background: #fff; border-radius: 16px; border: 1px solid #e2e8f0; margin-bottom: 24px; overflow: hidden; }
+    .doc-section-header { padding: 18px 28px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; background: #fafafa; }
+    .doc-section-title { font-size: 16px; font-weight: 700; }
+    .doc-section-sub { font-size: 12px; color: #64748b; margin-top: 2px; }
+    .doc-body { padding: 32px 40px; }
+
+    /* ===== CONTRAT LEGAL ===== */
+    .contrat { font-size: 13px; line-height: 1.8; color: #1e293b; }
+    .contrat h1 { font-size: 16px; font-weight: 800; text-align: center; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+    .contrat .subtitle { text-align: center; font-size: 11px; color: #64748b; margin-bottom: 24px; }
+    .contrat h2 { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin: 20px 0 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; color: #6366f1; }
+    .contrat p { margin-bottom: 8px; }
+    .contrat .fv { font-weight: 700; color: #1e293b; border-bottom: 1px solid #94a3b8; padding-bottom: 1px; }
+    .contrat .missing { color: #ef4444; font-style: italic; }
+
+    .signature-zone { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 24px; }
+    .sig-block .sig-label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .sig-block .sig-name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .sig-block .sig-title { font-size: 12px; color: #94a3b8; margin-bottom: 16px; }
+    .sig-line { border-bottom: 1px solid #1e293b; height: 40px; margin-bottom: 8px; }
+    .sig-date { font-size: 11px; color: #94a3b8; }
+
+    /* ===== DIMONA FICHE ===== */
+    .dimona-fiche { border: 2px solid #f59e0b; border-radius: 12px; overflow: hidden; }
+    .dimona-fiche-head { background: #f59e0b; color: #fff; padding: 14px 20px; }
+    .dimona-fiche-head h3 { font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+    .dimona-fiche-head p { font-size: 11px; opacity: 0.85; margin-top: 2px; }
+    .dimona-grid { display: grid; grid-template-columns: 1fr 1fr; }
+    .dimona-cell { padding: 12px 18px; border-bottom: 1px solid rgba(245,158,11,0.2); border-right: 1px solid rgba(245,158,11,0.2); }
+    .dimona-cell:nth-child(even) { border-right: none; }
+    .dimona-cell .dc-label { font-size: 10px; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .dimona-cell .dc-val { font-size: 14px; font-weight: 700; color: #1e293b; }
+    .dimona-cell .dc-val.missing { color: #ef4444; font-style: italic; font-weight: 400; font-size: 12px; }
+    .dimona-cell.full { grid-column: 1 / -1; }
+    .dimona-steps { padding: 16px 20px; background: #fffbeb; }
+    .dimona-step-item { display: flex; gap: 10px; margin-bottom: 8px; font-size: 12px; color: #92400e; }
+    .dimona-step-num { width: 20px; height: 20px; min-width: 20px; background: #f59e0b; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 10px; }
+
+    /* ===== ALERTE ===== */
+    .alert { border-radius: 10px; padding: 12px 16px; font-size: 13px; margin-bottom: 16px; }
+    .alert-amber { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+    .alert-green { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; }
+    .alert-red   { background: #fff5f5; border: 1px solid #fecaca; color: #b91c1c; }
+
+    .loading-state { text-align: center; padding: 80px 20px; color: #94a3b8; }
+    .loading-icon { font-size: 48px; margin-bottom: 16px; }
+    .hidden { display: none !important; }
+
+    /* ===== PRINT ===== */
+    @media print {
+      body { background: #fff; }
+      .screen-header, .dossier-header, .header-actions, .btn-print-section,
+      .doc-section-header .btn-print-section, .no-print { display: none !important; }
+      .doc-section { border: none; border-radius: 0; box-shadow: none; margin-bottom: 0; page-break-after: always; }
+      .doc-section:last-child { page-break-after: auto; }
+      .doc-body { padding: 0; }
+      .main { max-width: 100%; margin: 0; padding: 0; }
+      .contrat { font-size: 11pt; }
+    }
+
+    @media (max-width: 600px) {
+      .dimona-grid { grid-template-columns: 1fr; }
+      .dimona-cell { border-right: none; }
+      .signature-zone { grid-template-columns: 1fr; }
+      .dossier-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="screen-header no-print">
+  <div class="logo">Flex<span>Money</span></div>
+  <span style="font-size:13px;color:#64748b;">Dossier Jour J — Documents légaux</span>
+  <div class="header-actions">
+    <button class="btn-print-all" onclick="window.print()">🖨️ Tout imprimer (3 docs)</button>
+  </div>
+</div>
+
+<div id="loadingState" class="loading-state">
+  <div class="loading-icon">⏳</div>
+  <p>Chargement du dossier...</p>
+</div>
+
+<div id="mainContent" class="main hidden">
+
+  <!-- En-tête dossier -->
+  <div class="dossier-header no-print">
+    <div>
+      <h1>📁 Dossier Jour J</h1>
+      <p id="dossierSubtitle">Mission · Travailleur · Date</p>
+    </div>
+    <div class="dossier-badges" id="dossierBadges"></div>
+  </div>
+
+  <!-- ===== DOC 1 : CONTRAT CADRE ===== -->
+  <div class="doc-section" id="doc-contrat-cadre">
+    <div class="doc-section-header no-print">
+      <div>
+        <div class="doc-section-title">📄 1. Contrat cadre flexi-job</div>
+        <div class="doc-section-sub">Accord général entre l'employeur, le travailleur et FlexMoney</div>
+      </div>
+      <button class="btn-print-section" onclick="printDoc('doc-contrat-cadre')">🖨️ Imprimer</button>
+    </div>
+    <div class="doc-body">
+      <div class="contrat" id="contratCadreContent"></div>
+    </div>
+  </div>
+
+  <!-- ===== DOC 2 : CONTRAT DE TRAVAIL (récurrent uniquement) ===== -->
+  <div class="doc-section hidden" id="doc-contrat-travail">
+    <div class="doc-section-header no-print">
+      <div>
+        <div class="doc-section-title">📋 2. Contrat de travail flexi-job</div>
+        <div class="doc-section-sub">Contrat écrit trimestriel — mission récurrente</div>
+      </div>
+      <button class="btn-print-section" onclick="printDoc('doc-contrat-travail')">🖨️ Imprimer</button>
+    </div>
+    <div class="doc-body">
+      <div class="contrat" id="contratTravailContent"></div>
+    </div>
+  </div>
+
+  <!-- ===== DOC 3 : FICHE DIMONA ===== -->
+  <div class="doc-section" id="doc-dimona">
+    <div class="doc-section-header no-print">
+      <div>
+        <div class="doc-section-title">🔴 3. Fiche DIMONA FLX — À soumettre AVANT le début du shift</div>
+        <div class="doc-section-sub">Type FLX · Commission paritaire XXX</div>
+      </div>
+      <button class="btn-print-section" onclick="printDoc('doc-dimona')">🖨️ Imprimer</button>
+    </div>
+    <div class="doc-body" id="dimonaBody"></div>
+  </div>
+
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const params = new URLSearchParams(window.location.search);
+  const candidatureId = params.get('cid');
+
+  let D = {}; // toutes les données
+
+  async function init() {
+    if (!candidatureId) { loadDemo(); return; }
+
+    // Charger candidature
+    const { data: cand } = await sb.from('candidatures').select('*').eq('id', candidatureId).single();
+    D.cand = cand;
+
+    // Charger dossier compliance (NISS, IBAN, etc.)
+    const { data: dossier } = await sb.from('dimona_dossiers')
+      .select('*').eq('candidature_id', candidatureId).order('created_at', { ascending: false }).limit(1).single();
+    D.dossier = dossier;
+
+    // Charger mission
+    if (cand?.mission_id) {
+      const { data: mission } = await sb.from('missions').select('*').eq('id', cand.mission_id).single();
+      D.mission = mission;
+    }
+
+    // Charger profil employeur
+    if (D.mission?.email_employeur) {
+      const { data: emp } = await sb.from('employers_inscription')
+        .select('*').eq('email_contact', D.mission.email_employeur).limit(1).single();
+      D.employer = emp;
+    }
+
+    render();
+  }
+
+  function loadDemo() {
+    D = {
+      cand: {
+        type_contrat: 'test_jour',
+        worker_prenom: 'Sophie',
+        worker_nom: 'Martin',
+        worker_email: 'sophie.martin@email.com',
+        heure_debut: '08:00',
+        heure_fin: '16:00',
+        date_test: new Date().toISOString().split('T')[0]
+      },
+      dossier: {
+        niss: '85.03.15-123.45',
+        date_naissance: '1985-03-15',
+        adresse: 'Rue de la Loi 14, 1000 Bruxelles',
+        statut_eligibilite: 'salarie_4_5',
+        iban: 'BE68539007547034',
+        titulaire_compte: 'Sophie Martin',
+        heure_debut: '08:00',
+        heure_fin: '16:00',
+        date_debut: new Date().toISOString().split('T')[0]
+      },
+      mission: {
+        titre: 'Assistant comptable — Encodage TVA',
+        nom_entreprise: 'Fiduciaire Dupont SA',
+        taux_horaire: 22,
+        heures_prestees: 8,
+        lieu: 'remote',
+        description: 'Encodage de factures et déclaration TVA trimestrielle',
+        fonction: 'Assistant comptable'
+      },
+      employer: {
+        nom_entreprise: 'Fiduciaire Dupont SA',
+        numero_bce: '0472.391.845',
+        secteur: 'Bureau & Administration',
+        prenom_contact: 'Jean',
+        nom_contact: 'Dupont',
+        email_contact: 'j.dupont@fiduciaire.be',
+        adresse: 'Avenue Louise 123, 1050 Bruxelles'
+      }
+    };
+    render();
+  }
+
+  function render() {
+    document.getElementById('loadingState').classList.add('hidden');
+    document.getElementById('mainContent').classList.remove('hidden');
+
+    const { cand, dossier, mission, employer } = D;
+    const isRecurrent = cand?.type_contrat === 'trimestriel';
+    const today = new Date().toLocaleDateString('fr-BE', { day:'2-digit', month:'long', year:'numeric' });
+    const workerName = `${cand?.worker_prenom || ''} ${cand?.worker_nom || ''}`.trim();
+
+    // En-tête
+    document.getElementById('dossierSubtitle').textContent =
+      `${mission?.titre || '—'} · ${workerName} · ${today}`;
+    document.getElementById('dossierBadges').innerHTML = `
+      <span class="d-badge ${dossier?.niss ? 'green' : 'amber'}">${dossier?.niss ? '✓ NISS vérifié' : '⚠ NISS manquant'}</span>
+      <span class="d-badge ${dossier?.iban ? 'green' : 'amber'}">${dossier?.iban ? '✓ IBAN renseigné' : '⚠ IBAN manquant'}</span>
+      <span class="d-badge blue">${isRecurrent ? '📋 Mission récurrente' : '🧪 Journée de test'}</span>
+    `;
+
+    // Doc 1 : Contrat cadre
+    document.getElementById('contratCadreContent').innerHTML = buildContratCadre(today, workerName);
+
+    // Doc 2 : Contrat de travail (récurrent seulement)
+    if (isRecurrent) {
+      document.getElementById('doc-contrat-travail').classList.remove('hidden');
+      document.getElementById('contratTravailContent').innerHTML = buildContratTravail(today, workerName);
+    }
+
+    // Doc 3 : DIMONA
+    document.getElementById('dimonaBody').innerHTML = buildDimona(workerName);
+  }
+
+  /* ===== CONTRAT CADRE ===== */
+  function buildContratCadre(today, workerName) {
+    const { dossier, mission, employer, cand } = D;
+    const isRecurrent = cand?.type_contrat === 'trimestriel';
+    const typeContrat = isRecurrent ? 'Contrat écrit trimestriel' : 'Contrat oral journalier';
+
+    return `
+      <h1>Contrat Cadre Flexi-Job</h1>
+      <p class="subtitle">Conforme à la loi du 24 décembre 2016 relative au flexi-job, modifiée par la loi du 12 mai 2026<br>
+      Via la plateforme FlexMoney · Référence : FM-${Date.now().toString().slice(-6)}</p>
+
+      <h2>Article 1 — Parties</h2>
+      <p><strong>L'employeur :</strong><br>
+      Dénomination : <span class="fv">${employer?.nom_entreprise || miss()}</span><br>
+      Numéro BCE : <span class="fv">${employer?.numero_bce || miss()}</span><br>
+      Siège social : <span class="fv">${employer?.adresse || miss()}</span><br>
+      Représenté par : <span class="fv">${employer?.prenom_contact || ''} ${employer?.nom_contact || ''}</span><br>
+      Email : <span class="fv">${employer?.email_contact || miss()}</span></p>
+
+      <p style="margin-top:12px;"><strong>Le travailleur flexi :</strong><br>
+      Nom et prénom : <span class="fv">${workerName || miss()}</span><br>
+      Date de naissance : <span class="fv">${dossier?.date_naissance ? new Date(dossier.date_naissance).toLocaleDateString('fr-BE') : miss()}</span><br>
+      Adresse : <span class="fv">${dossier?.adresse || miss()}</span><br>
+      NISS : <span class="fv">${dossier?.niss || miss()}</span><br>
+      Statut professionnel : <span class="fv">${statutLabel(dossier?.statut_eligibilite)}</span></p>
+
+      <p style="margin-top:12px;"><strong>L'intermédiaire :</strong><br>
+      FlexMoney SRL — plateforme de mise en relation flexi-job<br>
+      Email : contact.flexmoney@gmail.com</p>
+
+      <h2>Article 2 — Objet</h2>
+      <p>Le présent contrat cadre organise les conditions générales dans lesquelles le travailleur flexi effectuera des prestations ponctuelles pour l'employeur, conformément aux dispositions légales belges sur le flexi-job.</p>
+      <p>Type de contrat : <span class="fv">${typeContrat}</span></p>
+
+      <h2>Article 3 — Mission et rémunération</h2>
+      <p>Fonction exercée : <span class="fv">${mission?.fonction || mission?.titre || miss()}</span><br>
+      Description : <span class="fv">${mission?.description || miss()}</span><br>
+      Lieu d'exécution : <span class="fv">${mission?.lieu === 'remote' ? 'Télétravail (domicile du travailleur)' : mission?.adresse_lieu || 'À définir'}</span><br>
+      Taux horaire brut : <span class="fv">${mission?.taux_horaire ? fmt(mission.taux_horaire) + ' €/heure' : miss()}</span><br>
+      Salaire net = salaire brut (exonération fiscale flexi-job jusqu'à 18 000 €/an)</p>
+
+      <h2>Article 4 — Obligations de l'employeur</h2>
+      <p>L'employeur s'engage à :</p>
+      <p>1° Effectuer la déclaration DIMONA FLX avant le début de chaque prestation ;<br>
+      2° Couvrir le travailleur par une assurance accidents du travail valide ;<br>
+      3° Respecter la législation sur la santé et la sécurité au travail ;<br>
+      4° Payer la rémunération dans les délais légaux.</p>
+
+      <h2>Article 5 — Éligibilité du travailleur</h2>
+      <p>Le travailleur déclare sur l'honneur remplir les conditions d'éligibilité au flexi-job conformément à la loi, notamment avoir travaillé à minimum 80% au trimestre de référence (T-3) auprès d'un employeur distinct.</p>
+      <p>En cas de déclaration NOK par l'ONSS, aucune prestation ne pourra être effectuée pour cette mission.</p>
+
+      <h2>Article 6 — Confidentialité et données personnelles</h2>
+      <p>Les parties s'engagent à traiter les données personnelles échangées dans le cadre de ce contrat conformément au RGPD (UE 2016/679). Les données du travailleur (NISS, coordonnées bancaires) sont utilisées exclusivement pour la déclaration DIMONA et le paiement.</p>
+
+      <h2>Article 7 — Droit applicable</h2>
+      <p>Le présent contrat est soumis au droit belge. En cas de litige, les parties s'engagent à rechercher une solution amiable avant tout recours judiciaire.</p>
+
+      <p style="margin-top:16px;font-size:11px;color:#64748b;">Fait à ________________, le <strong>${today}</strong>, en deux exemplaires originaux.</p>
+
+      <div class="signature-zone">
+        <div class="sig-block">
+          <div class="sig-label">L'employeur</div>
+          <div class="sig-name">${employer?.nom_entreprise || '—'}</div>
+          <div class="sig-title">${employer?.prenom_contact || ''} ${employer?.nom_contact || ''} · ${employer?.email_contact || ''}</div>
+          <div class="sig-line"></div>
+          <div class="sig-date">Signature et cachet · Date : ___________</div>
+        </div>
+        <div class="sig-block">
+          <div class="sig-label">Le travailleur flexi</div>
+          <div class="sig-name">${workerName || '—'}</div>
+          <div class="sig-title">${D.cand?.worker_email || ''}</div>
+          <div class="sig-line"></div>
+          <div class="sig-date">Signature · Date : ___________</div>
+        </div>
+      </div>`;
+  }
+
+  /* ===== CONTRAT DE TRAVAIL (récurrent) ===== */
+  function buildContratTravail(today, workerName) {
+    const { dossier, mission, employer } = D;
+    const dateDebut = mission?.date_debut ? new Date(mission.date_debut).toLocaleDateString('fr-BE') : '___________';
+    const dateFin = mission?.date_fin ? new Date(mission.date_fin).toLocaleDateString('fr-BE') : 'fin du trimestre';
+    const heures = mission?.heures_prestees || '___';
+    const brut = (mission?.heures_prestees || 0) * (mission?.taux_horaire || 0);
+
+    return `
+      <h1>Contrat de Travail Flexi-Job</h1>
+      <p class="subtitle">Contrat écrit pour mission récurrente · Trimestre en cours<br>
+      Conforme à la loi du 24 décembre 2016, modifiée par la loi du 12 mai 2026</p>
+
+      <h2>Article 1 — Identification des parties</h2>
+      <p><strong>Employeur :</strong> <span class="fv">${employer?.nom_entreprise || miss()}</span> · BCE : <span class="fv">${employer?.numero_bce || miss()}</span><br>
+      <strong>Travailleur :</strong> <span class="fv">${workerName}</span> · NISS : <span class="fv">${dossier?.niss || miss()}</span></p>
+
+      <h2>Article 2 — Type de contrat</h2>
+      <p>Contrat de travail à durée déterminée flexi-job — régime <strong>contrat écrit trimestriel</strong>.<br>
+      Commission paritaire : <span class="fv">XXX (flexi-job tous secteurs)</span><br>
+      Période : du <span class="fv">${dateDebut}</span> au <span class="fv">${dateFin}</span></p>
+
+      <h2>Article 3 — Fonction et lieu</h2>
+      <p>Fonction : <span class="fv">${mission?.fonction || mission?.titre || miss()}</span><br>
+      Lieu : <span class="fv">${mission?.lieu === 'remote' ? 'Télétravail' : mission?.adresse_lieu || miss()}</span><br>
+      Description des tâches : <span class="fv">${mission?.description || miss()}</span></p>
+
+      <h2>Article 4 — Durée du travail et rémunération</h2>
+      <p>Heures prévues : <span class="fv">${heures}h</span> sur la période<br>
+      Taux horaire brut flexi : <span class="fv">${fmt(mission?.taux_horaire || 0)} €/heure</span><br>
+      Salaire brut total estimé : <span class="fv">${fmt(brut)} €</span><br>
+      <strong>Net à payer = Brut</strong> (exonération totale d'impôt et de cotisations personnelles flexi)</p>
+      <p>Un enregistrement journalier des heures de présence sera effectué conformément à la législation (art. 10 loi flexi-job). Le travailleur déclare ses heures réelles via la plateforme FlexMoney en fin de journée.</p>
+
+      <h2>Article 5 — DIMONA</h2>
+      <p>L'employeur a effectué la déclaration DIMONA FLX pour la période couverte par ce contrat. Référence de déclaration : ___________________</p>
+      <p>En cas de modification d'horaire, l'employeur procédera à une déclaration modificative avant toute prestation.</p>
+
+      <h2>Article 6 — Paiement</h2>
+      <p>La rémunération sera versée sur le compte bancaire suivant :<br>
+      Titulaire : <span class="fv">${dossier?.titulaire_compte || miss()}</span><br>
+      IBAN : <span class="fv">${dossier?.iban ? formatIBAN(dossier.iban) : miss()}</span></p>
+
+      <h2>Article 7 — Résiliation</h2>
+      <p>Le présent contrat prend fin de plein droit à l'échéance de la période définie à l'article 2. Toute résiliation anticipée sera notifiée par écrit avec un préavis de 24 heures.</p>
+
+      <p style="margin-top:16px;font-size:11px;color:#64748b;">Fait le <strong>${today}</strong> en deux exemplaires.</p>
+
+      <div class="signature-zone">
+        <div class="sig-block">
+          <div class="sig-label">L'employeur</div>
+          <div class="sig-name">${employer?.nom_entreprise || '—'}</div>
+          <div class="sig-title">Représenté par ${employer?.prenom_contact || ''} ${employer?.nom_contact || ''}</div>
+          <div class="sig-line"></div>
+          <div class="sig-date">Signature et cachet · Date : ___________</div>
+        </div>
+        <div class="sig-block">
+          <div class="sig-label">Le travailleur — Lu et approuvé</div>
+          <div class="sig-name">${workerName || '—'}</div>
+          <div class="sig-title">NISS : ${dossier?.niss || '—'}</div>
+          <div class="sig-line"></div>
+          <div class="sig-date">Signature · Date : ___________</div>
+        </div>
+      </div>`;
+  }
+
+  /* ===== FICHE DIMONA ===== */
+  function buildDimona(workerName) {
+    const { dossier, mission, employer, cand } = D;
+    const isTest = cand?.type_contrat === 'test_jour';
+    const hdeb = dossier?.heure_debut || cand?.heure_debut || null;
+    const hfin = dossier?.heure_fin   || cand?.heure_fin   || null;
+    const dateP = dossier?.date_debut  || cand?.date_test   || mission?.date_debut || null;
+    const dateLabel = dateP ? new Date(dateP).toLocaleDateString('fr-BE', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) : null;
+
+    const cells = [
+      ['Type travailleur', 'FLX', true],
+      ['Commission paritaire', 'XXX', true],
+      ['Type de déclaration', isTest ? 'Journalière (contrat oral)' : 'Trimestrielle (contrat écrit)', true],
+      ['BCE Employeur', employer?.numero_bce, true],
+      ['Nom employeur', employer?.nom_entreprise, true],
+      ['NISS travailleur', dossier?.niss, true],
+      ['Nom travailleur', workerName, true],
+      ['Date de prestation', dateLabel, true],
+      ['Heure de début', hdeb ? hdeb.slice(0,5) : null, isTest],
+      ['Heure de fin',   hfin ? hfin.slice(0,5) : null, isTest],
+    ].filter(([,, show]) => show);
+
+    return `
+      <div class="alert alert-amber no-print">
+        ⚠️ <strong>À soumettre AVANT le début du shift</strong> sur <strong>socialsecurity.be</strong> → Dimona → Nouvelle déclaration → Type FLX.<br>
+        Si la réponse ONSS est <strong>NOK</strong>, le travailleur ne peut légalement pas commencer.
+      </div>
+
+      <div class="dimona-fiche">
+        <div class="dimona-fiche-head">
+          <h3>🔴 Déclaration DIMONA FLX — ${isTest ? 'Journalière' : 'Trimestrielle'}</h3>
+          <p>À encoder sur socialsecurity.be avant toute prestation · Type travailleur FLX · CP XXX</p>
+        </div>
+        <div class="dimona-grid">
+          ${cells.map(([label, val]) => `
+            <div class="dimona-cell">
+              <div class="dc-label">${label}</div>
+              <div class="dc-val ${!val ? 'missing' : ''}">${val || '⚠️ Manquant'}</div>
+            </div>`).join('')}
+        </div>
+        <div class="dimona-steps">
+          <div style="font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">Comment soumettre :</div>
+          <div class="dimona-step-item"><div class="dimona-step-num">1</div><span>Connectez-vous sur <strong>socialsecurity.be</strong> avec votre identité électronique (eID ou itsme)</span></div>
+          <div class="dimona-step-item"><div class="dimona-step-num">2</div><span>Allez dans <strong>Dimona → Nouvelle déclaration → Type : FLX</strong></span></div>
+          <div class="dimona-step-item"><div class="dimona-step-num">3</div><span>Encodez les données ci-dessus. Attendez la réponse <strong style="color:#16a34a;">OK</strong></span></div>
+          <div class="dimona-step-item"><div class="dimona-step-num">4</div><span>Si <strong style="color:#ef4444;">NOK</strong> → le travailleur n'est pas éligible. Contactez FlexMoney.</span></div>
+        </div>
+      </div>`;
+  }
+
+  /* ===== PRINT SECTION ===== */
+  function printDoc(sectionId) {
+    const section = document.getElementById(sectionId);
+    const win = window.open('', '_blank');
+    win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+      <title>FlexMoney — Document</title>
+      <style>
+        body { font-family: 'Segoe UI', sans-serif; font-size: 11pt; color: #1e293b; padding: 40px; line-height: 1.7; }
+        h1 { font-size: 15pt; font-weight: 800; text-align: center; text-transform: uppercase; margin-bottom: 6pt; }
+        h2 { font-size: 11pt; font-weight: 800; text-transform: uppercase; color: #6366f1; margin: 16pt 0 6pt; border-bottom: 1px solid #e2e8f0; padding-bottom: 3pt; }
+        p { margin-bottom: 6pt; }
+        .subtitle { text-align: center; font-size: 9pt; color: #64748b; margin-bottom: 20pt; }
+        .fv { font-weight: 700; border-bottom: 1px solid #94a3b8; }
+        .missing { color: #ef4444; font-style: italic; }
+        .signature-zone { display: grid; grid-template-columns: 1fr 1fr; gap: 40pt; margin-top: 30pt; border-top: 1px solid #e2e8f0; padding-top: 20pt; }
+        .sig-label { font-size: 9pt; font-weight: 700; color: #64748b; text-transform: uppercase; }
+        .sig-name { font-weight: 700; font-size: 13pt; margin: 4pt 0 2pt; }
+        .sig-title { font-size: 9pt; color: #94a3b8; margin-bottom: 20pt; }
+        .sig-line { border-bottom: 1px solid #1e293b; height: 30pt; }
+        .sig-date { font-size: 9pt; color: #94a3b8; margin-top: 4pt; }
+        .dimona-fiche { border: 2px solid #f59e0b; border-radius: 8pt; overflow: hidden; }
+        .dimona-fiche-head { background: #f59e0b; color: #fff; padding: 10pt 16pt; }
+        .dimona-fiche-head h3 { font-size: 12pt; font-weight: 800; }
+        .dimona-grid { display: grid; grid-template-columns: 1fr 1fr; }
+        .dimona-cell { padding: 8pt 14pt; border-bottom: 1px solid rgba(245,158,11,0.2); border-right: 1px solid rgba(245,158,11,0.2); }
+        .dimona-cell:nth-child(even) { border-right: none; }
+        .dc-label { font-size: 8pt; font-weight: 700; color: #92400e; text-transform: uppercase; margin-bottom: 2pt; }
+        .dc-val { font-size: 12pt; font-weight: 700; }
+        .dc-val.missing { color: #ef4444; font-style: italic; font-size: 9pt; font-weight: 400; }
+        .dimona-steps { padding: 12pt 16pt; background: #fffbeb; }
+        .dimona-step-item { display: flex; gap: 8pt; margin-bottom: 6pt; font-size: 9pt; color: #92400e; }
+        .dimona-step-num { width: 16pt; height: 16pt; min-width: 16pt; background: #f59e0b; color: #fff; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 8pt; }
+        .no-print { display: none !important; }
+      </style>
+    </head><body>${section.querySelector('.doc-body').innerHTML}</body></html>`);
+    win.document.close();
+    win.print();
+  }
+
+  /* ===== UTILS ===== */
+  function miss() { return '<span class="missing">⚠️ Manquant</span>'; }
+
+  function statutLabel(s) {
+    return { salarie_4_5: 'Salarié à minimum 4/5e', pensionné: 'Pensionné(e)', independant: 'Indépendant à titre principal' }[s] || (s || '—');
+  }
+
+  function fmt(n) {
+    return (n || 0).toLocaleString('fr-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function formatIBAN(iban) {
+    return (iban || '').replace(/[^A-Z0-9]/g, '').match(/.{1,4}/g)?.join(' ') || iban;
+  }
+
+  init();
+</script>
+</body>
+</html>

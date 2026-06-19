@@ -84,6 +84,45 @@
     .loading { text-align: center; padding: 40px; color: #94a3b8; }
     .hidden { display: none !important; }
 
+    /* === DECLARATIONS === */
+    .decl-card { background: #fff; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 20px 24px; margin-bottom: 12px; transition: border-color 0.2s; }
+    .decl-card:hover { border-color: #6366f1; }
+    .decl-card.contestee { border-left: 4px solid #ef4444; }
+    .decl-card.validee { border-left: 4px solid #16a34a; opacity: 0.7; }
+    .decl-card.en_attente { border-left: 4px solid #f59e0b; }
+
+    .decl-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .decl-worker { font-weight: 700; font-size: 15px; }
+    .decl-mission { font-size: 12px; color: #6366f1; font-weight: 600; margin-top: 2px; }
+
+    .heures-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    .heure-box { background: #f8fafc; border-radius: 10px; padding: 12px 14px; }
+    .heure-box.prevu { border: 1px solid #e2e8f0; }
+    .heure-box.reel { border: 1px solid #6366f1; background: #f0f0ff; }
+    .heure-box .hb-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; margin-bottom: 6px; }
+    .heure-box .hb-val { font-size: 18px; font-weight: 800; color: #1e293b; }
+    .heure-box .hb-sub { font-size: 11px; color: #64748b; margin-top: 2px; }
+    .heure-box.reel .hb-label { color: #6366f1; }
+    .heure-box.reel .hb-val { color: #6366f1; }
+
+    .diff-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 10px; }
+    .diff-ok   { background: #dcfce7; color: #15803d; }
+    .diff-warn { background: #fef3c7; color: #92400e; }
+    .diff-over { background: #fee2e2; color: #b91c1c; }
+
+    .decl-comment { font-size: 13px; color: #374151; font-style: italic; padding: 8px 12px; background: #fffbeb; border-radius: 8px; margin-bottom: 14px; border-left: 3px solid #f59e0b; }
+
+    .decl-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-valider-h { padding: 9px 20px; background: #16a34a; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.2s; }
+    .btn-valider-h:hover { background: #15803d; }
+    .btn-contester { padding: 9px 16px; background: #fff; color: #ef4444; border: 1.5px solid #fecaca; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .btn-contester:hover { background: #fee2e2; }
+
+    .contestation-form { margin-top: 12px; display: none; }
+    .contestation-form textarea { width: 100%; padding: 10px 14px; border: 1.5px solid #fecaca; border-radius: 8px; font-size: 13px; font-family: inherit; outline: none; resize: vertical; }
+    .contestation-form textarea:focus { border-color: #ef4444; }
+    .btn-send-contest { margin-top: 8px; padding: 9px 20px; background: #ef4444; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
+
     /* === CANDIDATURES === */
     .candidatures-section { margin-bottom: 24px; }
     .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
@@ -207,6 +246,14 @@
       🛡️ <strong>Rappel légal :</strong> Vérifiez que votre <strong>assurance accidents du travail</strong> couvre les travailleurs flexi avant chaque mission. Effectuez la <strong>déclaration Dimona FLX</strong> avant chaque prestation sur <a href="https://www.socialsecurity.be" target="_blank" style="color:#92400e;">socialsecurity.be</a>.
     </div>
 
+    <!-- DÉCLARATIONS D'HEURES À VALIDER -->
+    <div class="candidatures-section" id="declarationsSection" style="display:none;">
+      <div class="section-header">
+        <h2>⏱️ Déclarations d'heures à valider <span class="badge-count" id="declCount">0</span></h2>
+      </div>
+      <div id="declarationsList"></div>
+    </div>
+
     <!-- CANDIDATURES REÇUES -->
     <div class="candidatures-section">
       <div class="section-header">
@@ -309,7 +356,8 @@
         <strong>• Statut d'éligibilité</strong> (salarié 4/5, pensionné ou indépendant)<br>
         <strong>• Document de preuve</strong> (contrat, fiche de paie ou attestation pension)<br>
         <strong>• Coordonnées bancaires IBAN</strong> (pour le paiement)<br><br>
-        Dès que le dossier est complet, vous pourrez voir la fiche DIMONA pré-remplie depuis vos candidatures.
+        Dès que le dossier est complet, vous pourrez voir la fiche DIMONA pré-remplie depuis vos candidatures.<br><br>
+        Après la journée de travail, le travailleur recevra un lien pour <strong>déclarer ses heures réelles</strong>. Vous pourrez les valider ou les contester depuis votre tableau de bord.
       </div>
       <div class="modal-footer">
         <button class="btn-copy" style="background:#6366f1;" onclick="closeComplianceModal()">Compris →</button>
@@ -441,6 +489,8 @@
 
     // Candidatures reçues
     await loadCandidatures();
+    // Déclarations d'heures
+    await loadDeclarations();
   }
 
   /* ===== CANDIDATURES ===== */
@@ -501,6 +551,10 @@
         }
       }
 
+      const jourJBtn = c.compliance_complete
+        ? `<a href="dossier-jour-j.html?cid=${c.id}" target="_blank" style="padding:9px 16px;background:#6366f1;color:#fff;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;display:inline-block;">📁 Dossier Jour J</a>`
+        : `<span style="font-size:12px;color:#f59e0b;font-weight:600;">⏳ En attente compliance</span>`;
+
       const actions = isPending ? `
         <div class="cand-actions">
           <button class="btn-accept" onclick="accepterCandidature('${c.id}', '${c.type_contrat}')">✅ Accepter</button>
@@ -511,6 +565,7 @@
             ? `<button class="btn-dimona" onclick="showDimonaFiche('${c.id}')">📋 Voir fiche DIMONA</button>`
             : `<button class="btn-compliance" onclick="showComplianceInfo('${c.id}')">📁 Dossier de conformité</button>`
           }
+          ${jourJBtn}
         </div>` : '';
 
       return `
@@ -645,6 +700,180 @@ Type : FLX`;
       btn.textContent = '✅ Copié !';
       setTimeout(() => { btn.textContent = '📋 Copier les données'; }, 2000);
     });
+  }
+
+  /* ===== DECLARATIONS D'HEURES ===== */
+
+  async function loadDeclarations() {
+    const missionIds = myMissionsList.map(m => m.id).filter(Boolean);
+    let decls = [];
+
+    if (missionIds.length > 0) {
+      const { data } = await sb.from('declarations_heures')
+        .select('*').in('mission_id', missionIds).order('created_at', { ascending: false });
+      decls = data || [];
+    }
+
+    // Aussi par email employeur
+    if (decls.length === 0 && currentUser?.email) {
+      const { data } = await sb.from('declarations_heures')
+        .select('*').eq('employer_email', currentUser.email).order('created_at', { ascending: false });
+      decls = data || [];
+    }
+
+    const pending = decls.filter(d => d.statut === 'en_attente');
+    document.getElementById('declCount').textContent = pending.length;
+
+    if (decls.length > 0) {
+      document.getElementById('declarationsSection').style.display = 'block';
+      renderDeclarations(decls);
+    }
+  }
+
+  function renderDeclarations(decls) {
+    const el = document.getElementById('declarationsList');
+    el.innerHTML = decls.map(d => {
+      const mission = myMissionsList.find(m => m.id === d.mission_id);
+      const isPending = d.statut === 'en_attente';
+
+      // Calcul diff
+      let diffHtml = '';
+      if (d.heures_prevues && d.heures_reelles) {
+        const delta = d.heures_reelles - d.heures_prevues;
+        if (Math.abs(delta) < 0.05) {
+          diffHtml = `<span class="diff-pill diff-ok">✓ Conforme</span>`;
+        } else if (delta > 0) {
+          diffHtml = `<span class="diff-pill diff-warn">+${fmtH(Math.abs(delta))} de plus</span>`;
+        } else {
+          diffHtml = `<span class="diff-pill diff-over">-${fmtH(Math.abs(delta))} de moins</span>`;
+        }
+      }
+
+      const statusBadge = d.statut === 'validee'
+        ? '<span class="cand-type-badge badge-acceptee">✅ Validée</span>'
+        : d.statut === 'contestee'
+        ? '<span class="cand-type-badge badge-refusee">❌ Contestée</span>'
+        : '<span class="cand-type-badge badge-test">⏳ En attente</span>';
+
+      const dateLabel = d.date_prestation
+        ? new Date(d.date_prestation).toLocaleDateString('fr-BE', { weekday:'long', day:'numeric', month:'long' })
+        : '—';
+
+      const brut = (d.heures_reelles || 0) * (d.taux_horaire || 0);
+
+      return `
+        <div class="decl-card ${d.statut}" id="decl-${d.id}">
+          <div class="decl-top">
+            <div>
+              <div class="decl-worker">👤 ${d.worker_nom || d.worker_email}</div>
+              ${mission ? `<div class="decl-mission">📌 ${mission.titre}</div>` : ''}
+              <div style="font-size:12px;color:#64748b;margin-top:3px;">📅 ${dateLabel}</div>
+            </div>
+            ${statusBadge}
+          </div>
+
+          <div class="heures-compare">
+            <div class="heure-box prevu">
+              <div class="hb-label">Prévu (contrat/DIMONA)</div>
+              <div class="hb-val">${fmtH(d.heures_prevues || 0)}</div>
+              <div class="hb-sub">${d.heure_debut_prevue ? d.heure_debut_prevue.slice(0,5) : '—'} → ${d.heure_fin_prevue ? d.heure_fin_prevue.slice(0,5) : '—'}</div>
+            </div>
+            <div class="heure-box reel">
+              <div class="hb-label">Déclaré par le travailleur ${diffHtml}</div>
+              <div class="hb-val">${fmtH(d.heures_reelles || 0)}</div>
+              <div class="hb-sub">${d.heure_debut_reelle ? d.heure_debut_reelle.slice(0,5) : '—'} → ${d.heure_fin_reelle ? d.heure_fin_reelle.slice(0,5) : '—'}</div>
+            </div>
+          </div>
+
+          <div style="font-size:13px;color:#64748b;margin-bottom:12px;">
+            💰 Salaire brut : <strong style="color:#1e293b;">${fmtMoney(brut)} €</strong>
+            ${d.taux_horaire ? `<span style="margin-left:8px;">· ${fmtMoney(d.taux_horaire)} €/h</span>` : ''}
+          </div>
+
+          ${d.commentaire_travailleur ? `<div class="decl-comment">💬 "${d.commentaire_travailleur}"</div>` : ''}
+
+          ${isPending ? `
+          <div class="decl-actions">
+            <button class="btn-valider-h" onclick="validerDeclaration('${d.id}')">✅ Valider les heures</button>
+            <button class="btn-contester" onclick="toggleContest('${d.id}')">⚠️ Contester</button>
+          </div>
+          <div class="contestation-form" id="contest-${d.id}">
+            <textarea rows="2" placeholder="Expliquez le problème (ex: le travailleur a terminé à 14h30 et non 16h00)..." id="motif-${d.id}"></textarea>
+            <button class="btn-send-contest" onclick="envoyerContestation('${d.id}', '${d.worker_email}')">Envoyer la contestation →</button>
+          </div>` : d.statut === 'contestee' && d.motif_contestation ? `
+          <div class="decl-comment" style="border-left-color:#ef4444;background:#fff5f5;">
+            ❌ Motif de contestation : "${d.motif_contestation}"
+          </div>` : ''}
+        </div>`;
+    }).join('');
+  }
+
+  async function validerDeclaration(id) {
+    const { data: d } = await sb.from('declarations_heures').select('*').eq('id', id).single();
+    await sb.from('declarations_heures').update({
+      statut: 'validee',
+      heures_validees: d.heures_reelles,
+      updated_at: new Date().toISOString()
+    }).eq('id', id);
+
+    // Notifier le travailleur par email
+    if (d.worker_email) {
+      try {
+        await emailjs.send(EJS_SERVICE_ID, EJS_TPL_WORKER, {
+          to_email:    d.worker_email,
+          prenom:      d.worker_nom?.split(' ')[0] || 'Travailleur',
+          to_name:     d.worker_nom || d.worker_email,
+          eligible:    `✅ Vos heures ont été validées par l'employeur.`,
+          competences: `Durée validée : ${fmtH(d.heures_reelles)} · Salaire net : ${fmtMoney((d.heures_reelles || 0) * (d.taux_horaire || 0))} €`,
+          reply_to:    'contact.flexmoney@gmail.com'
+        });
+      } catch(e) { console.warn('Email:', e); }
+    }
+    await loadDeclarations();
+  }
+
+  function toggleContest(id) {
+    const form = document.getElementById(`contest-${id}`);
+    form.style.display = form.style.display === 'none' || !form.style.display ? 'block' : 'none';
+  }
+
+  async function envoyerContestation(id, workerEmail) {
+    const motif = document.getElementById(`motif-${id}`).value.trim();
+    if (!motif) { alert('Veuillez indiquer le motif de la contestation.'); return; }
+
+    await sb.from('declarations_heures').update({
+      statut: 'contestee',
+      motif_contestation: motif,
+      updated_at: new Date().toISOString()
+    }).eq('id', id);
+
+    // Notifier le travailleur
+    if (workerEmail) {
+      try {
+        await emailjs.send(EJS_SERVICE_ID, EJS_TPL_WORKER, {
+          to_email:    workerEmail,
+          prenom:      'Travailleur',
+          to_name:     workerEmail,
+          eligible:    `⚠️ Vos heures ont été contestées par l'employeur.`,
+          competences: `Motif : ${motif}. Contactez votre employeur pour résoudre le différend.`,
+          reply_to:    'contact.flexmoney@gmail.com'
+        });
+      } catch(e) { console.warn('Email:', e); }
+    }
+    await loadDeclarations();
+  }
+
+  /* ===== Utils ===== */
+  function fmtH(h) {
+    if (!h && h !== 0) return '—';
+    const abs = Math.abs(h);
+    const hh = Math.floor(abs);
+    const mm = Math.round((abs - hh) * 60);
+    return `${hh}h${mm > 0 ? mm.toString().padStart(2,'0') : '00'}`;
+  }
+
+  function fmtMoney(n) {
+    return (n || 0).toLocaleString('fr-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
   function contactWorker(name) {

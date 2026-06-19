@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dossier de conformité — FlexMoney</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -330,6 +331,11 @@
   const { createClient } = supabase;
   const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+  const EJS_PUBLIC_KEY = 'YAyl_sI2uC4Q2YCCF';
+  const EJS_SERVICE_ID = 'service_2749nt8';
+  const EJS_TPL_WORKER = 'template_0hbqgjd';
+  emailjs.init(EJS_PUBLIC_KEY);
+
   let currentStep = 1;
   let selectedStatut = null;
   let selectedFile = null;
@@ -580,6 +586,27 @@
           compliance_complete: true,
           updated_at: new Date().toISOString()
         }).eq('id', candidatureId);
+      }
+
+      // 4. Email Jour J à l'employeur avec lien vers le dossier complet
+      const employeurEmail = missionData?.email_employeur;
+      if (employeurEmail && candidatureId) {
+        const BASE_URL = 'https://flexmoney.vercel.app';
+        const lienDossier = `${BASE_URL}/dossier-jour-j.html?cid=${candidatureId}`;
+        const workerName = `${document.getElementById('f-prenom').value} ${document.getElementById('f-nom').value}`.trim();
+        const typeLabel = candidatureData?.type_contrat === 'test_jour'
+          ? '🧪 Journée de test (contrat oral journalier)'
+          : '📋 Mission récurrente (contrat trimestriel)';
+        try {
+          await emailjs.send(EJS_SERVICE_ID, EJS_TPL_WORKER, {
+            to_email:    employeurEmail,
+            prenom:      missionData?.nom_entreprise || 'Employeur',
+            subject:     `📁 Dossier Jour J prêt — ${workerName}`,
+            message:     `Le dossier de conformité DIMONA de ${workerName} est complet et validé.\n\nType de mission : ${typeLabel}\n\nVotre dossier Jour J contient :\n✅ Contrat cadre flexi-job pré-rempli\n${candidatureData?.type_contrat === 'trimestriel' ? '✅ Contrat de travail trimestriel\n' : ''}✅ Fiche DIMONA FLX pré-remplie (à soumettre AVANT le début du shift)\n\n👉 Accédez à votre dossier ici :\n${lienDossier}\n\nIMPORTANT : Soumettez la DIMONA sur socialsecurity.be AVANT que le travailleur commence. En cas de réponse NOK, la prestation est interdite.\n\n— FlexMoney`
+          });
+        } catch(emailErr) {
+          console.warn('Email Jour J non envoyé :', emailErr);
+        }
       }
 
     } catch(e) {
