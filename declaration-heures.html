@@ -139,15 +139,23 @@
         <span class="v" id="calcDuree">— <span id="diffBadge"></span></span>
       </div>
       <div class="calc-row">
-        <span class="k">Taux horaire</span>
+        <span class="k">Taux horaire flexi</span>
         <span class="v" id="calcTaux">— €/h</span>
       </div>
       <div class="calc-row">
-        <span class="k">Salaire brut flexi</span>
+        <span class="k">Salaire flexi (heures × taux)</span>
         <span class="v" id="calcBrut">— €</span>
       </div>
-      <div class="calc-net" id="calcNet">
-        💚 Vous recevrez <strong id="calcNetVal">—</strong> net (brut = net pour les flexi-jobs)
+      <div class="calc-row" style="color:#64748b;font-size:12px;">
+        <span class="k">+ Pécule de vacances (7,67%)</span>
+        <span class="v" id="calcPecule">— €</span>
+      </div>
+      <div class="calc-row" style="border-top:1px solid #e2e8f0;padding-top:8px;margin-top:4px;">
+        <span class="k" style="font-weight:700;">Total que vous recevrez</span>
+        <span class="v" style="font-weight:800;font-size:15px;" id="calcNetVal">— €</span>
+      </div>
+      <div class="calc-net" id="calcNet" style="margin-top:10px;font-size:12px;">
+        💚 <strong>Brut = Net</strong> pour les flexi-jobs (aucune retenue sociale ni fiscale jusqu'à 18 440 €/an)
       </div>
     </div>
 
@@ -296,6 +304,13 @@
     updateCalc();
   }
 
+  // Constantes légales flexi-job (loi du 12 mai 2026)
+  const TAUX_MIN_HORAIRE = 11.87;  // €/h minimum depuis 01/03/2026 (hors pécule)
+  const TAUX_MIN_TOTAL   = 12.78;  // €/h avec pécule de vacances inclus
+  const PECULE_PCT       = 0.0767; // 7,67% de pécule de vacances
+  const COTIS_PATRONALE  = 0.28;   // 28% sur (salaire + pécule)
+  const PLAFOND_FISCAL   = 18440;  // € annuel 2026
+
   function updateCalc() {
     const hdeb = document.getElementById('heureDebutReelle').value;
     const hfin = document.getElementById('heureFinReelle').value;
@@ -307,7 +322,9 @@
       return;
     }
 
-    const brut = heures * tauxHoraire;
+    const salaire     = heures * tauxHoraire;
+    const pecule      = salaire * PECULE_PCT;
+    const totalWorker = salaire + pecule;
 
     // Badge diff vs prévu
     const prevDebut = document.getElementById('prevDebut').textContent;
@@ -326,8 +343,25 @@
     }
 
     document.getElementById('calcDuree').innerHTML = `<strong>${formatH(heures)}</strong> ${diffHtml}`;
-    document.getElementById('calcBrut').textContent = fmt(brut) + ' €';
-    document.getElementById('calcNetVal').textContent = fmt(brut) + ' €';
+    document.getElementById('calcBrut').textContent  = fmt(salaire) + ' €';
+    document.getElementById('calcPecule').textContent = fmt(pecule) + ' €';
+    document.getElementById('calcNetVal').textContent  = fmt(totalWorker) + ' €';
+
+    // Alerte si taux < minimum légal
+    const calcCard = document.querySelector('.calc-card');
+    const existingAlert = document.getElementById('tauxMinAlert');
+    if (tauxHoraire > 0 && tauxHoraire < TAUX_MIN_HORAIRE) {
+      if (!existingAlert) {
+        const alert = document.createElement('div');
+        alert.id = 'tauxMinAlert';
+        alert.className = 'info-box';
+        alert.style.cssText = 'background:#fff5f5;border-color:#fecaca;color:#b91c1c;margin-top:10px;font-size:12px;';
+        alert.innerHTML = `⚠️ Le taux de ${fmt(tauxHoraire)} €/h est inférieur au <strong>minimum légal de ${TAUX_MIN_HORAIRE} €/h</strong> (depuis le 01/03/2026).`;
+        calcCard.appendChild(alert);
+      }
+    } else if (existingAlert) {
+      existingAlert.remove();
+    }
   }
 
   async function submitDeclaration() {
@@ -343,9 +377,13 @@
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span>Envoi en cours...';
 
-    const brut = heures * tauxHoraire;
-    const cotisationsPatronales = brut * 0.25; // estimation
-    const coutTotal = brut + cotisationsPatronales;
+    // Calcul légal flexi-job
+    const salaire          = heures * tauxHoraire;
+    const pecule           = salaire * PECULE_PCT;          // 7,67%
+    const brut             = salaire;                        // alias pour compatibilité
+    const totalTravailleur = salaire + pecule;               // ce que reçoit le travailleur
+    const cotisationsPatronales = totalTravailleur * COTIS_PATRONALE; // 28% sur (salaire + pécule)
+    const coutTotal        = totalTravailleur + cotisationsPatronales; // coût réel pour l'employeur
     const workerName = `${candidatureData?.worker_prenom || ''} ${candidatureData?.worker_nom || ''}`.trim()
       || candidatureData?.worker_email || 'Travailleur';
 
@@ -416,26 +454,29 @@
           bce:        missionData.titre || '—',
           secteur: `${isResubmit ? '🔄 HEURES CORRIGÉES après contestation\n\n' : ''}` +
             `📋 RÉCAPITULATIF DES HEURES PRESTÉES\n` +
-            `━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
             `Travailleur : ${workerName}\n` +
             `Mission     : ${missionData.titre || '—'}\n` +
             `Date        : ${dateLabel}\n\n` +
             `⏰ HEURES DÉCLARÉES\n` +
             `Début : ${hdeb}  ·  Fin : ${hfin}\n` +
-            `Total : ${formatH(heures)}\n` +
+            `Durée totale : ${formatH(heures)}\n` +
             `${diffNote ? diffNote + '\n' : ''}` +
             `${commentaire ? `\n💬 Commentaire travailleur : "${commentaire}"\n` : ''}` +
-            `\n💰 CALCUL DU COÛT\n` +
-            `Taux horaire           : ${fmt(tauxHoraire)} €/h\n` +
-            `Salaire brut flexi     : ${fmt(brut)} €\n` +
-            `Cot. patronale (~25%)  : ${fmt(cotisationsPatronales)} €\n` +
-            `Coût total estimé      : ${fmt(coutTotal)} €\n` +
-            `(Le travailleur reçoit ${fmt(brut)} € net — brut = net en flexi-job)\n` +
-            `\n✅ ACCEPTATION AUTOMATIQUE\n` +
-            `Ces heures sont considérées comme acceptées dans les 48h.\n` +
-            `Vous pouvez transmettre ce récapitulatif à votre secrétariat social.\n` +
-            `\n❌ Vous n'êtes pas d'accord ?\n` +
-            `Accédez à votre portail employeur pour contester :\n` +
+            `\n💰 CALCUL DU COÛT (conforme loi flexi-job)\n` +
+            `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `Taux horaire flexi            : ${fmt(tauxHoraire)} €/h\n` +
+            `Salaire flexi (${formatH(heures)})       : ${fmt(salaire)} €\n` +
+            `+ Pécule de vacances (7,67%)  : ${fmt(pecule)} €\n` +
+            `                               ──────────\n` +
+            `Total dû au travailleur       : ${fmt(totalTravailleur)} € (brut = net)\n` +
+            `\n+ Cotisation patronale (28%)  : ${fmt(cotisationsPatronales)} €\n` +
+            `                               ──────────\n` +
+            `COÛT TOTAL EMPLOYEUR          : ${fmt(coutTotal)} €\n` +
+            `\n→ Ce récapitulatif peut être transmis à votre secrétariat social.\n` +
+            `\n✅ ACCEPTATION AUTOMATIQUE SOUS 48H\n` +
+            `Ces heures sont considérées comme acceptées sauf contestation de votre part.\n` +
+            `\n❌ Pas d'accord ? Contestez via votre portail :\n` +
             portailUrl,
           dimona_url: portailUrl,
           reply_to:   'contact.flexmoney@gmail.com'
@@ -445,7 +486,7 @@
 
     // Afficher succès
     document.getElementById('successHeures').textContent = formatH(heures);
-    document.getElementById('successSalaire').textContent = fmt(brut) + ' €';
+    document.getElementById('successSalaire').textContent = fmt(totalTravailleur) + ' €';
     if (resubmitDeclId) {
       document.getElementById('successTitle').textContent = '🔄 Déclaration corrigée envoyée !';
     }

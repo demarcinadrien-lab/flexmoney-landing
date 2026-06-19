@@ -319,8 +319,11 @@
       <p>Fonction exercée : <span class="fv">${mission?.fonction || mission?.titre || miss()}</span><br>
       Description : <span class="fv">${mission?.description || miss()}</span><br>
       Lieu d'exécution : <span class="fv">${mission?.lieu === 'remote' ? 'Télétravail (domicile du travailleur)' : mission?.adresse_lieu || 'À définir'}</span><br>
-      Taux horaire brut : <span class="fv">${mission?.taux_horaire ? fmt(mission.taux_horaire) + ' €/heure' : miss()}</span><br>
-      Salaire net = salaire brut (exonération fiscale flexi-job jusqu'à 18 000 €/an)</p>
+      Taux horaire flexi : <span class="fv">${mission?.taux_horaire ? fmt(mission.taux_horaire) + ' €/heure' : miss()}</span>
+        ${mission?.taux_horaire && parseFloat(mission.taux_horaire) < TAUX_MIN ? `<span style="color:#ef4444;font-size:11px;"> ⚠️ Inférieur au minimum légal de ${TAUX_MIN} €/h</span>` : ''}<br>
+      + Pécule de vacances 7,67% payé avec le salaire<br>
+      <strong>Brut = Net pour le travailleur</strong> (exonération de cotisations personnelles et d'impôts jusqu'à 18 440 €/an en 2026)<br>
+      Cotisation patronale : 28% sur (salaire + pécule de vacances)</p>
 
       <h2>Article 4 — Obligations de l'employeur</h2>
       <p>L'employeur s'engage à :</p>
@@ -364,8 +367,8 @@
     const { dossier, mission, employer } = D;
     const dateDebut = mission?.date_debut ? new Date(mission.date_debut).toLocaleDateString('fr-BE') : '___________';
     const dateFin = mission?.date_fin ? new Date(mission.date_fin).toLocaleDateString('fr-BE') : 'fin du trimestre';
-    const heures = mission?.heures_prestees || '___';
-    const brut = (mission?.heures_prestees || 0) * (mission?.taux_horaire || 0);
+    const heures = mission?.heures_prestees || 0;
+    const calc = heures && mission?.taux_horaire ? calcFlexi(heures, parseFloat(mission.taux_horaire)) : null;
 
     return `
       <h1>Contrat de Travail Flexi-Job</h1>
@@ -387,10 +390,16 @@
       Description des tâches : <span class="fv">${mission?.description || miss()}</span></p>
 
       <h2>Article 4 — Durée du travail et rémunération</h2>
-      <p>Heures prévues : <span class="fv">${heures}h</span> sur la période<br>
-      Taux horaire brut flexi : <span class="fv">${fmt(mission?.taux_horaire || 0)} €/heure</span><br>
-      Salaire brut total estimé : <span class="fv">${fmt(brut)} €</span><br>
-      <strong>Net à payer = Brut</strong> (exonération totale d'impôt et de cotisations personnelles flexi)</p>
+      <p>Heures prévues : <span class="fv">${heures ? heures + 'h' : '— à définir'}</span> sur la période<br>
+      Taux horaire flexi : <span class="fv">${fmt(mission?.taux_horaire || 0)} €/heure</span><br>
+      ${calc ? `
+      Salaire flexi (${heures}h × ${fmt(mission.taux_horaire)} €) : <span class="fv">${fmt(calc.salaire)} €</span><br>
+      + Pécule de vacances (7,67%) : <span class="fv">${fmt(calc.pecule)} €</span><br>
+      <strong>Total dû au travailleur : <span class="fv">${fmt(calc.totalWorker)} €</span></strong> (brut = net, aucune retenue)<br>
+      Cotisation patronale (28%) : <span class="fv">${fmt(calc.cotisations)} €</span><br>
+      <strong>Coût total employeur : <span class="fv">${fmt(calc.coutTotal)} €</span></strong>` : `
+      Salaire estimé : à calculer selon les heures réelles prestées`}<br>
+      </p>
       <p>Un enregistrement journalier des heures de présence sera effectué conformément à la législation (art. 10 loi flexi-job). Le travailleur déclare ses heures réelles via la plateforme FlexMoney en fin de journée.</p>
 
       <h2>Article 5 — DIMONA</h2>
@@ -512,6 +521,20 @@
     </head><body>${section.querySelector('.doc-body').innerHTML}</body></html>`);
     win.document.close();
     win.print();
+  }
+
+  /* ===== CONSTANTES LÉGALES (loi flexi-job, mai 2026) ===== */
+  const TAUX_MIN   = 11.87;   // €/h minimum depuis 01/03/2026
+  const PECULE_PCT = 0.0767;  // 7,67% pécule de vacances
+  const COTIS_PAT  = 0.28;    // 28% cotisation patronale sur (salaire + pécule)
+
+  function calcFlexi(heures, tauxHoraire) {
+    const salaire      = heures * tauxHoraire;
+    const pecule       = salaire * PECULE_PCT;
+    const totalWorker  = salaire + pecule;
+    const cotisations  = totalWorker * COTIS_PAT;
+    const coutTotal    = totalWorker + cotisations;
+    return { salaire, pecule, totalWorker, cotisations, coutTotal };
   }
 
   /* ===== UTILS ===== */
