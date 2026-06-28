@@ -126,6 +126,43 @@
 
     .hero-note { font-size: 0.82rem; color: var(--muted); }
 
+    /* ── ADVANTAGES PANEL ── */
+    .adv-panel {
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: max-height 0.4s ease, opacity 0.35s ease, transform 0.35s ease;
+      transform: translateY(-6px);
+      margin-bottom: 0;
+    }
+    .adv-panel.visible {
+      max-height: 140px;
+      opacity: 1;
+      transform: translateY(0);
+      margin-bottom: 20px;
+    }
+    .adv-inner {
+      display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+      padding: 16px 0 4px;
+    }
+    .adv-pill {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 100px;
+      padding: 8px 16px;
+      font-size: 0.82rem; color: var(--text);
+      animation: pillIn 0.3s ease both;
+    }
+    .adv-pill:nth-child(2) { animation-delay: 0.05s; }
+    .adv-pill:nth-child(3) { animation-delay: 0.1s; }
+    .adv-pill .adv-icon { font-size: 1rem; }
+    .adv-pill strong { color: var(--accent); }
+    @keyframes pillIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
     /* ── STATS ── */
     .stats {
       display: flex; gap: 48px; flex-wrap: wrap;
@@ -322,11 +359,68 @@
     Basée sur tes <strong style="color:var(--text)">compétences</strong> — pas sur ton CV.
   </p>
   <div class="cta-group">
-    <a href="inscription-travailleur.html" class="btn-primary">Je suis travailleur →</a>
-    <a href="inscription-employeur.html" class="btn-secondary">Je recrute en flexi</a>
+    <a href="inscription-travailleur.html" class="btn-primary"
+       onmouseenter="showAdv('worker')" onmouseleave="hideAdv()"
+       ontouchstart="toggleAdv('worker')">Je suis travailleur →</a>
+    <a href="inscription-employeur.html" class="btn-secondary"
+       onmouseenter="showAdv('employer')" onmouseleave="hideAdv()"
+       ontouchstart="toggleAdv('employer')">Je recrute en flexi</a>
   </div>
+
+  <!-- Panneau avantages contextuel -->
+  <div class="adv-panel" id="advPanel">
+    <!-- Travailleur -->
+    <div class="adv-inner" id="advWorker" style="display:none;">
+      <div class="adv-pill"><span class="adv-icon">💶</span> <strong>Brut&nbsp;=&nbsp;Net</strong>&nbsp;— aucune cotisation à payer</div>
+      <div class="adv-pill"><span class="adv-icon">🕐</span> Tu choisis&nbsp;<strong>tes horaires</strong></div>
+      <div class="adv-pill"><span class="adv-icon">🔒</span> Droits sociaux&nbsp;<strong>maintenus</strong></div>
+    </div>
+    <!-- Employeur -->
+    <div class="adv-inner" id="advEmployer" style="display:none;">
+      <div class="adv-pill"><span class="adv-icon">💰</span> Charges&nbsp;<strong>réduites</strong>&nbsp;vs contrat classique</div>
+      <div class="adv-pill"><span class="adv-icon">⚡</span> DIMONA &amp; contrat&nbsp;<strong>automatiques</strong></div>
+      <div class="adv-pill"><span class="adv-icon">🎯</span> Profils&nbsp;<strong>déjà actifs</strong>&nbsp;et qualifiés</div>
+    </div>
+  </div>
+
   <p class="hero-note">Rejoins la liste d'attente · Gratuit · Sans engagement</p>
 </section>
+
+<script>
+  let advTimeout;
+  let lastProfile = null;
+
+  function showAdv(profile) {
+    clearTimeout(advTimeout);
+    const panel = document.getElementById('advPanel');
+    const workerEl   = document.getElementById('advWorker');
+    const employerEl = document.getElementById('advEmployer');
+
+    if (profile === 'worker') {
+      workerEl.style.display   = 'flex';
+      employerEl.style.display = 'none';
+    } else {
+      workerEl.style.display   = 'none';
+      employerEl.style.display = 'flex';
+    }
+    panel.classList.add('visible');
+    lastProfile = profile;
+  }
+
+  function hideAdv() {
+    advTimeout = setTimeout(() => {
+      document.getElementById('advPanel').classList.remove('visible');
+    }, 200);
+  }
+
+  function toggleAdv(profile) {
+    if (lastProfile === profile && document.getElementById('advPanel').classList.contains('visible')) {
+      hideAdv();
+    } else {
+      showAdv(profile);
+    }
+  }
+</script>
 
 <!-- STATS -->
 <div class="stats">
