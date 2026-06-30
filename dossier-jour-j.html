@@ -319,8 +319,9 @@
       <p>Fonction exercée : <span class="fv">${mission?.fonction || mission?.titre || miss()}</span><br>
       Description : <span class="fv">${mission?.description || miss()}</span><br>
       Lieu d'exécution : <span class="fv">${mission?.lieu === 'remote' ? 'Télétravail (domicile du travailleur)' : mission?.adresse_lieu || 'À définir'}</span><br>
-      Taux horaire flexi : <span class="fv">${mission?.taux_horaire ? fmt(mission.taux_horaire) + ' €/heure' : miss()}</span>
-        ${mission?.taux_horaire && parseFloat(mission.taux_horaire) < TAUX_MIN ? `<span style="color:#ef4444;font-size:11px;"> ⚠️ Inférieur au minimum légal de ${TAUX_MIN} €/h</span>` : ''}<br>
+      Taux horaire flexi (salaire de base) : <span class="fv">${mission?.taux_horaire ? fmt(mission.taux_horaire) + ' €/heure' : miss()}</span>
+        ${mission?.taux_horaire && parseFloat(mission.taux_horaire) < TAUX_MIN ? `<span style="color:#ef4444;font-size:11px;"> ⚠️ Inférieur au minimum légal de ${TAUX_MIN} €/h</span>` : ''}
+        ${mission?.taux_horaire && parseFloat(mission.taux_horaire) > TAUX_MAX_BASE ? `<span style="color:#f59e0b;font-size:11px;"> ⚠️ Dépasse ${fmt(TAUX_MAX_BASE)} €/h (150% du RMMMG) — vérifiez le barème de votre CP</span>` : ''}<br>
       + Pécule de vacances 7,67% payé avec le salaire<br>
       <strong>Brut = Net pour le travailleur</strong> (exonération de cotisations personnelles et d'impôts jusqu'à 18 440 €/an en 2026)<br>
       Cotisation patronale : 28% sur (salaire + pécule de vacances)</p>
@@ -524,9 +525,10 @@
   }
 
   /* ===== CONSTANTES LÉGALES (loi flexi-job, mai 2026) ===== */
-  const TAUX_MIN   = 11.87;   // €/h minimum depuis 01/03/2026
-  const PECULE_PCT = 0.0767;  // 7,67% pécule de vacances
-  const COTIS_PAT  = 0.28;    // 28% cotisation patronale sur (salaire + pécule)
+  const TAUX_MIN      = 11.87;        // €/h minimum depuis 01/03/2026
+  const TAUX_MAX_BASE = 11.87 * 1.5; // 150% du RMMMG = plafond du salaire de BASE (loi 12/05/2026)
+  const PECULE_PCT    = 0.0767;       // 7,67% pécule de vacances
+  const COTIS_PAT     = 0.28;         // 28% cotisation patronale sur (salaire + pécule)
 
   function calcFlexi(heures, tauxHoraire) {
     const salaire      = heures * tauxHoraire;

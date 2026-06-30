@@ -188,7 +188,7 @@
         <div class="form-group">
           <label>Taux horaire brut flexi (€/h) *</label>
           <input type="number" id="taux" value="22" min="12" max="50" step="0.5" oninput="updateCalc()">
-          <small>Minimum légal : ~12€/h. Recommandé : 18-28€/h selon le profil.</small>
+          <small>Minimum légal : <strong>11,87 €/h</strong> (depuis 01/03/2026). Le <em>salaire de base</em> ne peut dépasser 150% du barème sectoriel (voir votre CP).</small>
         </div>
         <div class="form-group">
           <label>Commission FlexMoney</label>
@@ -197,11 +197,14 @@
       </div>
 
       <div class="salary-preview" id="salaryPreview">
-        <div class="salary-row"><span>Salaire brut flexi</span><span id="prevBrut">—</span></div>
-        <div class="salary-row"><span>ONSS employeur (25%)</span><span id="prevONSS">—</span></div>
-        <div class="salary-row"><span>Commission FlexMoney (5%)</span><span id="prevComm">—</span></div>
-        <div class="salary-row"><span>💡 Coût total pour vous</span><span id="prevTotal">—</span></div>
+        <div class="salary-row"><span>Salaire flexi (h × taux)</span><span id="prevBrut">—</span></div>
+        <div class="salary-row"><span>+ Pécule de vacances (7,67%)</span><span id="prevPecule">—</span></div>
+        <div class="salary-row" style="font-weight:600;border-top:1px solid #e2e8f0;padding-top:6px;margin-top:2px;"><span>= Dû au travailleur (brut = net)</span><span id="prevWorker">—</span></div>
+        <div class="salary-row"><span>+ Cotisation ONSS employeur (28%)</span><span id="prevONSS">—</span></div>
+        <div class="salary-row"><span>+ Commission FlexMoney (5%)</span><span id="prevComm">—</span></div>
+        <div class="salary-row" style="font-weight:700;border-top:1px solid #cbd5e1;padding-top:6px;margin-top:2px;"><span>💡 Coût total pour vous</span><span id="prevTotal">—</span></div>
       </div>
+      <div id="tauxMaxAlert" style="display:none;margin-top:8px;padding:8px 12px;background:#fefce8;border:1px solid #fbbf24;border-radius:8px;font-size:12px;color:#92400e;"></div>
 
       <div class="alert alert-warning" style="margin-top:16px;">
         🛡️ <strong>Obligation légale :</strong> Vérifiez que votre <strong>assurance accidents du travail</strong> couvre bien les travailleurs flexi-job pour la durée de cette mission avant de la publier.
@@ -319,17 +322,33 @@
     document.getElementById('adresseGroup').classList.toggle('hidden', mode === 'remote');
   }
 
+  const TAUX_MIN_LEGAL  = 11.87;           // €/h depuis 01/03/2026
+  const TAUX_MAX_BASE   = 11.87 * 1.5;    // 150% du RMMMG = 17,81 €/h (cap sur salaire de BASE)
+
   function updateCalc() {
     const h = parseFloat(document.getElementById('heures').value) || 0;
     const t = parseFloat(document.getElementById('taux').value) || 0;
-    const brut = h * t;
-    const onss = brut * 0.25;
-    const comm = brut * 0.05;
-    const total = brut + onss + comm;
-    document.getElementById('prevBrut').textContent = fmt(brut) + ' €';
-    document.getElementById('prevONSS').textContent = fmt(onss) + ' €';
-    document.getElementById('prevComm').textContent = fmt(comm) + ' €';
-    document.getElementById('prevTotal').textContent = fmt(total) + ' €';
+    const salaire    = h * t;
+    const pecule     = salaire * 0.0767;
+    const totalWorker = salaire + pecule;
+    const onss       = totalWorker * 0.28;
+    const comm       = salaire * 0.05;
+    const total      = totalWorker + onss + comm;
+    document.getElementById('prevBrut').textContent   = fmt(salaire) + ' €';
+    document.getElementById('prevPecule').textContent = fmt(pecule) + ' €';
+    document.getElementById('prevWorker').textContent = fmt(totalWorker) + ' €';
+    document.getElementById('prevONSS').textContent   = fmt(onss) + ' €';
+    document.getElementById('prevComm').textContent   = fmt(comm) + ' €';
+    document.getElementById('prevTotal').textContent  = fmt(total) + ' €';
+
+    // Avertissement si taux dépasse 150% du RMMMG (plafond salaire de base loi 12/05/2026)
+    const alertEl = document.getElementById('tauxMaxAlert');
+    if (t > 0 && t > TAUX_MAX_BASE) {
+      alertEl.style.display = 'block';
+      alertEl.innerHTML = `⚠️ Le taux de ${fmt(t)} €/h dépasse <strong>${fmt(TAUX_MAX_BASE)} €/h</strong> (150% du RMMMG). Le <em>salaire de base</em> flexi est plafonné à 150% du minimum barémique de votre Commission Paritaire (loi du 12 mai 2026). Si votre CP a un barème plus élevé, ce taux peut être valide — vérifiez avec votre secrétariat social.`;
+    } else {
+      alertEl.style.display = 'none';
+    }
   }
 
   function updatePreview() {}
