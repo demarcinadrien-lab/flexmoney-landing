@@ -114,13 +114,12 @@
     .competence-chip.selected, .comp-chip.selected { font-weight: 600; }
 
     /* DISPONIBILITES */
-    .dispo-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 16px; }
-    .dispo-day { text-align: center; }
-    .dispo-day-name { font-size: 0.72rem; font-weight: 700; color: var(--muted); margin-bottom: 6px; letter-spacing: 0.5px; }
-    .dispo-slots { display: flex; flex-direction: column; gap: 4px; }
+    .dispo-grid { display: grid; grid-template-columns: 92px repeat(7, 1fr); gap: 6px; margin-bottom: 16px; align-items: center; }
+    .dispo-col-head { text-align: center; font-size: 0.72rem; font-weight: 700; color: var(--muted); letter-spacing: 0.5px; padding-bottom: 4px; }
+    .dispo-row-label { font-size: 0.78rem; font-weight: 700; color: var(--text); text-align: left; white-space: nowrap; }
     .dispo-slot {
-      padding: 6px 4px; border-radius: 6px; border: 1px solid var(--border);
-      font-size: 0.65rem; cursor: pointer; text-align: center; color: var(--muted);
+      padding: 12px 4px; border-radius: 8px; border: 1px solid var(--border);
+      font-size: 0.72rem; cursor: pointer; text-align: center; color: var(--muted);
       transition: all 0.15s; user-select: none;
     }
     .dispo-slot:hover { border-color: var(--brand); }
@@ -197,7 +196,10 @@
       .progress-wrap { padding: 16px 20px; }
       .fields-row { grid-template-columns: 1fr; }
       .radio-cards { grid-template-columns: 1fr; }
-      .dispo-grid { grid-template-columns: repeat(4, 1fr); }
+      .dispo-grid { grid-template-columns: 62px repeat(7, 1fr); gap: 4px; }
+      .dispo-row-label { font-size: 0.64rem; white-space: normal; line-height: 1.15; }
+      .dispo-col-head { font-size: 0.62rem; }
+      .dispo-slot { padding: 9px 2px; min-height: 30px; }
       .btn-row { flex-direction: column; }
     }
   </style>
@@ -422,10 +424,6 @@
       <div class="panel-icon">📅</div>
       <h2 class="panel-title">Vos disponibilités</h2>
       <p class="panel-sub">Indiquez quand vous pouvez travailler. Cliquez sur les cases pour les sélectionner.</p>
-    </div>
-
-    <div class="alert alert-info">
-      🏠 Les missions FlexMoney sont principalement en télétravail. Vos disponibilités nous permettent de vous proposer les bonnes missions au bon moment.
     </div>
 
     <p style="font-size:0.85rem;font-weight:600;color:var(--muted);margin-bottom:12px;">Sélectionnez vos créneaux disponibles</p>
@@ -725,14 +723,11 @@
   const jours = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
   const slots = ['Matin','Après-midi','Soir'];
   const grid = document.getElementById('dispo-grid');
-  jours.forEach(j => {
-    const col = document.createElement('div');
-    col.className = 'dispo-day';
-    col.innerHTML = `<div class="dispo-day-name">${j}</div><div class="dispo-slots">
-      ${slots.map(s => `<div class="dispo-slot" data-key="${j}-${s}" onclick="toggleDispo(this,'${j}-${s}')">${s[0]}</div>`).join('')}
-    </div>`;
-    grid.appendChild(col);
-  });
+  grid.innerHTML = `<div></div>${jours.map(j => `<div class="dispo-col-head">${j}</div>`).join('')}` +
+    slots.map(s => `
+      <div class="dispo-row-label">${s}</div>
+      ${jours.map(j => `<div class="dispo-slot" data-key="${j}-${s}" onclick="toggleDispo(this,'${j}-${s}')"></div>`).join('')}
+    `).join('');
 
   function toggleDispo(el, key) {
     el.classList.toggle('selected');
