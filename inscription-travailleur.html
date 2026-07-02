@@ -95,15 +95,14 @@
 
     /* COMPETENCES — SECTEUR TABS */
     .competences-section { margin-bottom: 24px; }
-    .secteur-tabs-wrap { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+    .secteur-tabs-wrap { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
     .secteur-tab {
-      padding: 8px 16px; border-radius: 100px; border: 1px solid var(--border);
-      font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
-      color: var(--muted); background: transparent; white-space: nowrap;
+      padding: 11px 22px; border-radius: 100px; border: 1.5px solid rgba(255,255,255,0.14);
+      font-size: 0.88rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
+      color: var(--text); background: var(--dark3); white-space: nowrap;
     }
-    .secteur-tab:hover { border-color: rgba(108,71,255,0.5); color: var(--text); }
-    .secteur-tab.active { color: #fff !important; }
-    .new-badge { font-size: 0.6rem; background: #ff4d6d; color: #fff; border-radius: 4px; padding: 1px 5px; margin-left: 5px; vertical-align: middle; letter-spacing: 0.5px; }
+    .secteur-tab:hover { border-color: rgba(108,71,255,0.6); color: var(--brand-light); background: var(--dark2); }
+    .secteur-tab.active { color: #fff !important; box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
     .secteur-desc { font-size: 0.78rem; color: var(--muted); margin-bottom: 14px; font-style: italic; }
     .competences-list { display: flex; flex-wrap: wrap; gap: 8px; min-height: 60px; }
     .competence-chip, .comp-chip {
@@ -649,9 +648,9 @@
     tabsWrap.innerHTML = FLEXMONEY_SECTEURS.map((s, i) => `
       <button class="secteur-tab${i === 0 ? ' active' : ''}"
         data-id="${s.id}"
-        style="${i === 0 ? `background:${s.couleur};color:#fff;border-color:${s.couleur}` : 'border-color:rgba(255,255,255,0.1)'}"
+        style="${i === 0 ? `background:${s.couleur};color:#fff;border-color:${s.couleur}` : ''}"
         onclick="switchSecteurIns('${s.id}', this, '${s.couleur}')">
-        ${s.label}${s.featured ? ' <span class="new-badge">NOUVEAU</span>' : ''}
+        ${s.label}
       </button>
     `).join('');
     renderSecteurChipsIns(FLEXMONEY_SECTEURS[0]);
@@ -661,9 +660,9 @@
     currentSecteurIns = secteurId;
     document.querySelectorAll('#secteur-tabs-ins .secteur-tab').forEach(t => {
       t.classList.remove('active');
-      t.style.background = 'transparent';
+      t.style.background = '';
       t.style.color = '';
-      t.style.borderColor = 'rgba(255,255,255,0.1)';
+      t.style.borderColor = '';
     });
     btn.classList.add('active');
     btn.style.background = couleur;
