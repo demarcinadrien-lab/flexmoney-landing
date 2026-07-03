@@ -52,6 +52,14 @@
     .field input.error { border-color: var(--error); }
     .field .field-error { font-size:0.8rem; color:var(--error); margin-top:6px; display:none; }
     .field .field-error.show { display:block; }
+    .password-wrap { position: relative; }
+    .password-wrap input { padding-right: 46px !important; }
+    .password-toggle {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; font-size: 1.05rem;
+      color: var(--muted); padding: 4px; line-height: 1; user-select: none;
+    }
+    .password-toggle:hover { color: var(--text); }
     .field-hint { font-size: 0.78rem; color: var(--muted); margin-top: 6px; }
 
     .fields-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -314,12 +322,18 @@
     <div class="fields-row">
       <div class="field">
         <label>Mot de passe <span class="required">*</span></label>
-        <input type="password" id="contact-password" placeholder="8 caractères minimum"/>
+        <div class="password-wrap">
+          <input type="password" id="contact-password" placeholder="8 caractères minimum"/>
+          <button type="button" class="password-toggle" onclick="togglePasswordVisibility('contact-password', this)">👁️</button>
+        </div>
         <div class="field-error" id="err-cpassword">8 caractères minimum</div>
       </div>
       <div class="field">
         <label>Confirmer le mot de passe <span class="required">*</span></label>
-        <input type="password" id="contact-password-confirm" placeholder="8 caractères minimum"/>
+        <div class="password-wrap">
+          <input type="password" id="contact-password-confirm" placeholder="8 caractères minimum"/>
+          <button type="button" class="password-toggle" onclick="togglePasswordVisibility('contact-password-confirm', this)">👁️</button>
+        </div>
         <div class="field-error" id="err-cpassword-confirm">Les mots de passe ne correspondent pas</div>
       </div>
     </div>
@@ -501,6 +515,13 @@
   let formData = {};
   let bceValidated = false;
   let secteurOk = false;
+
+  function togglePasswordVisibility(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const isHidden = input.type === 'password';
+    input.type = isHidden ? 'text' : 'password';
+    btn.textContent = isHidden ? '🙈' : '👁️';
+  }
 
   // ── NAVIGATION ──────────────────────────────────────────
   function goToStep(n) {
