@@ -154,6 +154,7 @@
     .badge-trim { background: #ede9fe; color: #6d28d9; }
     .badge-acceptee { background: #dcfce7; color: #15803d; }
     .badge-refusee { background: #fee2e2; color: #b91c1c; }
+    .badge-date-proposee { background: #e0e7ff; color: #4338ca; }
 
     .cand-details { display: flex; gap: 16px; margin-top: 10px; flex-wrap: wrap; }
     .cand-detail { font-size: 12px; color: #64748b; display: flex; align-items: center; gap: 4px; }
@@ -365,6 +366,32 @@
     </div>
   </div>
 
+  <!-- MODAL PROPOSER CRÉNEAU -->
+  <div class="modal-overlay hidden" id="proposerCreneauModal">
+    <div class="modal-box">
+      <h2>📅 Proposer un créneau</h2>
+      <p class="modal-subtitle">Choisissez la date et l'horaire de la journée de test. Le travailleur recevra un email pour confirmer.</p>
+      <div class="field" style="margin-bottom:14px;">
+        <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;">Date *</label>
+        <input type="date" id="propDate" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+        <div class="field">
+          <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;">Heure de début *</label>
+          <input type="time" id="propHeureDebut" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;">
+        </div>
+        <div class="field">
+          <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;">Heure de fin *</label>
+          <input type="time" id="propHeureFin" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-copy" style="background:#e2e8f0;color:#374151;" onclick="closeProposerCreneauModal()">Annuler</button>
+        <button class="btn-copy" style="background:#6366f1;" onclick="confirmerPropositionCreneau()">Envoyer la proposition →</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Pas de profil -->
   <div id="noProfileState" class="hidden">
     <div class="card" style="text-align:center;padding:40px;max-width:500px;margin:0 auto;">
@@ -382,6 +409,7 @@
   const EJS_PUBLIC_KEY  = 'YAyl_sI2uC4Q2YCCF';
   const EJS_SERVICE_ID  = 'service_2749nt8';
   const EJS_TPL_WORKER  = 'template_0hbqgjd'; // email travailleur
+  const EJS_TPL_PROPOSITION = 'template_lk3kj9n'; // proposition de créneau au travailleur
   emailjs.init(EJS_PUBLIC_KEY);
 
   const { createClient } = supabase;
@@ -536,11 +564,12 @@
       const mission = myMissionsList.find(m => m.id === c.mission_id);
       const isTest = c.type_contrat === 'test_jour';
       const isPending = c.statut === 'en_attente';
+      const isDateProposee = c.statut === 'date_proposee';
       const isAccepted = c.statut === 'acceptee';
       const isRefused = c.statut === 'refusee';
 
-      const badgeClass = isAccepted ? 'badge-acceptee' : isRefused ? 'badge-refusee' : isTest ? 'badge-test' : 'badge-trim';
-      const badgeLabel = isAccepted ? '✅ Acceptée' : isRefused ? '❌ Refusée' : isTest ? '🧪 Journée de test' : '📋 Mission récurrente';
+      const badgeClass = isAccepted ? 'badge-acceptee' : isRefused ? 'badge-refusee' : isDateProposee ? 'badge-date-proposee' : isTest ? 'badge-test' : 'badge-trim';
+      const badgeLabel = isAccepted ? '✅ Acceptée' : isRefused ? '❌ Refusée' : isDateProposee ? '📅 Créneau proposé' : isTest ? '🧪 Journée de test' : '📋 Mission récurrente';
 
       let dateInfo = '';
       if (isTest && c.date_test) {
@@ -549,6 +578,9 @@
         if (c.heure_debut && c.heure_fin) {
           dateInfo += `<div class="cand-detail">🕐 ${c.heure_debut.slice(0,5)} → ${c.heure_fin.slice(0,5)}</div>`;
         }
+      }
+      if (isTest && c.disponibilites && c.disponibilites.length) {
+        dateInfo += `<div class="cand-detail">🗓️ Disponibilités indiquées : ${c.disponibilites.join(', ')}</div>`;
       }
 
       const jourJBtn = c.compliance_complete
@@ -559,6 +591,9 @@
         <div class="cand-actions">
           <button class="btn-accept" onclick="accepterCandidature('${c.id}', '${c.type_contrat}')">✅ Accepter</button>
           <button class="btn-refuse" onclick="refuserCandidature('${c.id}')">❌ Refuser</button>
+        </div>` : isDateProposee ? `
+        <div class="cand-actions">
+          <span style="font-size:12px;color:#4338ca;font-weight:600;">⏳ En attente de confirmation du travailleur</span>
         </div>` : isAccepted ? `
         <div class="cand-actions">
           ${isTest
@@ -591,28 +626,88 @@
     }).join('');
   }
 
+  let pendingCandidatureId = null;
+
   async function accepterCandidature(id, type) {
+    if (type === 'test_jour') {
+      // Pour une journée de test : proposer un créneau plutôt que d'accepter directement
+      ouvrirProposerCreneau(id);
+      return;
+    }
+
     await sb.from('candidatures').update({ statut: 'acceptee', updated_at: new Date().toISOString() }).eq('id', id);
 
-    // Dans les deux cas : envoyer le lien compliance au travailleur
+    // Mission récurrente : envoyer directement le lien compliance au travailleur
     const { data: cand } = await sb.from('candidatures').select('*').eq('id', id).single();
     if (cand) {
       const complianceUrl = `${window.location.origin}/compliance.html?cid=${cand.id}`;
-      const typeLabel = type === 'test_jour'
-        ? 'journée de test (contrat oral — DIMONA journalière)'
-        : 'mission récurrente (contrat écrit trimestriel)';
       try {
         await emailjs.send(EJS_SERVICE_ID, EJS_TPL_WORKER, {
           to_email:    cand.worker_email,
           prenom:      cand.worker_prenom || cand.worker_nom,
           to_name:     `${cand.worker_prenom || ''} ${cand.worker_nom || ''}`,
-          eligible:    `✅ Votre candidature a été acceptée pour une ${typeLabel}. Complétez votre dossier DIMONA ici : ${complianceUrl}`,
+          eligible:    `✅ Votre candidature a été acceptée pour une mission récurrente (contrat écrit trimestriel). Complétez votre dossier DIMONA ici : ${complianceUrl}`,
           competences: 'NISS · Éligibilité · Document de preuve · IBAN — obligatoires avant le début de la mission',
           reply_to:    'contact.flexmoney@gmail.com'
         });
       } catch(e) { console.log('Email non bloquant', e); }
     }
     document.getElementById('complianceModal').classList.remove('hidden');
+    await loadCandidatures();
+  }
+
+  function ouvrirProposerCreneau(id) {
+    pendingCandidatureId = id;
+    const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+    document.getElementById('propDate').value = tomorrow;
+    document.getElementById('propDate').min = new Date().toISOString().split('T')[0];
+    document.getElementById('propHeureDebut').value = '';
+    document.getElementById('propHeureFin').value = '';
+    document.getElementById('proposerCreneauModal').classList.remove('hidden');
+  }
+
+  function closeProposerCreneauModal() {
+    document.getElementById('proposerCreneauModal').classList.add('hidden');
+    pendingCandidatureId = null;
+  }
+
+  async function confirmerPropositionCreneau() {
+    const date = document.getElementById('propDate').value;
+    const hdeb = document.getElementById('propHeureDebut').value;
+    const hfin = document.getElementById('propHeureFin').value;
+    if (!date) { alert('Date requise.'); return; }
+    if (!hdeb || !hfin) { alert('Heures de début et fin requises.'); return; }
+    if (hdeb >= hfin) { alert("L'heure de fin doit être après l'heure de début."); return; }
+
+    const id = pendingCandidatureId;
+    await sb.from('candidatures').update({
+      statut: 'date_proposee',
+      date_test: date,
+      heure_debut: hdeb,
+      heure_fin: hfin,
+      updated_at: new Date().toISOString()
+    }).eq('id', id);
+
+    const { data: cand } = await sb.from('candidatures').select('*').eq('id', id).single();
+    if (cand) {
+      const confirmUrl = `${window.location.origin}/confirmation-creneau.html?cid=${cand.id}`;
+      const dateLabel = new Date(date).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' });
+      try {
+        await emailjs.send(EJS_SERVICE_ID, EJS_TPL_PROPOSITION, {
+          to_email:        cand.worker_email,
+          to_name:         `${cand.worker_prenom || ''} ${cand.worker_nom || ''}`,
+          entreprise:      employerProfile?.nom_entreprise || 'L\'employeur',
+          mission_titre:   (myMissionsList.find(m => m.id === cand.mission_id)?.titre) || 'la mission',
+          date_proposee:   dateLabel,
+          heure_debut:     hdeb,
+          heure_fin:       hfin,
+          lien_confirmation: confirmUrl,
+          reply_to:        'contact.flexmoney@gmail.com'
+        });
+      } catch(e) { console.log('Email non bloquant', e); }
+    }
+
+    closeProposerCreneauModal();
     await loadCandidatures();
   }
 

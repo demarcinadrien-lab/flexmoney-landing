@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirmer le créneau — FlexMoney</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --brand: #6366f1; --brand-light: #8b5cf6; --brand-dim: rgba(99,102,241,0.1);
+      --success: #16a34a; --warning: #f59e0b; --error: #ef4444;
+      --dark: #1e293b; --muted: #64748b; --border: #e2e8f0; --bg: #f8fafc;
+    }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--dark); min-height: 100vh; }
+
+    header { background: #fff; border-bottom: 1px solid var(--border); padding: 16px 32px; display: flex; align-items: center; gap: 12px; }
+    .logo { font-weight: 800; font-size: 20px; color: var(--brand); }
+    .logo span { color: var(--dark); }
+
+    .main { max-width: 520px; margin: 48px auto; padding: 0 20px 80px; }
+
+    .card { background: #fff; border: 1.5px solid var(--border); border-radius: 16px; padding: 32px; }
+
+    .mission-card { background: var(--bg); border: 1.5px solid var(--border); border-radius: 12px; padding: 18px 20px; margin-bottom: 24px; }
+    .mission-card .label { font-size: 11px; font-weight: 700; color: var(--brand); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .mission-card .titre { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+    .mission-card .meta { font-size: 13px; color: var(--muted); }
+
+    h1 { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+    .sub { font-size: 14px; color: var(--muted); margin-bottom: 24px; line-height: 1.6; }
+
+    .creneau-box {
+      background: var(--brand-dim); border: 1.5px solid rgba(99,102,241,0.3); border-radius: 12px;
+      padding: 20px; margin-bottom: 28px; text-align: center;
+    }
+    .creneau-box .date { font-size: 18px; font-weight: 800; color: var(--brand); text-transform: capitalize; }
+    .creneau-box .heure { font-size: 14px; color: var(--dark); margin-top: 4px; }
+
+    .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-bottom: 12px; }
+    .btn-primary { background: var(--brand); color: #fff; }
+    .btn-primary:hover { background: var(--brand-light); }
+    .btn-primary:disabled { background: #a5b4fc; cursor: not-allowed; }
+    .btn-outline { background: #fff; color: var(--error); border: 1.5px solid var(--error); margin-bottom: 0; }
+    .btn-outline:hover { background: #fef2f2; }
+
+    .success-state, .error-state { text-align: center; padding: 12px 0; }
+    .success-state .icon, .error-state .icon { font-size: 48px; margin-bottom: 16px; }
+    .success-state h2, .error-state h2 { font-size: 19px; font-weight: 800; margin-bottom: 8px; }
+    .success-state p, .error-state p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+    .success-state a.btn-primary { display: block; text-decoration: none; text-align: center; margin-top: 20px; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Flex<span>Money</span></div>
+</header>
+
+<div class="main">
+  <div class="card">
+
+    <!-- État normal -->
+    <div id="formState">
+      <div class="mission-card">
+        <div class="label">Mission</div>
+        <div class="titre" id="missionTitre">—</div>
+        <div class="meta" id="missionMeta">—</div>
+      </div>
+
+      <h1>Créneau proposé</h1>
+      <p class="sub">L'employeur a accepté votre candidature et propose le créneau suivant pour votre journée de test.</p>
+
+      <div class="creneau-box">
+        <div class="date" id="creneauDate">—</div>
+        <div class="heure" id="creneauHeure">—</div>
+      </div>
+
+      <button class="btn btn-primary" id="btnConfirm" onclick="confirmerCreneau()">✅ Confirmer ce créneau</button>
+      <button class="btn btn-outline" id="btnDecline" onclick="declinerCreneau()">Décliner ce créneau</button>
+    </div>
+
+    <!-- État succès (confirmé) -->
+    <div id="successState" class="success-state hidden">
+      <div class="icon">🎉</div>
+      <h2>Créneau confirmé !</h2>
+      <p>La prochaine étape consiste à compléter votre dossier de conformité (NISS, statut, IBAN) avant le début de la mission.</p>
+      <a class="btn-primary" id="linkCompliance" href="#">Compléter mon dossier →</a>
+    </div>
+
+    <!-- État décliné -->
+    <div id="declineState" class="success-state hidden">
+      <div class="icon">👋</div>
+      <h2>Créneau décliné</h2>
+      <p>L'employeur a été informé. Vous pouvez postuler à d'autres missions depuis le tableau des missions disponibles.</p>
+      <a class="btn-primary" href="tableau-missions.html">Voir les missions →</a>
+    </div>
+
+    <!-- État erreur / déjà traité -->
+    <div id="errorState" class="error-state hidden">
+      <div class="icon">⚠️</div>
+      <h2 id="errorTitle">Lien invalide</h2>
+      <p id="errorMsg">Ce lien de confirmation n'est plus valide ou a déjà été utilisé.</p>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const params = new URLSearchParams(window.location.search);
+  const candidatureId = params.get('cid');
+  let candidatureData = null;
+
+  function showState(id) {
+    ['formState','successState','declineState','errorState'].forEach(s => {
+      document.getElementById(s).classList.toggle('hidden', s !== id);
+    });
+  }
+
+  async function init() {
+    if (!candidatureId) {
+      document.getElementById('errorTitle').textContent = 'Lien incomplet';
+      document.getElementById('errorMsg').textContent = "Ce lien ne contient pas les informations nécessaires.";
+      showState('errorState');
+      return;
+    }
+
+    const { data: cand } = await sb.from('candidatures').select('*').eq('id', candidatureId).single();
+    if (!cand) {
+      showState('errorState');
+      return;
+    }
+    candidatureData = cand;
+
+    if (cand.statut === 'acceptee') {
+      document.getElementById('linkCompliance').href = `compliance.html?cid=${cand.id}`;
+      showState('successState');
+      return;
+    }
+    if (cand.statut === 'refusee') {
+      showState('declineState');
+      return;
+    }
+    if (cand.statut !== 'date_proposee') {
+      document.getElementById('errorTitle').textContent = 'Pas encore de créneau proposé';
+      document.getElementById('errorMsg').textContent = "L'employeur n'a pas encore proposé de créneau pour cette candidature.";
+      showState('errorState');
+      return;
+    }
+
+    // Charger la mission
+    let mission = null;
+    if (cand.mission_id) {
+      const { data: m } = await sb.from('missions').select('*').eq('id', cand.mission_id).single();
+      mission = m;
+    }
+    document.getElementById('missionTitre').textContent = mission?.titre || 'Mission flexi-job';
+    document.getElementById('missionMeta').textContent = mission?.nom_entreprise || '—';
+
+    const dateLabel = cand.date_test
+      ? new Date(cand.date_test).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' })
+      : '—';
+    document.getElementById('creneauDate').textContent = dateLabel;
+    document.getElementById('creneauHeure').textContent = (cand.heure_debut && cand.heure_fin)
+      ? `🕐 ${cand.heure_debut.slice(0,5)} → ${cand.heure_fin.slice(0,5)}`
+      : '';
+
+    showState('formState');
+  }
+
+  async function confirmerCreneau() {
+    const btn = document.getElementById('btnConfirm');
+    btn.disabled = true;
+    btn.textContent = 'Confirmation en cours...';
+
+    await sb.from('candidatures').update({ statut: 'acceptee', updated_at: new Date().toISOString() }).eq('id', candidatureId);
+
+    document.getElementById('linkCompliance').href = `compliance.html?cid=${candidatureId}`;
+    showState('successState');
+  }
+
+  async function declinerCreneau() {
+    if (!confirm('Confirmer que vous déclinez ce créneau ?')) return;
+    await sb.from('candidatures').update({ statut: 'refusee', updated_at: new Date().toISOString() }).eq('id', candidatureId);
+    showState('declineState');
+  }
+
+  init();
+</script>
+</body>
+</html>

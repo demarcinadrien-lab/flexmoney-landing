@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Missions disponibles — FlexMoney</title>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; color: #1e293b; }
@@ -113,8 +114,16 @@
     .type-card.selected .type-label { color: #6366f1; }
 
     .heure-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .info-box { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 10px; padding: 12px 14px; font-size: 12px; color: #92400e; line-height: 1.5; margin-bottom: 16px; }
-    .info-box strong { color: #78350f; }
+    .info-box { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 12px 14px; font-size: 12px; color: #0369a1; line-height: 1.5; margin-bottom: 16px; }
+    .info-box strong { color: #0c4a6e; }
+    .dispo-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .dispo-chip {
+      padding: 7px 14px; border-radius: 100px; border: 1px solid #e2e8f0;
+      font-size: 12px; font-weight: 600; cursor: pointer; color: #64748b;
+      background: #fff; transition: all 0.15s; user-select: none;
+    }
+    .dispo-chip:hover { border-color: #6366f1; }
+    .dispo-chip.selected { background: #6366f1; border-color: #6366f1; color: #fff; }
 
     .modal-buttons { display: flex; gap: 12px; margin-top: 20px; }
     .btn-cancel { flex: 1; padding: 12px; background: #f1f5f9; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; }
@@ -234,24 +243,14 @@
 
       <!-- Info journée de test -->
       <div class="info-box" id="infoTest">
-        ⚠️ <strong>Important :</strong> Pour une journée de test, la <strong>DIMONA doit être soumise par l'employeur lui-même</strong> avant votre début de shift, via socialsecurity.be. FlexMoney vous enverra un formulaire pré-rempli à transmettre à l'employeur.
+        ℹ️ Postulez avec un message et, si vous le souhaitez, vos disponibilités. Si l'employeur accepte votre candidature, il vous proposera une date et un horaire précis pour la journée de test.
       </div>
 
-      <!-- Champs heure (test seulement) -->
+      <!-- Disponibilités (optionnel, test seulement) -->
       <div id="champsTest">
         <div class="form-group">
-          <label>Date du test *</label>
-          <input type="date" id="dateTest" min="">
-        </div>
-        <div class="heure-row">
-          <div class="form-group">
-            <label>Heure de début *</label>
-            <input type="time" id="heureDebut">
-          </div>
-          <div class="form-group">
-            <label>Heure de fin *</label>
-            <input type="time" id="heureFin">
-          </div>
+          <label>Vos disponibilités (optionnel)</label>
+          <div class="dispo-chips" id="dispoChips"></div>
         </div>
       </div>
 
@@ -300,6 +299,31 @@
   let selectedMission = null;
   let selectedMissionData = null;
   let selectedTypeContrat = 'test_jour';
+  let selectedDispos = [];
+
+  // ── EMAILJS CONFIG ──────────────────────────────────────
+  const EJS_PUBLIC_KEY   = 'YAyl_sI2uC4Q2YCCF';
+  const EJS_SERVICE_ID   = 'service_2749nt8';
+  const EJS_TPL_CANDIDATURE = 'template_78kr3h6';
+  emailjs.init(EJS_PUBLIC_KEY);
+
+  const JOURS_DISPO = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+
+  function renderDispoChips() {
+    const wrap = document.getElementById('dispoChips');
+    wrap.innerHTML = JOURS_DISPO.map(j => `
+      <div class="dispo-chip${selectedDispos.includes(j) ? ' selected' : ''}" onclick="toggleDispoChip('${j}', this)">${j}</div>
+    `).join('');
+  }
+
+  function toggleDispoChip(jour, el) {
+    if (selectedDispos.includes(jour)) {
+      selectedDispos = selectedDispos.filter(j => j !== jour);
+    } else {
+      selectedDispos.push(jour);
+    }
+    el.classList.toggle('selected');
+  }
   let currentFilterSecteur = FLEXMONEY_SECTEURS[0].id;
 
   // Init secteur tabs + filter chips
@@ -463,9 +487,8 @@
     document.getElementById('modalSuccess').classList.add('hidden');
     // Reset
     selectTypeContrat('test_jour');
-    const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
-    document.getElementById('dateTest').value = tomorrow;
-    document.getElementById('dateTest').min = new Date().toISOString().split('T')[0];
+    selectedDispos = [];
+    renderDispoChips();
     document.getElementById('postulantPrenom').value = '';
     document.getElementById('postulantNom').value = '';
     document.getElementById('postulantEmail').value = '';
@@ -489,15 +512,6 @@
     if (!prenom || !nom) { alert('Prénom et nom requis.'); return; }
     if (!email || !email.includes('@')) { alert('Email valide requis.'); return; }
 
-    if (selectedTypeContrat === 'test_jour') {
-      const date  = document.getElementById('dateTest').value;
-      const hdeb  = document.getElementById('heureDebut').value;
-      const hfin  = document.getElementById('heureFin').value;
-      if (!date) { alert('Date du test requise.'); return; }
-      if (!hdeb || !hfin) { alert('Heures de début et fin requises pour un test journalier.'); return; }
-      if (hdeb >= hfin) { alert('L\'heure de fin doit être après l\'heure de début.'); return; }
-    }
-
     const btn = document.getElementById('btnSend');
     btn.disabled = true;
     btn.textContent = 'Envoi en cours...';
@@ -510,14 +524,9 @@
       worker_prenom: prenom,
       message:       msg || null,
       type_contrat:  selectedTypeContrat,
-      statut:        'en_attente'
+      statut:        'en_attente',
+      disponibilites: selectedTypeContrat === 'test_jour' ? selectedDispos : null
     };
-
-    if (selectedTypeContrat === 'test_jour') {
-      payload.date_test   = document.getElementById('dateTest').value;
-      payload.heure_debut = document.getElementById('heureDebut').value || null;
-      payload.heure_fin   = document.getElementById('heureFin').value || null;
-    }
 
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/candidatures`, {
@@ -536,11 +545,41 @@
       console.warn('Supabase non disponible (mode démo)', e);
     }
 
+    // ── Email à l'employeur avec le profil du candidat ───────
+    try {
+      const employeurEmail = selectedMissionData?.email_employeur;
+      if (employeurEmail) {
+        let competences = 'Non renseigné';
+        try {
+          const wRes = await fetch(`${SUPABASE_URL}/rest/v1/workers_inscription?select=competences&email=eq.${encodeURIComponent(email)}&limit=1`, {
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+          });
+          const wData = await wRes.json();
+          if (Array.isArray(wData) && wData[0]?.competences?.length) {
+            competences = wData[0].competences.join(', ');
+          }
+        } catch(e) { /* non-bloquant */ }
+
+        await emailjs.send(EJS_SERVICE_ID, EJS_TPL_CANDIDATURE, {
+          to_email:         employeurEmail,
+          to_name:          selectedMissionData?.nom_entreprise || 'Employeur',
+          mission_titre:    selectedMissionData?.titre || 'votre mission',
+          candidat_prenom:  prenom,
+          candidat_nom:     nom,
+          candidat_email:   email,
+          competences:      competences,
+          disponibilites:   selectedDispos.length ? selectedDispos.join(', ') : 'Non précisées',
+          message:          msg || 'Aucun message',
+          reply_to:         'contact.flexmoney@gmail.com'
+        });
+      }
+    } catch(e) { console.log('Email employeur non envoyé (non-bloquant)', e); }
+
     // Afficher succès
     document.getElementById('modalForm').classList.add('hidden');
     const missionTitre = selectedMissionData?.titre || 'cette mission';
     const msgSucces = selectedTypeContrat === 'test_jour'
-      ? `Votre candidature pour <strong>${missionTitre}</strong> a bien été reçue.<br><br>L'employeur va examiner votre profil. S'il accepte, vous recevrez un email avec le formulaire DIMONA pré-rempli à lui transmettre avant votre journée de test.`
+      ? `Votre candidature pour <strong>${missionTitre}</strong> a bien été reçue et l'employeur a été notifié.<br><br>S'il accepte votre profil, il vous proposera une date et un horaire précis pour la journée de test — vous recevrez un email pour confirmer.`
       : `Votre candidature pour <strong>${missionTitre}</strong> a bien été reçue.<br><br>L'employeur va examiner votre profil. En cas d'acceptation, FlexMoney vous guidera pour compléter votre dossier de conformité.`;
     document.getElementById('successMsg').innerHTML = msgSucces;
     document.getElementById('modalSuccess').classList.remove('hidden');
