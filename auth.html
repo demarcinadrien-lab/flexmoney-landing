@@ -82,6 +82,8 @@
   <div class="logo">Flex<span>Money</span></div>
   <div class="tagline">La plateforme belge du flexi-job par compétences</div>
 
+  <div id="alertBox" class="alert"></div>
+
   <!-- État normal -->
   <div id="formState">
     <h1>Connexion / Inscription</h1>
@@ -92,8 +94,6 @@
       <button class="role-tab active" id="tabTravailleur" onclick="setRole('travailleur')">👤 Je suis travailleur</button>
       <button class="role-tab" id="tabEmployeur" onclick="setRole('employeur')">🏢 Je suis employeur</button>
     </div>
-
-    <div id="alertBox" class="alert"></div>
 
     <div class="form-group">
       <label>Votre adresse email</label>
@@ -128,8 +128,15 @@
     <div class="icon">📬</div>
     <h2>Vérifiez votre boîte mail !</h2>
     <p>Un lien de connexion a été envoyé à<br><span class="email-shown" id="emailShown">—</span></p>
-    <p style="margin-top:12px;font-size:13px;color:#94a3b8;">Cliquez sur le lien dans l'email pour accéder à votre espace. Le lien expire dans 1 heure.</p>
-    <button class="btn btn-magic" onclick="resetForm()" style="margin-top:20px;width:100%;padding:12px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;font-weight:600;cursor:pointer;">← Changer d'email</button>
+    <p style="margin-top:12px;font-size:13px;color:#94a3b8;">Cliquez sur le lien dans l'email, ou entrez ci-dessous le code à 6 chiffres reçu dans le même email.</p>
+
+    <div class="form-group" style="margin-top:20px;text-align:left;">
+      <label>Code de connexion (6 chiffres)</label>
+      <input type="text" id="otpInput" inputmode="numeric" maxlength="6" placeholder="123456" onkeydown="if(event.key==='Enter') verifyCode()">
+    </div>
+    <button class="btn btn-primary" id="btnVerify" onclick="verifyCode()">Valider le code</button>
+
+    <button class="btn btn-magic" onclick="resetForm()" style="margin-top:12px;width:100%;padding:12px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;font-weight:600;cursor:pointer;">← Changer d'email</button>
   </div>
 
   <div class="footer-link">
@@ -201,6 +208,30 @@
       document.getElementById('emailShown').textContent = email;
       document.getElementById('formState').classList.add('hidden');
       document.getElementById('successState').classList.remove('hidden');
+    }
+  }
+
+  async function verifyCode() {
+    const email = document.getElementById('emailShown').textContent;
+    const token = document.getElementById('otpInput').value.trim();
+    if (!token || token.length < 6) {
+      showAlert('Veuillez entrer le code à 6 chiffres reçu par email.', 'error');
+      return;
+    }
+
+    const btn = document.getElementById('btnVerify');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Vérification...';
+    hideAlert();
+
+    const { data, error } = await sb.auth.verifyOtp({ email, token, type: 'email' });
+    if (error) {
+      showAlert('Code invalide ou expiré : ' + error.message, 'error');
+      btn.disabled = false;
+      btn.innerHTML = 'Valider le code';
+    } else {
+      await saveRole(data.user);
+      redirectByRole(data.user);
     }
   }
 
