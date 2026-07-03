@@ -103,24 +103,6 @@
     <button class="btn btn-primary" id="btnMagic" onclick="sendMagicLink()">
       ✉️ Recevoir mon lien de connexion
     </button>
-
-    <div class="divider">ou</div>
-
-    <button class="btn btn-magic" onclick="showPasswordForm()">
-      🔑 Connexion avec mot de passe
-    </button>
-
-    <!-- Formulaire mot de passe (caché par défaut) -->
-    <div id="passwordForm" class="hidden" style="margin-top:16px;">
-      <div class="form-group">
-        <label>Mot de passe</label>
-        <input type="password" id="passwordInput" placeholder="••••••••" onkeydown="if(event.key==='Enter') signInWithPassword()">
-      </div>
-      <button class="btn btn-primary" onclick="signInWithPassword()">Se connecter</button>
-      <div style="text-align:center;margin-top:10px;">
-        <a href="#" onclick="showPasswordForm()" style="font-size:13px;color:#6366f1;text-decoration:none;">← Retour au lien magique</a>
-      </div>
-    </div>
   </div>
 
   <!-- État après envoi magic link -->
@@ -151,7 +133,6 @@
   const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
   let currentRole = 'travailleur';
-  let passwordFormVisible = false;
 
   // Vérifier si déjà connecté → redirect
   (async () => {
@@ -171,11 +152,6 @@
     currentRole = role;
     document.getElementById('tabTravailleur').classList.toggle('active', role === 'travailleur');
     document.getElementById('tabEmployeur').classList.toggle('active', role === 'employeur');
-  }
-
-  function showPasswordForm() {
-    passwordFormVisible = !passwordFormVisible;
-    document.getElementById('passwordForm').classList.toggle('hidden', !passwordFormVisible);
   }
 
   async function sendMagicLink() {
@@ -229,27 +205,6 @@
       showAlert('Code invalide ou expiré : ' + error.message, 'error');
       btn.disabled = false;
       btn.innerHTML = 'Valider le code';
-    } else {
-      await saveRole(data.user);
-      redirectByRole(data.user);
-    }
-  }
-
-  async function signInWithPassword() {
-    const email = document.getElementById('emailInput').value.trim();
-    const password = document.getElementById('passwordInput').value;
-    if (!email || !password) { showAlert('Email et mot de passe requis.', 'error'); return; }
-
-    const { data, error } = await sb.auth.signInWithPassword({ email, password });
-    if (error) {
-      // Si pas de compte, créer
-      if (error.message.includes('Invalid login')) {
-        const { data: signUpData, error: signUpError } = await sb.auth.signUp({ email, password, options: { data: { role: currentRole } } });
-        if (signUpError) { showAlert(signUpError.message, 'error'); return; }
-        showAlert('Compte créé ! Vérifiez votre email pour confirmer.', 'success');
-      } else {
-        showAlert(error.message, 'error');
-      }
     } else {
       await saveRole(data.user);
       redirectByRole(data.user);
