@@ -7,6 +7,7 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; color: #1e293b; }
+    body.access-checking > * { display: none !important; }
     header { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 16px 32px; display: flex; align-items: center; gap: 12px; }
     header .logo { font-weight: 800; font-size: 20px; color: #6366f1; }
     header .logo span { color: #1e293b; }
@@ -94,7 +95,7 @@
     }
   </style>
 </head>
-<body>
+<body class="access-checking">
 
 <header>
   <div class="logo">Flex<span>Money</span></div>
@@ -201,10 +202,22 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="competences.js"></script>
 <script>
   const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // ── ACCÈS RÉSERVÉ AUX EMPLOYEURS INSCRITS ────────────────
+  (async () => {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.replace('auth.html'); return; }
+    const role = session.user.user_metadata?.role;
+    if (role !== 'employeur') { window.location.replace('dashboard-travailleur.html'); return; }
+    document.body.classList.remove('access-checking');
+  })();
 
   let allWorkers = [];
   let filterComps = [];
