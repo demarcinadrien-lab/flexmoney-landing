@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FlexMoney — Inscription Employeur</title>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -310,6 +311,19 @@
       <div class="field-error" id="err-cemail">Email invalide</div>
     </div>
 
+    <div class="fields-row">
+      <div class="field">
+        <label>Mot de passe <span class="required">*</span></label>
+        <input type="password" id="contact-password" placeholder="8 caractères minimum"/>
+        <div class="field-error" id="err-cpassword">8 caractères minimum</div>
+      </div>
+      <div class="field">
+        <label>Confirmer le mot de passe <span class="required">*</span></label>
+        <input type="password" id="contact-password-confirm" placeholder="8 caractères minimum"/>
+        <div class="field-error" id="err-cpassword-confirm">Les mots de passe ne correspondent pas</div>
+      </div>
+    </div>
+
     <div class="field">
       <label>Téléphone direct <span class="required">*</span></label>
       <input type="tel" id="contact-tel" placeholder="+32 470 00 00 00"/>
@@ -474,6 +488,8 @@
 <script>
   const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
   // ── EMAILJS CONFIG ──────────────────────────────────────
   const EMAILJS_PUBLIC_KEY  = 'YAyl_sI2uC4Q2YCCF';
@@ -647,6 +663,7 @@
       { id:'contact-prenom', err:'err-cprenom', check: v => v.trim().length > 1 },
       { id:'contact-nom',    err:'err-cnom',    check: v => v.trim().length > 1 },
       { id:'contact-email',  err:'err-cemail',  check: v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) },
+      { id:'contact-password', err:'err-cpassword', check: v => v.length >= 8 },
       { id:'contact-tel',    err:'err-ctel',    check: v => v.trim().length >= 9 },
     ];
     fields.forEach(f => {
@@ -656,11 +673,20 @@
       document.getElementById(f.err).classList.toggle('show', !ok);
       if (!ok) valid = false;
     });
+
+    const pwd = document.getElementById('contact-password').value;
+    const pwdConfirm = document.getElementById('contact-password-confirm').value;
+    const pwdMatch = pwd === pwdConfirm && pwdConfirm.length > 0;
+    document.getElementById('contact-password-confirm').classList.toggle('error', !pwdMatch);
+    document.getElementById('err-cpassword-confirm').classList.toggle('show', !pwdMatch);
+    if (!pwdMatch) valid = false;
+
     if (!document.getElementById('contact-fonction').value) { alert('Veuillez sélectionner votre fonction.'); return; }
     if (valid) {
       formData.contact_prenom  = document.getElementById('contact-prenom').value;
       formData.contact_nom     = document.getElementById('contact-nom').value;
       formData.contact_email   = document.getElementById('contact-email').value;
+      formData.contact_password= pwd;
       formData.contact_tel     = document.getElementById('contact-tel').value;
       formData.contact_fonction= document.getElementById('contact-fonction').value;
       formData.volume          = document.getElementById('volume').value;
@@ -684,6 +710,18 @@
     btn.textContent = 'Activation...'; btn.disabled = true;
 
     formData.type = 'employer';
+
+    // ── CRÉATION DU COMPTE (email + mot de passe) ────────────
+    try {
+      const { error: signUpError } = await sb.auth.signUp({
+        email: formData.contact_email,
+        password: formData.contact_password,
+        options: { data: { role: 'employeur' } }
+      });
+      if (signUpError && !signUpError.message.includes('already registered')) {
+        console.log('Création de compte (non-bloquant)', signUpError.message);
+      }
+    } catch(e) { console.log('Création de compte (non-bloquant)', e); }
 
     try {
       await fetch(`${SUPABASE_URL}/rest/v1/employers_inscription`, {

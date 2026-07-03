@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FlexMoney — Inscription Travailleur</title>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="competences.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -263,6 +264,19 @@
       <label>Adresse email <span class="required">*</span></label>
       <input type="email" id="email" placeholder="marie.dupont@gmail.com" />
       <div class="field-error" id="err-email">Email invalide</div>
+    </div>
+
+    <div class="fields-row">
+      <div class="field">
+        <label>Mot de passe <span class="required">*</span></label>
+        <input type="password" id="password" placeholder="8 caractères minimum" />
+        <div class="field-error" id="err-password">8 caractères minimum</div>
+      </div>
+      <div class="field">
+        <label>Confirmer le mot de passe <span class="required">*</span></label>
+        <input type="password" id="password-confirm" placeholder="8 caractères minimum" />
+        <div class="field-error" id="err-password-confirm">Les mots de passe ne correspondent pas</div>
+      </div>
     </div>
 
     <div class="field">
@@ -551,6 +565,8 @@
 <script>
   const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
   // ── EMAILJS CONFIG ──────────────────────────────────────
   const EMAILJS_PUBLIC_KEY  = 'YAyl_sI2uC4Q2YCCF';
@@ -584,6 +600,7 @@
       { id: 'prenom', err: 'err-prenom', check: v => v.trim().length > 1 },
       { id: 'nom',    err: 'err-nom',    check: v => v.trim().length > 1 },
       { id: 'email',  err: 'err-email',  check: v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) },
+      { id: 'password', err: 'err-password', check: v => v.length >= 8 },
       { id: 'tel',    err: 'err-tel',    check: v => v.trim().length >= 9 },
       { id: 'ddn',    err: 'err-ddn',    check: v => v.length > 0 },
       { id: 'cp',     err: 'err-cp',     check: v => /^\d{4}$/.test(v) },
@@ -595,12 +612,21 @@
       document.getElementById(f.err).classList.toggle('show', !ok);
       if (!ok) valid = false;
     });
+
+    const pwd = document.getElementById('password').value;
+    const pwdConfirm = document.getElementById('password-confirm').value;
+    const pwdMatch = pwd === pwdConfirm && pwdConfirm.length > 0;
+    document.getElementById('password-confirm').classList.toggle('error', !pwdMatch);
+    document.getElementById('err-password-confirm').classList.toggle('show', !pwdMatch);
+    if (!pwdMatch) valid = false;
+
     if (valid) {
-      formData.prenom = document.getElementById('prenom').value;
-      formData.nom    = document.getElementById('nom').value;
-      formData.email  = document.getElementById('email').value;
-      formData.tel    = document.getElementById('tel').value;
-      formData.cp     = document.getElementById('cp').value;
+      formData.prenom   = document.getElementById('prenom').value;
+      formData.nom      = document.getElementById('nom').value;
+      formData.email    = document.getElementById('email').value;
+      formData.password = pwd;
+      formData.tel      = document.getElementById('tel').value;
+      formData.cp       = document.getElementById('cp').value;
       goToStep(2);
     }
   }
@@ -761,6 +787,18 @@
     formData.rayon          = document.getElementById('rayon').value;
     formData.taux_min       = document.getElementById('taux-min').value;
     formData.type           = 'worker';
+
+    // ── CRÉATION DU COMPTE (email + mot de passe) ────────────
+    try {
+      const { error: signUpError } = await sb.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: { data: { role: 'travailleur' } }
+      });
+      if (signUpError && !signUpError.message.includes('already registered')) {
+        console.log('Création de compte (non-bloquant)', signUpError.message);
+      }
+    } catch(e) { console.log('Création de compte (non-bloquant)', e); }
 
     try {
       const res = await fetch(`${SUPABASE_URL}/rest/v1/workers_inscription`, {
