@@ -771,7 +771,21 @@
           'Authorization': `Bearer ${SUPABASE_KEY}`,
           'Prefer': 'return=minimal'
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          prenom:                 formData.prenom,
+          nom:                    formData.nom,
+          email:                  formData.email,
+          telephone:              formData.tel,
+          code_postal:            formData.cp,
+          statut_eligibilite:     formData.statut,
+          regime_travail:         formData.regime,
+          eligible:               formData.eligible,
+          competences:            formData.competences,
+          disponibilites:         formData.disponibilites,
+          teletravail_preference: formData.pref_lieu,
+          rayon_deplacement:      formData.rayon,
+          taux_horaire_min:       formData.taux_min
+        })
       });
 
       // Fallback : save to waitlist if table doesn't exist yet

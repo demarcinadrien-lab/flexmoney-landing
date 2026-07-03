@@ -585,6 +585,7 @@
       status.innerHTML = `❌ <strong>Secteur exclu</strong> — Ce secteur n'est pas autorisé pour le régime flexi-job, même après la réforme de juillet 2026. Contactez-nous si vous pensez être dans une exception.`;
       btn2.disabled = true;
       secteurOk = false;
+      formData.secteur_statut = 'exclu';
     } else if (SECTEURS_CONDITION.includes(val)) {
       status.className = 'secteur-status warn';
       status.style.display = 'block';
@@ -597,6 +598,7 @@
       btn2.disabled = false;
       secteurOk = true;
       detail.style.display = 'block';
+      formData.secteur_statut = 'conditionnel';
     } else {
       status.className = 'secteur-status ok';
       status.style.display = 'block';
@@ -604,9 +606,11 @@
       btn2.disabled = false;
       secteurOk = true;
       detail.style.display = 'block';
+      formData.secteur_statut = 'ok';
     }
 
     formData.secteur = val;
+    formData.secteur_eligible = secteurOk;
     document.getElementById('err-secteur').classList.remove('show');
   }
 
@@ -689,11 +693,16 @@
           numero_bce:       formData.bce,
           nom_entreprise:   formData.company_name,
           secteur:          formData.secteur,
-          prenom_contact:   formData.prenom,
-          nom_contact:      formData.nom,
-          fonction_contact: formData.fonction,
-          email_contact:    formData.email,
-          telephone_contact: formData.telephone,
+          adresse:          formData.company_address,
+          code_postal:      formData.company_cp,
+          ville:            formData.company_city,
+          code_nace:        formData.nace,
+          activite:         formData.activite,
+          prenom_contact:   formData.contact_prenom,
+          nom_contact:      formData.contact_nom,
+          fonction_contact: formData.contact_fonction,
+          email_contact:    formData.contact_email,
+          telephone_contact: formData.contact_tel,
           volume_mensuel:   formData.volume,
           secteur_eligible: formData.secteur_eligible,
           secteur_statut:   formData.secteur_statut,
@@ -709,9 +718,9 @@
     // ── ENVOI EMAIL EMPLOYEUR + GUIDE DIMONA ─────────────────
     try {
       await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-        to_email:       formData.email,
-        to_name:        formData.prenom + ' ' + formData.nom,
-        prenom:         formData.prenom,
+        to_email:       formData.contact_email,
+        to_name:        formData.contact_prenom + ' ' + formData.contact_nom,
+        prenom:         formData.contact_prenom,
         entreprise:     formData.company_name,
         bce:            formData.bce || 'Non renseigné',
         secteur:        formData.secteur || 'Non renseigné',
