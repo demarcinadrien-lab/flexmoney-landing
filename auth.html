@@ -130,9 +130,42 @@
       </div>
       <button class="btn btn-primary" onclick="signInWithPassword()">Se connecter</button>
       <div style="text-align:center;margin-top:10px;">
+        <a href="#" onclick="sendPasswordReset()" style="font-size:13px;color:#6366f1;text-decoration:none;">Mot de passe oublié ?</a>
+      </div>
+      <div style="text-align:center;margin-top:6px;">
         <a href="#" onclick="showPasswordForm()" style="font-size:13px;color:#6366f1;text-decoration:none;">← Retour au lien magique</a>
       </div>
     </div>
+  </div>
+
+  <!-- État après demande de réinitialisation -->
+  <div id="resetSentState" class="hidden success-state">
+    <div class="icon">🔒</div>
+    <h2>Vérifiez votre boîte mail !</h2>
+    <p>Un lien pour choisir un nouveau mot de passe a été envoyé à<br><span class="email-shown" id="resetEmailShown">—</span></p>
+    <button class="btn btn-magic" onclick="resetForm()" style="margin-top:20px;width:100%;padding:12px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;font-weight:600;cursor:pointer;">← Retour</button>
+  </div>
+
+  <!-- État de choix d'un nouveau mot de passe (après clic sur le lien de réinitialisation) -->
+  <div id="newPasswordState" class="hidden">
+    <h1>Nouveau mot de passe</h1>
+    <p class="sub">Choisissez un nouveau mot de passe pour votre compte.</p>
+
+    <div class="form-group">
+      <label>Nouveau mot de passe</label>
+      <div class="password-wrap">
+        <input type="password" id="newPasswordInput" placeholder="8 caractères minimum">
+        <button type="button" class="password-toggle" onclick="togglePasswordVisibility('newPasswordInput', this)">👁️</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Confirmer le nouveau mot de passe</label>
+      <div class="password-wrap">
+        <input type="password" id="newPasswordConfirmInput" placeholder="8 caractères minimum" onkeydown="if(event.key==='Enter') updatePassword()">
+        <button type="button" class="password-toggle" onclick="togglePasswordVisibility('newPasswordConfirmInput', this)">👁️</button>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="updatePassword()">Valider le nouveau mot de passe</button>
   </div>
 
   <!-- État après envoi magic link -->
@@ -165,14 +198,21 @@
   let currentRole = 'travailleur';
   let passwordFormVisible = false;
 
-  // Vérifier si déjà connecté → redirect
+  // Vérifier si déjà connecté → redirect (sauf si on arrive via un lien de réinitialisation de mot de passe)
   (async () => {
+    if (window.location.hash.includes('type=recovery')) return;
     const { data: { session } } = await sb.auth.getSession();
     if (session) redirectByRole(session.user);
   })();
 
-  // Écouter le retour du magic link
+  // Écouter le retour du magic link / de la réinitialisation de mot de passe
   sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      document.getElementById('formState').classList.add('hidden');
+      document.getElementById('resetSentState').classList.add('hidden');
+      document.getElementById('newPasswordState').classList.remove('hidden');
+      return;
+    }
     if (event === 'SIGNED_IN' && session) {
       await saveRole(session.user);
       redirectByRole(session.user);
@@ -205,6 +245,43 @@
     const { data, error } = await sb.auth.signInWithPassword({ email, password });
     if (error) {
       showAlert('Email ou mot de passe incorrect. Le mot de passe est celui choisi lors de votre inscription — sinon, utilisez le lien magique.', 'error');
+    } else {
+      await saveRole(data.user);
+      redirectByRole(data.user);
+    }
+  }
+
+  async function sendPasswordReset() {
+    const email = document.getElementById('emailInput').value.trim();
+    if (!email || !email.includes('@')) {
+      showAlert('Entrez d\'abord votre adresse email ci-dessus.', 'error');
+      return;
+    }
+    hideAlert();
+
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + '/auth.html'
+    });
+
+    if (error) {
+      showAlert('Erreur : ' + error.message, 'error');
+    } else {
+      document.getElementById('resetEmailShown').textContent = email;
+      document.getElementById('formState').classList.add('hidden');
+      document.getElementById('resetSentState').classList.remove('hidden');
+    }
+  }
+
+  async function updatePassword() {
+    const pwd = document.getElementById('newPasswordInput').value;
+    const pwdConfirm = document.getElementById('newPasswordConfirmInput').value;
+    if (pwd.length < 8) { showAlert('8 caractères minimum.', 'error'); return; }
+    if (pwd !== pwdConfirm) { showAlert('Les mots de passe ne correspondent pas.', 'error'); return; }
+    hideAlert();
+
+    const { data, error } = await sb.auth.updateUser({ password: pwd });
+    if (error) {
+      showAlert('Erreur : ' + error.message, 'error');
     } else {
       await saveRole(data.user);
       redirectByRole(data.user);
@@ -288,6 +365,7 @@
   function resetForm() {
     document.getElementById('formState').classList.remove('hidden');
     document.getElementById('successState').classList.add('hidden');
+    document.getElementById('resetSentState').classList.add('hidden');
     document.getElementById('emailInput').value = '';
   }
 
