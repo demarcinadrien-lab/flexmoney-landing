@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Missions disponibles — FlexMoney</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -149,7 +150,7 @@
 
 <header>
   <div class="logo">Flex<span>Money</span></div>
-  <nav>
+  <nav id="mainNav">
     <a href="poster-mission.html">📢 Poster une mission</a>
     <a href="tableau-travailleurs.html">👥 Travailleurs</a>
     <a href="inscription-travailleur.html" style="background:#6366f1;color:#fff;padding:8px 16px;border-radius:8px;">M'inscrire</a>
@@ -293,6 +294,24 @@
 <script>
   const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // ── ADAPTER LE MENU SELON LE STATUT DE CONNEXION ─────────
+  (async () => {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session && session.user.user_metadata?.role === 'travailleur') {
+      document.getElementById('mainNav').innerHTML = `
+        <a href="dashboard-travailleur.html">👤 Mon espace</a>
+        <button onclick="signOutNav()" style="background:#6366f1;color:#fff;padding:8px 16px;border-radius:8px;border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Déconnexion</button>
+      `;
+    }
+  })();
+
+  async function signOutNav() {
+    await sb.auth.signOut();
+    window.location.href = 'index.html';
+  }
 
   let allMissions = [];
   let filterComps = [];

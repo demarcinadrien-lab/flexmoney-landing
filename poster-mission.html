@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Poster une mission — FlexMoney</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -242,6 +243,16 @@
 <script>
   const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // ── Un travailleur connecté ne peut pas poster de mission ──
+  (async () => {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session && session.user.user_metadata?.role === 'travailleur') {
+      window.location.replace('dashboard-travailleur.html');
+    }
+  })();
 
   // ── EMAILJS CONFIG ──────────────────────────────────────
   const EJS_PUBLIC_KEY   = 'YAyl_sI2uC4Q2YCCF';
