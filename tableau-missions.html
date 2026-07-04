@@ -178,12 +178,11 @@
     </div>
 
     <div class="filter-group">
-      <label>Lieu</label>
-      <select id="lieuFilter" onchange="applyFilters()">
-        <option value="">Tous</option>
-        <option value="remote">🏠 Télétravail uniquement</option>
-        <option value="onsite">🏢 Sur place</option>
+      <label>Ville</label>
+      <select id="villeFilter" onchange="applyFilters()">
+        <option value="">Toutes les villes</option>
       </select>
+      <small style="display:block;margin-top:6px;color:#94a3b8;font-size:11px;">Inclut les villes proches et le télétravail</small>
     </div>
 
     <div class="filter-group">
@@ -198,9 +197,8 @@
     </div>
 
     <div class="filter-group">
-      <label>Compétences</label>
+      <label>Type de travail</label>
       <div class="secteur-tabs-filter" id="secteur-tabs-filter"></div>
-      <div class="comp-chips" id="filterChips"></div>
     </div>
 
     <button class="btn-reset" onclick="resetFilters()">↺ Réinitialiser les filtres</button>
@@ -291,6 +289,7 @@
 </div>
 
 <script src="competences.js"></script>
+<script src="villes.js"></script>
 <script>
   const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
@@ -314,7 +313,6 @@
   }
 
   let allMissions = [];
-  let filterComps = [];
   let selectedMission = null;
   let selectedMissionData = null;
   let selectedTypeContrat = 'test_jour';
@@ -343,65 +341,45 @@
     }
     el.classList.toggle('selected');
   }
-  let currentFilterSecteur = FLEXMONEY_SECTEURS[0].id;
+  let selectedFilterSecteurs = [];
 
-  // Init secteur tabs + filter chips
+  // Filtre "type de travail" : les 6 secteurs globaux, multi-sélection
   function initFilterTabs() {
     const tabsWrap = document.getElementById('secteur-tabs-filter');
-    tabsWrap.innerHTML = FLEXMONEY_SECTEURS.map((s, i) => `
-      <button class="s-tab${i === 0 ? ' active' : ''}"
-        style="${i === 0 ? `background:${s.couleur};color:#fff;border-color:${s.couleur}` : ''}"
-        onclick="switchFilterSecteur('${s.id}', this, '${s.couleur}')">
+    tabsWrap.innerHTML = FLEXMONEY_SECTEURS.map(s => `
+      <button class="s-tab" data-secteur="${s.id}" data-couleur="${s.couleur}"
+        onclick="toggleFilterSecteur('${s.id}', this, '${s.couleur}')">
         ${s.label}${s.featured ? ' <span class="new-badge">NEW</span>' : ''}
       </button>
     `).join('');
-    renderFilterChips(FLEXMONEY_SECTEURS[0]);
   }
 
-  function switchFilterSecteur(secteurId, btn, couleur) {
-    currentFilterSecteur = secteurId;
-    document.querySelectorAll('#secteur-tabs-filter .s-tab').forEach(t => {
-      t.classList.remove('active');
-      t.style.background = '#fff';
-      t.style.color = '#64748b';
-      t.style.borderColor = '#e2e8f0';
-    });
-    btn.classList.add('active');
-    btn.style.background = couleur;
-    btn.style.color = '#fff';
-    btn.style.borderColor = couleur;
-    renderFilterChips(FLEXMONEY_SECTEURS.find(s => s.id === secteurId));
-  }
-
-  function renderFilterChips(secteur) {
-    const chipsContainer = document.getElementById('filterChips');
-    chipsContainer.innerHTML = secteur.competences.map(c => {
-      const on = filterComps.includes(c);
-      return `<div class="f-chip${on ? ' on' : ''}"
-        style="${on ? `background:${secteur.couleur};border-color:${secteur.couleur}` : ''}"
-        data-comp="${c}" data-couleur="${secteur.couleur}"
-        onclick="toggleFilterChip(this)">${c}</div>`;
-    }).join('');
-  }
-
-  function toggleFilterChip(chip) {
-    const c = chip.dataset.comp;
-    const couleur = chip.dataset.couleur;
-    if (filterComps.includes(c)) {
-      filterComps = filterComps.filter(x => x !== c);
-      chip.classList.remove('on');
-      chip.style.background = '#fff';
-      chip.style.borderColor = '#e2e8f0';
+  function toggleFilterSecteur(secteurId, btn, couleur) {
+    if (selectedFilterSecteurs.includes(secteurId)) {
+      selectedFilterSecteurs = selectedFilterSecteurs.filter(s => s !== secteurId);
+      btn.classList.remove('active');
+      btn.style.background = '#fff';
+      btn.style.color = '#64748b';
+      btn.style.borderColor = '#e2e8f0';
     } else {
-      filterComps.push(c);
-      chip.classList.add('on');
-      chip.style.background = couleur;
-      chip.style.borderColor = couleur;
+      selectedFilterSecteurs.push(secteurId);
+      btn.classList.add('active');
+      btn.style.background = couleur;
+      btn.style.color = '#fff';
+      btn.style.borderColor = couleur;
     }
     applyFilters();
   }
 
+  // Peupler le filtre Ville
+  function initVilleFilter() {
+    const sel = document.getElementById('villeFilter');
+    sel.innerHTML = `<option value="">Toutes les villes</option>` +
+      TOUTES_VILLES.map(v => `<option value="${v}">${v}</option>`).join('');
+  }
+
   document.addEventListener('DOMContentLoaded', initFilterTabs);
+  document.addEventListener('DOMContentLoaded', initVilleFilter);
 
   async function loadMissions() {
     try {
@@ -424,8 +402,11 @@
 
   function applyFilters() {
     const search = document.getElementById('searchInput').value.toLowerCase();
-    const lieu = document.getElementById('lieuFilter').value;
+    const ville = document.getElementById('villeFilter').value;
     const tauxMin = parseFloat(document.getElementById('tauxFilter').value) || 0;
+
+    // Villes acceptées : la ville choisie + celles à proximité (25 km)
+    const villesAcceptees = ville ? getVillesProches(ville, 25) : null;
 
     let filtered = allMissions.filter(m => {
       const matchSearch = !search ||
@@ -433,12 +414,15 @@
         (m.description || '').toLowerCase().includes(search) ||
         (m.fonction || '').toLowerCase().includes(search);
 
-      const matchLieu = !lieu || m.lieu === lieu;
-      const matchTaux = (m.taux_horaire || 0) >= tauxMin;
-      const matchComps = filterComps.length === 0 ||
-        filterComps.some(fc => (m.titre + ' ' + (m.description || '') + ' ' + (m.fonction || '')).includes(fc));
+      // Le télétravail correspond toujours (pas lié à une ville) ; sinon on vérifie la proximité
+      const matchVille = !villesAcceptees || m.lieu === 'remote' || villesAcceptees.includes(m.ville);
 
-      return matchSearch && matchLieu && matchTaux && matchComps;
+      const matchTaux = (m.taux_horaire || 0) >= tauxMin;
+
+      const matchSecteur = selectedFilterSecteurs.length === 0 ||
+        selectedFilterSecteurs.includes(m.secteur);
+
+      return matchSearch && matchVille && matchTaux && matchSecteur;
     });
 
     document.getElementById('countLabel').textContent = `${filtered.length} mission${filtered.length !== 1 ? 's' : ''}`;
@@ -456,6 +440,8 @@
       const brut = (m.heures_prestees || 0) * (m.taux_horaire || 0);
       const dateStr = m.date_debut ? new Date(m.date_debut).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' }) : 'À définir';
       const comps = getCompetences(m);
+      const secteurObj = FLEXMONEY_SECTEURS.find(s => s.id === m.secteur);
+      const lieuLabel = m.lieu === 'remote' ? '🏠 Télétravail' : `📍 ${m.ville || 'Sur place'}`;
 
       return `
         <div class="mission-card" onclick="openModal('${m.id}', '${(m.titre||'').replace(/'/g,"\\'")}')">
@@ -472,9 +458,9 @@
           <div class="mission-meta">
             <span>📅 ${dateStr}</span>
             <span>⏱️ ${m.heures_prestees || '?'}h</span>
-            <span>${m.lieu === 'remote' ? '🏠 Télétravail' : '🏢 Sur place'}</span>
+            <span>${lieuLabel}</span>
           </div>
-          ${comps.length ? `<div class="mission-chips">${comps.map(c => `<span class="m-chip">${c}</span>`).join('')}</div>` : ''}
+          ${secteurObj ? `<div class="mission-chips"><span class="m-chip" style="background:${secteurObj.couleur}20;color:${secteurObj.couleur};">${secteurObj.label}</span>${comps.map(c => `<span class="m-chip">${c}</span>`).join('')}</div>` : (comps.length ? `<div class="mission-chips">${comps.map(c => `<span class="m-chip">${c}</span>`).join('')}</div>` : '')}
           <div class="mission-footer">
             <span class="mission-posted">Publiée ${timeAgo(m.created_at)}</span>
             <button class="btn-postuler" onclick="event.stopPropagation();openModal('${m.id}', '${(m.titre||'').replace(/'/g,"\\'")}')">Postuler →</button>
@@ -606,14 +592,15 @@
 
   function resetFilters() {
     document.getElementById('searchInput').value = '';
-    document.getElementById('lieuFilter').value = '';
+    document.getElementById('villeFilter').value = '';
     document.getElementById('tauxFilter').value = '0';
-    document.querySelectorAll('.f-chip.on').forEach(el => {
-      el.classList.remove('on');
+    document.querySelectorAll('#secteur-tabs-filter .s-tab.active').forEach(el => {
+      el.classList.remove('active');
       el.style.background = '#fff';
+      el.style.color = '#64748b';
       el.style.borderColor = '#e2e8f0';
     });
-    filterComps = [];
+    selectedFilterSecteurs = [];
     applyFilters();
   }
 
@@ -631,10 +618,10 @@
 
   function getMockMissions() {
     return [
-      { id: 'mock1', titre: 'Assistant comptable — Encodage TVA', nom_entreprise: 'Fiduciaire Dupont SA', taux_horaire: 22, heures_prestees: 8, lieu: 'remote', date_debut: new Date(Date.now()+86400000*3).toISOString(), fonction: 'Comptabilité Encodage TVA', description: 'Encodage de factures et déclaration TVA trimestrielle', created_at: new Date().toISOString(), statut: 'proposee' },
-      { id: 'mock2', titre: 'Support back-office — Gestion dossiers', nom_entreprise: 'PME Bruxelles', taux_horaire: 19, heures_prestees: 6, lieu: 'remote', date_debut: new Date(Date.now()+86400000*5).toISOString(), fonction: 'Back-office Administration', description: 'Gestion administrative de dossiers clients', created_at: new Date(Date.now()-3600000).toISOString(), statut: 'proposee' },
-      { id: 'mock3', titre: 'Reporting Excel — Clôture mensuelle', nom_entreprise: 'Startup Fintech', taux_horaire: 28, heures_prestees: 4, lieu: 'remote', date_debut: new Date(Date.now()+86400000*7).toISOString(), fonction: 'Excel / Reporting Bilan annuel', description: 'Consolidation des données et reporting mensuel', created_at: new Date(Date.now()-7200000).toISOString(), statut: 'proposee' },
-      { id: 'mock4', titre: 'Community Manager — Réseaux sociaux', nom_entreprise: 'E-commerce Belge', taux_horaire: 20, heures_prestees: 8, lieu: 'remote', date_debut: new Date(Date.now()+86400000*4).toISOString(), fonction: 'Marketing digital Réseaux sociaux', description: 'Gestion des réseaux sociaux et création de contenu', created_at: new Date(Date.now()-10800000).toISOString(), statut: 'proposee' },
+      { id: 'mock1', titre: 'Assistant comptable — Encodage TVA', nom_entreprise: 'Fiduciaire Dupont SA', taux_horaire: 22, heures_prestees: 8, lieu: 'remote', secteur: 'bureau', ville: null, date_debut: new Date(Date.now()+86400000*3).toISOString(), fonction: 'Comptabilité Encodage TVA', description: 'Encodage de factures et déclaration TVA trimestrielle', created_at: new Date().toISOString(), statut: 'proposee' },
+      { id: 'mock2', titre: 'Support back-office — Gestion dossiers', nom_entreprise: 'PME Bruxelles', taux_horaire: 19, heures_prestees: 6, lieu: 'onsite', secteur: 'bureau', ville: 'Bruxelles', date_debut: new Date(Date.now()+86400000*5).toISOString(), fonction: 'Back-office Administration', description: 'Gestion administrative de dossiers clients', created_at: new Date(Date.now()-3600000).toISOString(), statut: 'proposee' },
+      { id: 'mock3', titre: 'Vendeur en magasin — Weekend', nom_entreprise: 'Retail Store', taux_horaire: 16, heures_prestees: 8, lieu: 'onsite', secteur: 'commerce', ville: 'Namur', date_debut: new Date(Date.now()+86400000*7).toISOString(), fonction: 'Vente Caisse', description: 'Vente et conseil client en magasin le weekend', created_at: new Date(Date.now()-7200000).toISOString(), statut: 'proposee' },
+      { id: 'mock4', titre: 'Community Manager — Réseaux sociaux', nom_entreprise: 'E-commerce Belge', taux_horaire: 20, heures_prestees: 8, lieu: 'remote', secteur: 'digital', ville: null, date_debut: new Date(Date.now()+86400000*4).toISOString(), fonction: 'Marketing digital Réseaux sociaux', description: 'Gestion des réseaux sociaux et création de contenu', created_at: new Date(Date.now()-10800000).toISOString(), statut: 'proposee' },
     ];
   }
 

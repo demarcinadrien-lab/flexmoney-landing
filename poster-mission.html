@@ -178,7 +178,9 @@
         </div>
       </div>
       <div class="form-group hidden" id="adresseGroup">
-        <label>Adresse de la mission</label>
+        <label>Ville de la mission *</label>
+        <select id="villeMission"></select>
+        <label style="margin-top:12px;">Adresse complète</label>
         <input type="text" id="adresse" placeholder="Rue de la Loi 1, 1000 Bruxelles">
       </div>
     </div>
@@ -240,6 +242,7 @@
 </div>
 
 <script src="competences.js"></script>
+<script src="villes.js"></script>
 <script>
   const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
@@ -312,6 +315,13 @@
     document.getElementById('dateMission').min = new Date().toISOString().split('T')[0];
   });
 
+  // Peupler le select des villes
+  document.addEventListener('DOMContentLoaded', () => {
+    const sel = document.getElementById('villeMission');
+    sel.innerHTML = `<option value="" disabled selected>Sélectionnez une ville...</option>` +
+      TOUTES_VILLES.map(v => `<option value="${v}">${v}</option>`).join('');
+  });
+
   function toggleComp(c, chip, couleur) {
     if (selectedCompetences.includes(c)) {
       selectedCompetences = selectedCompetences.filter(x => x !== c);
@@ -376,19 +386,25 @@
       alert('Veuillez remplir tous les champs obligatoires et sélectionner au moins une compétence.');
       return;
     }
+    if (lieuMode === 'onsite' && !document.getElementById('villeMission').value) {
+      alert('Veuillez sélectionner la ville de la mission.');
+      return;
+    }
 
     const brut = heures * taux;
     const ref = 'FM-' + new Date().getFullYear() + '-' + Math.floor(Math.random() * 9000 + 1000);
 
     // Sauvegarder dans Supabase
+    const secteurObj = getSecteurDeCompetence(selectedCompetences[0]);
     const body = {
       email_employeur: email,
       nom_entreprise: nom,
-      numero_bce: document.getElementById('bce').value,
       titre,
       description: document.getElementById('description').value,
       fonction: selectedCompetences[0],
+      secteur: secteurObj ? secteurObj.id : currentSecteurPm,
       lieu: lieuMode,
+      ville: lieuMode === 'onsite' ? (document.getElementById('villeMission').value || null) : null,
       adresse_lieu: document.getElementById('adresse').value,
       date_debut: date,
       date_fin: date,
