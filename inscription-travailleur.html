@@ -592,6 +592,8 @@
   let formData = {};
   let selectedComps = [];
   let selectedDispos = [];
+  let editMode = false;
+  let editingId = null;
 
   function togglePasswordVisibility(inputId, btn) {
     const input = document.getElementById(inputId);
@@ -621,7 +623,6 @@
       { id: 'prenom', err: 'err-prenom', check: v => v.trim().length > 1 },
       { id: 'nom',    err: 'err-nom',    check: v => v.trim().length > 1 },
       { id: 'email',  err: 'err-email',  check: v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) },
-      { id: 'password', err: 'err-password', check: v => v.length >= 8 },
       { id: 'tel',    err: 'err-tel',    check: v => v.trim().length >= 9 },
       { id: 'ddn',    err: 'err-ddn',    check: v => v.length > 0 },
       { id: 'cp',     err: 'err-cp',     check: v => /^\d{4}$/.test(v) },
@@ -636,10 +637,24 @@
 
     const pwd = document.getElementById('password').value;
     const pwdConfirm = document.getElementById('password-confirm').value;
-    const pwdMatch = pwd === pwdConfirm && pwdConfirm.length > 0;
-    document.getElementById('password-confirm').classList.toggle('error', !pwdMatch);
-    document.getElementById('err-password-confirm').classList.toggle('show', !pwdMatch);
-    if (!pwdMatch) valid = false;
+    // En mode édition, le mot de passe est optionnel : on ne le valide que s'il est renseigné
+    const pwdSkip = editMode && !pwd && !pwdConfirm;
+    if (!pwdSkip) {
+      const pwdOk = pwd.length >= 8;
+      document.getElementById('password').classList.toggle('error', !pwdOk);
+      document.getElementById('err-password').classList.toggle('show', !pwdOk);
+      if (!pwdOk) valid = false;
+
+      const pwdMatch = pwd === pwdConfirm && pwdConfirm.length > 0;
+      document.getElementById('password-confirm').classList.toggle('error', !pwdMatch);
+      document.getElementById('err-password-confirm').classList.toggle('show', !pwdMatch);
+      if (!pwdMatch) valid = false;
+    } else {
+      document.getElementById('password').classList.remove('error');
+      document.getElementById('password-confirm').classList.remove('error');
+      document.getElementById('err-password').classList.remove('show');
+      document.getElementById('err-password-confirm').classList.remove('show');
+    }
 
     if (valid) {
       formData.prenom   = document.getElementById('prenom').value;
@@ -648,6 +663,8 @@
       formData.password = pwd;
       formData.tel      = document.getElementById('tel').value;
       formData.cp       = document.getElementById('cp').value;
+      formData.ville    = document.getElementById('ville').value;
+      formData.ddn      = document.getElementById('ddn').value;
       goToStep(2);
     }
   }
@@ -809,6 +826,51 @@
     formData.taux_min       = document.getElementById('taux-min').value;
     formData.type           = 'worker';
 
+    const payload = {
+      prenom:                 formData.prenom,
+      nom:                    formData.nom,
+      email:                  formData.email,
+      telephone:              formData.tel,
+      code_postal:            formData.cp,
+      ville:                  formData.ville,
+      date_naissance:         formData.ddn || null,
+      statut_eligibilite:     formData.statut,
+      regime_travail:         formData.regime,
+      eligible:               formData.eligible,
+      competences:            formData.competences,
+      disponibilites:         formData.disponibilites,
+      teletravail_preference: formData.pref_lieu,
+      rayon_deplacement:      formData.rayon,
+      taux_horaire_min:       formData.taux_min
+    };
+
+    if (editMode) {
+      // ── MISE À JOUR DU PROFIL EXISTANT ─────────────────────
+      try {
+        // Changer le mot de passe uniquement s'il a été renseigné
+        if (formData.password) {
+          const { error: pwdError } = await sb.auth.updateUser({ password: formData.password });
+          if (pwdError) console.log('Mise à jour mot de passe (non-bloquant)', pwdError.message);
+        }
+      } catch(e) { console.log('Mise à jour mot de passe (non-bloquant)', e); }
+
+      try {
+        await fetch(`${SUPABASE_URL}/rest/v1/workers_inscription?id=eq.${editingId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify(payload)
+        });
+      } catch(e) { console.log('DB error (non-bloquant)', e); }
+
+      window.location.href = 'dashboard-travailleur.html';
+      return;
+    }
+
     // ── CRÉATION DU COMPTE (email + mot de passe) ────────────
     try {
       const { error: signUpError } = await sb.auth.signUp({
@@ -830,21 +892,7 @@
           'Authorization': `Bearer ${SUPABASE_KEY}`,
           'Prefer': 'return=minimal'
         },
-        body: JSON.stringify({
-          prenom:                 formData.prenom,
-          nom:                    formData.nom,
-          email:                  formData.email,
-          telephone:              formData.tel,
-          code_postal:            formData.cp,
-          statut_eligibilite:     formData.statut,
-          regime_travail:         formData.regime,
-          eligible:               formData.eligible,
-          competences:            formData.competences,
-          disponibilites:         formData.disponibilites,
-          teletravail_preference: formData.pref_lieu,
-          rayon_deplacement:      formData.rayon,
-          taux_horaire_min:       formData.taux_min
-        })
+        body: JSON.stringify(payload)
       });
 
       // Fallback : save to waitlist if table doesn't exist yet
@@ -884,6 +932,76 @@
     document.querySelector(`#prog-4`).classList.add('completed');
     document.querySelector(`#prog-5`).classList.add('active');
   }
+
+  // ── MODE ÉDITION (profil existant pré-rempli) ────────────
+  function applyDispoSelections() {
+    document.querySelectorAll('.dispo-slot').forEach(el => {
+      el.classList.toggle('selected', selectedDispos.includes(el.dataset.key));
+    });
+  }
+
+  function refreshCompChips() {
+    const secteur = FLEXMONEY_SECTEURS.find(s => s.id === currentSecteurIns) || FLEXMONEY_SECTEURS[0];
+    renderSecteurChipsIns(secteur);
+    updateCompCount();
+  }
+
+  async function initEditMode() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session || session.user.user_metadata?.role !== 'travailleur') return;
+
+    const { data: rows } = await sb.from('workers_inscription')
+      .select('*').eq('email', session.user.email)
+      .order('created_at', { ascending: false }).limit(1);
+    const row = rows && rows[0];
+    if (!row) return; // pas encore de profil : on laisse le formulaire vierge pour une création
+
+    editMode = true;
+    editingId = row.id;
+
+    // Étape 1
+    document.getElementById('prenom').value = row.prenom || '';
+    document.getElementById('nom').value = row.nom || '';
+    document.getElementById('email').value = row.email || '';
+    document.getElementById('email').readOnly = true;
+    document.getElementById('email').title = 'Contactez le support pour changer votre adresse email de connexion.';
+    document.getElementById('tel').value = row.telephone || '';
+    if (row.date_naissance) document.getElementById('ddn').value = row.date_naissance;
+    document.getElementById('cp').value = row.code_postal || '';
+    document.getElementById('ville').value = row.ville || '';
+    document.getElementById('password').placeholder = 'Laisser vide pour ne pas changer';
+    document.getElementById('password-confirm').placeholder = 'Laisser vide pour ne pas changer';
+
+    // Étape 2
+    if (row.statut_eligibilite) {
+      const radio = document.querySelector(`input[name="statut"][value="${row.statut_eligibilite}"]`);
+      if (radio) { radio.checked = true; showStatutFields(row.statut_eligibilite); }
+    }
+    if (row.regime_travail) document.getElementById('regime').value = row.regime_travail;
+    formData.eligible = row.eligible;
+    formData.statut = row.statut_eligibilite;
+    formData.regime = row.regime_travail;
+
+    // Étape 3
+    selectedComps = [...(row.competences || [])];
+    refreshCompChips();
+
+    // Étape 4
+    selectedDispos = [...(row.disponibilites || [])];
+    applyDispoSelections();
+    if (row.teletravail_preference) document.getElementById('pref-lieu').value = row.teletravail_preference;
+    if (row.rayon_deplacement) document.getElementById('rayon').value = row.rayon_deplacement;
+    if (row.taux_horaire_min) document.getElementById('taux-min').value = row.taux_horaire_min;
+
+    // CGU déjà acceptées lors de l'inscription initiale
+    ['cgu1','cgu2','cgu3'].forEach(id => { const el = document.getElementById(id); if (el) el.checked = true; });
+
+    // Adapter les textes de l'interface
+    document.querySelector('#step-1 .panel-title').textContent = 'Modifiez vos informations';
+    document.getElementById('btn-submit').textContent = 'Mettre à jour mon profil ✓';
+  }
+
+  initEditMode();
 </script>
 </body>
 </html>

@@ -515,6 +515,8 @@
   let formData = {};
   let bceValidated = false;
   let secteurOk = false;
+  let editMode = false;
+  let editingId = null;
 
   function togglePasswordVisibility(inputId, btn) {
     const input = document.getElementById(inputId);
@@ -684,7 +686,6 @@
       { id:'contact-prenom', err:'err-cprenom', check: v => v.trim().length > 1 },
       { id:'contact-nom',    err:'err-cnom',    check: v => v.trim().length > 1 },
       { id:'contact-email',  err:'err-cemail',  check: v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) },
-      { id:'contact-password', err:'err-cpassword', check: v => v.length >= 8 },
       { id:'contact-tel',    err:'err-ctel',    check: v => v.trim().length >= 9 },
     ];
     fields.forEach(f => {
@@ -697,10 +698,23 @@
 
     const pwd = document.getElementById('contact-password').value;
     const pwdConfirm = document.getElementById('contact-password-confirm').value;
-    const pwdMatch = pwd === pwdConfirm && pwdConfirm.length > 0;
-    document.getElementById('contact-password-confirm').classList.toggle('error', !pwdMatch);
-    document.getElementById('err-cpassword-confirm').classList.toggle('show', !pwdMatch);
-    if (!pwdMatch) valid = false;
+    const pwdSkip = editMode && !pwd && !pwdConfirm;
+    if (!pwdSkip) {
+      const pwdOk = pwd.length >= 8;
+      document.getElementById('contact-password').classList.toggle('error', !pwdOk);
+      document.getElementById('err-cpassword').classList.toggle('show', !pwdOk);
+      if (!pwdOk) valid = false;
+
+      const pwdMatch = pwd === pwdConfirm && pwdConfirm.length > 0;
+      document.getElementById('contact-password-confirm').classList.toggle('error', !pwdMatch);
+      document.getElementById('err-cpassword-confirm').classList.toggle('show', !pwdMatch);
+      if (!pwdMatch) valid = false;
+    } else {
+      document.getElementById('contact-password').classList.remove('error');
+      document.getElementById('contact-password-confirm').classList.remove('error');
+      document.getElementById('err-cpassword').classList.remove('show');
+      document.getElementById('err-cpassword-confirm').classList.remove('show');
+    }
 
     if (!document.getElementById('contact-fonction').value) { alert('Veuillez sélectionner votre fonction.'); return; }
     if (valid) {
@@ -732,6 +746,51 @@
 
     formData.type = 'employer';
 
+    const payload = {
+      numero_bce:       formData.bce,
+      nom_entreprise:   formData.company_name,
+      secteur:          formData.secteur,
+      adresse:          formData.company_address,
+      code_postal:      formData.company_cp,
+      ville:            formData.company_city,
+      code_nace:        formData.nace,
+      activite:         formData.activite,
+      prenom_contact:   formData.contact_prenom,
+      nom_contact:      formData.contact_nom,
+      fonction_contact: formData.contact_fonction,
+      email_contact:    formData.contact_email,
+      telephone_contact: formData.contact_tel,
+      volume_mensuel:   formData.volume,
+      secteur_eligible: formData.secteur_eligible,
+      secteur_statut:   formData.secteur_statut,
+      dimona_accepte:   true,
+      assurance_accepte: true,
+      onss_accepte:     true,
+      salaire_accepte:  true,
+      facture_accepte:  true
+    };
+
+    if (editMode) {
+      // ── MISE À JOUR DU PROFIL EXISTANT ─────────────────────
+      try {
+        if (formData.contact_password) {
+          const { error: pwdError } = await sb.auth.updateUser({ password: formData.contact_password });
+          if (pwdError) console.log('Mise à jour mot de passe (non-bloquant)', pwdError.message);
+        }
+      } catch(e) { console.log('Mise à jour mot de passe (non-bloquant)', e); }
+
+      try {
+        await fetch(`${SUPABASE_URL}/rest/v1/employers_inscription?id=eq.${editingId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Prefer': 'return=minimal' },
+          body: JSON.stringify(payload)
+        });
+      } catch(e) { console.log('DB save (non-bloquant)', e); }
+
+      window.location.href = 'dashboard-employeur.html';
+      return;
+    }
+
     // ── CRÉATION DU COMPTE (email + mot de passe) ────────────
     try {
       const { error: signUpError } = await sb.auth.signUp({
@@ -748,29 +807,7 @@
       await fetch(`${SUPABASE_URL}/rest/v1/employers_inscription`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Prefer': 'return=minimal' },
-        body: JSON.stringify({
-          numero_bce:       formData.bce,
-          nom_entreprise:   formData.company_name,
-          secteur:          formData.secteur,
-          adresse:          formData.company_address,
-          code_postal:      formData.company_cp,
-          ville:            formData.company_city,
-          code_nace:        formData.nace,
-          activite:         formData.activite,
-          prenom_contact:   formData.contact_prenom,
-          nom_contact:      formData.contact_nom,
-          fonction_contact: formData.contact_fonction,
-          email_contact:    formData.contact_email,
-          telephone_contact: formData.contact_tel,
-          volume_mensuel:   formData.volume,
-          secteur_eligible: formData.secteur_eligible,
-          secteur_statut:   formData.secteur_statut,
-          dimona_accepte:   true,
-          assurance_accepte: true,
-          onss_accepte:     true,
-          salaire_accepte:  true,
-          facture_accepte:  true
-        })
+        body: JSON.stringify(payload)
       });
     } catch(e) { console.log('DB save (non-bloquant)', e); }
 
@@ -816,6 +853,64 @@
     ['prog-4','prog-5'].forEach(id => document.getElementById(id).classList.add('completed'));
     document.getElementById('prog-6').classList.add('active');
   }
+
+  // ── MODE ÉDITION (profil existant pré-rempli) ────────────
+  async function initEditMode() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session || session.user.user_metadata?.role !== 'employeur') return;
+
+    const { data: rows } = await sb.from('employers_inscription')
+      .select('*').eq('email_contact', session.user.email)
+      .order('created_at', { ascending: false }).limit(1);
+    const row = rows && rows[0];
+    if (!row) return; // pas encore de profil : formulaire vierge pour une création
+
+    editMode = true;
+    editingId = row.id;
+
+    // Étape 1 — Entreprise / BCE (déjà validée, pas besoin de re-vérifier)
+    document.getElementById('bce').value = row.numero_bce || '';
+    bceValidated = true;
+    formData.bce = row.numero_bce;
+    formData.company_name = row.nom_entreprise;
+    document.getElementById('bce-result').className = 'bce-result success';
+    document.getElementById('bce-result').style.display = 'block';
+    document.getElementById('bce-result').innerHTML = `<div style="color:var(--success);font-weight:700;">✅ Numéro BCE déjà validé</div>`;
+    document.getElementById('bce-validated-fields').style.display = 'block';
+    document.getElementById('company-name').value = row.nom_entreprise || '';
+    document.getElementById('company-address').value = row.adresse || '';
+    document.getElementById('company-cp').value = row.code_postal || '';
+    document.getElementById('company-city').value = row.ville || '';
+
+    // Étape 2 — Secteur
+    if (row.secteur) {
+      document.getElementById('secteur').value = row.secteur;
+      checkSecteur(row.secteur);
+    }
+    if (row.code_nace) document.getElementById('nace').value = row.code_nace;
+    if (row.activite) document.getElementById('activite-desc').value = row.activite;
+
+    // Étape 3 — Contact
+    document.getElementById('contact-prenom').value = row.prenom_contact || '';
+    document.getElementById('contact-nom').value = row.nom_contact || '';
+    document.getElementById('contact-email').value = row.email_contact || '';
+    document.getElementById('contact-email').readOnly = true;
+    document.getElementById('contact-email').title = 'Contactez le support pour changer votre adresse email de connexion.';
+    if (row.fonction_contact) document.getElementById('contact-fonction').value = row.fonction_contact;
+    document.getElementById('contact-tel').value = row.telephone_contact || '';
+    if (row.volume_mensuel) document.getElementById('volume').value = row.volume_mensuel;
+    document.getElementById('contact-password').placeholder = 'Laisser vide pour ne pas changer';
+    document.getElementById('contact-password-confirm').placeholder = 'Laisser vide pour ne pas changer';
+
+    // Étape 4 — Obligations déjà acceptées lors de l'inscription initiale
+    ['obl1','obl2','obl3','obl4','obl5'].forEach(id => { const el = document.getElementById(id); if (el) el.checked = true; });
+
+    // Adapter les textes
+    document.querySelector('#step-1 .panel-title').textContent = 'Modifiez votre entreprise';
+    document.getElementById('btn-submit').textContent = 'Mettre à jour mon profil ✓';
+  }
+
+  initEditMode();
 </script>
 
 </body>
