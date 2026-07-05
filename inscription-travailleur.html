@@ -471,18 +471,6 @@
     </div>
 
     <div class="field">
-      <label>Rayon de déplacement (si présentiel)</label>
-      <select id="rayon">
-        <option value="0">Je ne me déplace pas</option>
-        <option value="10">Moins de 10 km</option>
-        <option value="20">Moins de 20 km</option>
-        <option value="35">Moins de 35 km</option>
-        <option value="50">Moins de 50 km</option>
-        <option value="100">Toute la Belgique</option>
-      </select>
-    </div>
-
-    <div class="field">
       <label>Taux horaire minimum souhaité</label>
       <select id="taux-min">
         <option value="">Pas de minimum</option>
@@ -822,7 +810,6 @@
 
     formData.disponibilites = selectedDispos;
     formData.pref_lieu      = document.getElementById('pref-lieu').value;
-    formData.rayon          = document.getElementById('rayon').value;
     formData.taux_min       = document.getElementById('taux-min').value;
     formData.type           = 'worker';
 
@@ -840,7 +827,6 @@
       competences:            formData.competences,
       disponibilites:         formData.disponibilites,
       teletravail_preference: formData.pref_lieu,
-      rayon_deplacement:      formData.rayon,
       taux_horaire_min:       formData.taux_min
     };
 
@@ -983,7 +969,6 @@
     selectedDispos = [...(row.disponibilites || [])];
     applyDispoSelections();
     if (row.teletravail_preference) document.getElementById('pref-lieu').value = row.teletravail_preference;
-    if (row.rayon_deplacement) document.getElementById('rayon').value = row.rayon_deplacement;
     if (row.taux_horaire_min) document.getElementById('taux-min').value = row.taux_horaire_min;
 
     // CGU déjà acceptées lors de l'inscription initiale
