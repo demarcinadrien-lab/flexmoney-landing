@@ -176,6 +176,12 @@
 
     <!-- Colonne droite : missions -->
     <div>
+      <!-- Mes candidatures -->
+      <div class="card" id="candidaturesCard" style="display:none;">
+        <h2>📌 Mes candidatures</h2>
+        <div id="myCandidatures"></div>
+      </div>
+
       <!-- Missions suggérées -->
       <div class="card">
         <h2>🎯 Missions pour vous</h2>
@@ -240,6 +246,65 @@
     workerProfile = workers[0];
     renderProfile();
     loadMissions();
+    loadCandidatures();
+  }
+
+  // ── Mes candidatures : en attente, à confirmer, dossier à compléter ──
+  async function loadCandidatures() {
+    const { data: cands } = await sb.from('candidatures')
+      .select('*').eq('worker_email', currentUser.email)
+      .order('created_at', { ascending: false });
+    if (!cands || cands.length === 0) return;
+
+    // Récupérer les missions liées (titre, entreprise)
+    const ids = [...new Set(cands.map(c => c.mission_id).filter(Boolean))];
+    let missionsById = {};
+    if (ids.length > 0) {
+      const { data: ms } = await sb.from('missions').select('id,titre,nom_entreprise').in('id', ids);
+      (ms || []).forEach(m => { missionsById[m.id] = m; });
+    }
+
+    const html = cands.map(c => {
+      const m = missionsById[c.mission_id] || {};
+      const titre = m.titre || (c.type_contrat === 'test_jour' ? 'Journée de test' : 'Mission flexi');
+      const entreprise = m.nom_entreprise || 'Employeur';
+      let badge, action = '';
+
+      if (c.statut === 'en_attente') {
+        badge = '<span class="status-badge status-proposee">⏳ En attente de réponse</span>';
+      } else if (c.statut === 'date_proposee') {
+        badge = '<span class="status-badge status-proposee">📅 Créneau proposé</span>';
+        action = `<button class="btn btn-primary" onclick="window.location.href='confirmation-creneau.html?cid=${c.id}'">Confirmer le créneau →</button>`;
+      } else if (c.statut === 'acceptee' && !c.compliance_complete) {
+        badge = '<span class="status-badge" style="background:#fffbeb;color:#92400e;">⚠️ Dossier incomplet</span>';
+        action = `<button class="btn btn-primary" onclick="window.location.href='compliance.html?cid=${c.id}'">Compléter mon dossier →</button>`;
+      } else if (c.statut === 'acceptee') {
+        badge = '<span class="status-badge status-acceptee">✅ Acceptée — dossier complet</span>';
+        action = `<button class="btn btn-outline" onclick="window.location.href='dossier-jour-j.html?cid=${c.id}'">Voir mon dossier →</button>`;
+      } else if (c.statut === 'refusee') {
+        badge = '<span class="status-badge status-cloturee">Refusée</span>';
+      } else {
+        badge = `<span class="status-badge status-cloturee">${c.statut}</span>`;
+      }
+
+      const dateInfo = c.date_test ? `📅 ${new Date(c.date_test).toLocaleDateString('fr-BE')}` : '';
+      const heures = c.heure_debut ? `⏱️ ${c.heure_debut}–${c.heure_fin || '?'}` : '';
+
+      return `
+        <div class="mission-item">
+          <div class="top">
+            <div>
+              <div class="titre">${titre}</div>
+              <div class="company">🏢 ${entreprise}</div>
+            </div>
+          </div>
+          <div class="meta"><span>${dateInfo}</span><span>${heures}</span></div>
+          <div class="footer">${badge}${action}</div>
+        </div>`;
+    }).join('');
+
+    document.getElementById('myCandidatures').innerHTML = html;
+    document.getElementById('candidaturesCard').style.display = 'block';
   }
 
   function renderProfile() {
