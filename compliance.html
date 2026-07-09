@@ -357,6 +357,13 @@
           document.getElementById('missionMeta').textContent = `${mission.nom_entreprise || '—'} · ${dateStr} · ${mission.taux_horaire || '?'} €/h`;
         }
       }
+      if (!missionData) {
+        // Candidature sans mission liée : afficher les infos de la candidature
+        document.getElementById('missionTitre').textContent = cand?.type_contrat === 'test_jour' ? 'Journée de test' : 'Mission flexi-job';
+        const dStr = cand?.date_test ? new Date(cand.date_test).toLocaleDateString('fr-BE', { weekday:'long', day:'numeric', month:'long' }) : 'Date à définir';
+        const hStr = cand?.heure_debut ? ` · ${cand.heure_debut}–${cand.heure_fin || '?'}` : '';
+        document.getElementById('missionMeta').textContent = dStr + hStr;
+      }
     } else {
       // Mode démo sans candidature_id
       document.getElementById('missionTitre').textContent = 'Mission flexi-job (démo)';
@@ -425,9 +432,9 @@
   /* ===== STATUT ===== */
   function selectStatut(s) {
     selectedStatut = s;
-    ['salarie_4_5','pensionné','independant'].forEach(k => {
-      const card = document.getElementById(`card-${k}`);
-      card.classList.toggle('selected', k === s);
+    const cardIds = { 'salarie_4_5': 'salarie', 'pensionné': 'pensionné', 'independant': 'independant' };
+    Object.entries(cardIds).forEach(([k, id]) => {
+      document.getElementById(`card-${id}`).classList.toggle('selected', k === s);
     });
     ['salarie','pensionné','independant'].forEach(k => {
       document.getElementById(`info-${k}`).classList.toggle('hidden', k !== s.replace('_4_5',''));
