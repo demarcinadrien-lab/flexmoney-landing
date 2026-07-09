@@ -294,13 +294,23 @@
 
   async function loadWorkers() {
     try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/workers_inscription?select=*&eligible=eq.true&order=created_at.desc`, {
-        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-      });
-      allWorkers = await res.json();
+      // Client authentifié (session employeur) : requis par la RLS,
+      // la clé anonyme ne peut pas lire les profils
+      await sb.auth.getSession();
+      const { data, error } = await sb.from('workers_inscription')
+        .select('*').eq('eligible', true).order('created_at', { ascending: false });
+      allWorkers = error ? [] : (data || []);
     } catch(e) { allWorkers = []; }
 
-    if (!Array.isArray(allWorkers) || allWorkers.length === 0) {
+    // Dédupliquer par email (garder l'inscription la plus récente)
+    const seen = new Set();
+    allWorkers = allWorkers.filter(w => {
+      if (!w.email || seen.has(w.email)) return false;
+      seen.add(w.email);
+      return true;
+    });
+
+    if (allWorkers.length === 0) {
       allWorkers = getMockWorkers();
     }
 
@@ -503,11 +513,4 @@
       { id: 'w3', prenom: 'Marie', nom: 'Dubois', ville: 'Gand', regime_travail: 'Pensionnée', eligible: true, competences: ['Bilan annuel','Audit','Comptabilité','Payroll'], teletravail_preference: 'oui', disponibilites: { 'Tous les jours': true }, created_at: new Date().toISOString() },
       { id: 'w4', prenom: 'Kevin', nom: 'Peeters', ville: 'Anvers', regime_travail: 'Salarié 4/5e', eligible: true, competences: ['Marketing digital','Réseaux sociaux','Design graphique'], teletravail_preference: 'oui', disponibilites: { 'Samedi': true }, created_at: new Date().toISOString() },
       { id: 'w5', prenom: 'Julie', nom: 'Renard', ville: 'Namur', regime_travail: 'Salariée 4/5e', eligible: true, competences: ['Support client','Back-office','Administration','Excel / Reporting'], teletravail_preference: 'hybride', disponibilites: { 'Mercredi': true, 'Weekend': true }, created_at: new Date().toISOString() },
-      { id: 'w6', prenom: 'Ahmed', nom: 'Benali', ville: 'Bruxelles', regime_travail: 'Salarié 4/5e', eligible: true, competences: ['IT / Développement','Excel / Reporting','Back-office'], teletravail_preference: 'oui', disponibilites: { 'Vendredi': true, 'Samedi': true }, created_at: new Date().toISOString() },
-    ];
-  }
-
-  loadWorkers();
-</script>
-</body>
-</html>
+      { id: 'w6', prenom: 'Ahmed', nom: 'Benali', ville: '
