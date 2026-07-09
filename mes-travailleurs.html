@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mes travailleurs — FlexMoney</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; color: #1e293b; }
+    body.access-checking > * { display: none !important; }
+    header { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 16px 32px; display: flex; align-items: center; gap: 12px; }
+    header .logo { font-weight: 800; font-size: 20px; color: #6366f1; }
+    header .logo span { color: #1e293b; }
+    header nav { margin-left: auto; display: flex; gap: 16px; align-items: center; }
+    header nav a, header nav button { font-size: 14px; font-weight: 600; color: #64748b; text-decoration: none; background: none; border: none; cursor: pointer; font-family: inherit; }
+    header nav a:hover, header nav button:hover { color: #6366f1; }
+
+    .hero { background: linear-gradient(135deg, #0f172a, #1e3a5f); color: #fff; padding: 32px; text-align: center; }
+    .hero h1 { font-size: 24px; font-weight: 800; margin-bottom: 6px; }
+    .hero p { font-size: 14px; opacity: 0.8; }
+
+    .container { max-width: 900px; margin: 32px auto; padding: 0 20px 60px; }
+
+    .loading { text-align: center; padding: 40px; color: #94a3b8; }
+    .empty-state { text-align: center; padding: 60px 20px; color: #94a3b8; }
+    .empty-state .icon { font-size: 44px; margin-bottom: 12px; }
+
+    .worker-row {
+      background: #fff; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 20px 24px;
+      margin-bottom: 14px; display: flex; align-items: center; gap: 16px; transition: border-color 0.2s;
+    }
+    .worker-row:hover { border-color: #6366f1; }
+    .avatar { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; color: #fff; flex-shrink: 0; }
+    .w-info { flex: 1; min-width: 0; }
+    .w-name { font-weight: 700; font-size: 15px; }
+    .w-email { font-size: 12px; color: #64748b; margin-top: 2px; }
+    .w-meta { font-size: 12px; color: #64748b; margin-top: 6px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .type-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+    .badge-test { background: #fef3c7; color: #92400e; }
+    .badge-trim { background: #ede9fe; color: #6d28d9; }
+    .missions-count { font-size: 11px; color: #94a3b8; }
+
+    .btn-propose { padding: 10px 18px; background: #6366f1; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.2s; white-space: nowrap; }
+    .btn-propose:hover { background: #4f46e5; }
+
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+    .modal { background: #fff; border-radius: 16px; padding: 32px; max-width: 480px; width: 100%; max-height: 90vh; overflow-y: auto; }
+    .modal h2 { font-size: 19px; font-weight: 800; margin-bottom: 6px; }
+    .modal .sub { font-size: 13px; color: #64748b; margin-bottom: 20px; }
+
+    .type-toggle { display: flex; gap: 0; border: 1.5px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin-bottom: 20px; }
+    .type-btn { flex: 1; padding: 11px; text-align: center; font-size: 13px; font-weight: 600; cursor: pointer; background: #fff; color: #64748b; border: none; transition: all 0.2s; }
+    .type-btn.active { background: #6366f1; color: #fff; }
+
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #374151; }
+    .form-group input, .form-group textarea { width: 100%; padding: 11px 14px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit; }
+    .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #6366f1; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .modal-buttons { display: flex; gap: 12px; margin-top: 20px; }
+    .btn-cancel { flex: 1; padding: 12px; background: #f1f5f9; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    .btn-send { flex: 2; padding: 12px; background: #6366f1; color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; }
+    .btn-send:disabled { background: #a5b4fc; cursor: not-allowed; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body class="access-checking">
+
+<header>
+  <div class="logo">Flex<span>Money</span></div>
+  <nav>
+    <a href="poster-mission.html">📢 Poster une mission</a>
+    <a href="tableau-travailleurs.html">👥 Tous les profils</a>
+    <a href="dashboard-employeur.html">🏢 Mon espace</a>
+    <button onclick="signOut()">Déconnexion</button>
+  </nav>
+</header>
+
+<div class="hero">
+  <h1>🤝 Mes travailleurs</h1>
+  <p>Les flexi-jobbeurs ayant déjà travaillé pour vous — proposez-leur directement un nouveau contrat.</p>
+</div>
+
+<div class="container">
+  <div id="loadingState" class="loading">⏳ Chargement...</div>
+  <div id="workersList"></div>
+</div>
+
+<!-- Modal proposer un nouveau contrat -->
+<div class="modal-overlay hidden" id="modalOverlay">
+  <div class="modal">
+    <h2 id="modalTitle">Proposer un nouveau contrat</h2>
+    <p class="sub" id="modalSub">Ce travailleur recevra directement la proposition par email, sans passer par une candidature publique.</p>
+
+    <div class="type-toggle">
+      <button class="type-btn active" id="btnTypeTest" onclick="setType('test_jour')">🧪 Journée de test</button>
+      <button class="type-btn" id="btnTypeTrim" onclick="setType('trimestriel')">📋 Contrat trimestriel</button>
+    </div>
+
+    <div class="form-group">
+      <label>Titre de la mission *</label>
+      <input type="text" id="f-titre" placeholder="Assistant comptable — encodage TVA">
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <textarea id="f-desc" rows="2" placeholder="Détails de la mission..."></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label id="f-date-label">Date du jour de test *</label>
+        <input type="date" id="f-date">
+      </div>
+      <div class="form-group" id="heuresGroup">
+        <label>Nombre d'heures *</label>
+        <input type="number" id="f-heures" value="8" min="1" max="12">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Taux horaire brut (€/h) *</label>
+      <input type="number" id="f-taux" value="20" min="12" max="50" step="0.5">
+    </div>
+
+    <div class="modal-buttons">
+      <button class="btn-cancel" onclick="closeModal()">Annuler</button>
+      <button class="btn-send" id="btnSendContract" onclick="submitNouveauContrat()">Envoyer la proposition →</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="competences.js"></script>
+<script>
+  const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const EJS_PUBLIC_KEY = 'YAyl_sI2uC4Q2YCCF';
+  const EJS_SERVICE_ID = 'service_2749nt8';
+  const EJS_TPL_WORKER = 'template_0hbqgjd';       // email travailleur (compliance / mission acceptée)
+  const EJS_TPL_PROPOSITION = 'template_lk3kj9n';  // proposition de créneau (jour test)
+  emailjs.init(EJS_PUBLIC_KEY);
+
+  let currentUser = null;
+  let employerProfile = null;
+  let pastWorkers = [];
+  let selectedContrat = 'test_jour';
+  let selectedWorkerEmail = null;
+
+  async function init() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.replace('auth.html'); return; }
+    const role = session.user.user_metadata?.role;
+    if (role !== 'employeur') { window.location.replace('dashboard-travailleur.html'); return; }
+    currentUser = session.user;
+
+    const { data: emp } = await sb.from('employers_inscription').select('*').eq('email_contact', currentUser.email).limit(1);
+    employerProfile = (emp && emp[0]) || null;
+
+    document.body.classList.remove('access-checking');
+    await loadPastWorkers();
+  }
+
+  async function loadPastWorkers() {
+    const { data: missions } = await sb.from('missions').select('*').eq('email_employeur', currentUser.email);
+    const myMissions = missions || [];
+    const missionIds = myMissions.map(m => m.id).filter(Boolean);
+
+    let cands = [];
+    if (missionIds.length > 0) {
+      const { data } = await sb.from('candidatures')
+        .select('*').in('mission_id', missionIds).eq('statut', 'acceptee')
+        .order('created_at', { ascending: false });
+      cands = data || [];
+    }
+
+    document.getElementById('loadingState').classList.add('hidden');
+
+    // Dédoublonner par email travailleur, en gardant la mission la plus récente + compter les missions
+    const byEmail = {};
+    cands.forEach(c => {
+      if (!c.worker_email) return;
+      if (!byEmail[c.worker_email]) {
+        const mission = myMissions.find(m => m.id === c.mission_id);
+        byEmail[c.worker_email] = {
+          email: c.worker_email,
+          prenom: c.worker_prenom,
+          nom: c.worker_nom,
+          type_contrat: c.type_contrat,
+          derniere_mission: mission?.titre || '—',
+          derniere_date: c.date_test || c.created_at,
+          nb_missions: 0
+        };
+      }
+      byEmail[c.worker_email].nb_missions++;
+    });
+
+    pastWorkers = Object.values(byEmail);
+    renderWorkers();
+  }
+
+  function renderWorkers() {
+    const el = document.getElementById('workersList');
+    if (pastWorkers.length === 0) {
+      el.innerHTML = `<div class="empty-state">
+        <div class="icon">🤝</div>
+        Aucun travailleur n'a encore de mission acceptée avec vous.<br>
+        Dès qu'une candidature sera acceptée (journée de test ou mission), le travailleur apparaîtra ici pour que vous puissiez lui proposer un nouveau contrat.
+      </div>`;
+      return;
+    }
+
+    el.innerHTML = pastWorkers.map(w => {
+      const initials = ((w.prenom || '?')[0] + (w.nom || '?')[0]).toUpperCase();
+      const isTest = w.type_contrat === 'test_jour';
+      const badgeClass = isTest ? 'badge-test' : 'badge-trim';
+      const badgeLabel = isTest ? '🧪 Journée de test' : '📋 Mission trimestrielle';
+      const dateLabel = w.derniere_date ? new Date(w.derniere_date).toLocaleDateString('fr-BE') : '—';
+
+      return `
+        <div class="worker-row">
+          <div class="avatar">${initials}</div>
+          <div class="w-info">
+            <div class="w-name">${w.prenom || ''} ${w.nom || ''}</div>
+            <div class="w-email">✉️ ${w.email}</div>
+            <div class="w-meta">
+              <span class="type-badge ${badgeClass}">${badgeLabel}</span>
+              <span class="missions-count">📌 ${w.derniere_mission} · ${dateLabel}</span>
+              ${w.nb_missions > 1 ? `<span class="missions-count">· ${w.nb_missions} missions ensemble</span>` : ''}
+            </div>
+          </div>
+          <button class="btn-propose" onclick="ouvrirNouveauContrat('${w.email}', '${(w.prenom||'').replace(/'/g,"\\'")}', '${(w.nom||'').replace(/'/g,"\\'")}')">📄 Proposer un nouveau contrat</button>
+        </div>`;
+    }).join('');
+  }
+
+  function ouvrirNouveauContrat(email, prenom, nom) {
+    selectedWorkerEmail = email;
+    document.getElementById('modalTitle').textContent = `Proposer un nouveau contrat à ${prenom} ${nom}`;
+    document.getElementById('f-titre').value = '';
+    document.getElementById('f-desc').value = '';
+    document.getElementById('f-date').value = '';
+    document.getElementById('f-date').min = new Date().toISOString().split('T')[0];
+    document.getElementById('f-heures').value = 8;
+    document.getElementById('f-taux').value = 20;
+    setType('test_jour');
+    document.getElementById('modalOverlay').classList.remove('hidden');
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.add('hidden');
+    selectedWorkerEmail = null;
+  }
+
+  function setType(type) {
+    selectedContrat = type;
+    document.getElementById('btnTypeTest').classList.toggle('active', type === 'test_jour');
+    document.getElementById('btnTypeTrim').classList.toggle('active', type === 'trimestriel');
+    document.getElementById('f-date-label').textContent = type === 'test_jour' ? 'Date du jour de test *' : 'Date de début souhaitée *';
+    document.getElementById('heuresGroup').classList.toggle('hidden', type === 'trimestriel');
+  }
+
+  async function submitNouveauContrat() {
+    const titre = document.getElementById('f-titre').value.trim();
+    const desc = document.getElementById('f-desc').value.trim();
+    const date = document.getElementById('f-date').value;
+    const heures = parseFloat(document.getElementById('f-heures').value) || 8;
+    const taux = parseFloat(document.getElementById('f-taux').value) || 20;
+
+    if (!titre || !date || !taux) { alert('Veuillez remplir les champs obligatoires.'); return; }
+    if (selectedContrat === 'test_jour' && !heures) { alert("Nombre d'heures requis."); return; }
+
+    const worker = pastWorkers.find(w => w.email === selectedWorkerEmail);
+    if (!worker) { alert('Travailleur introuvable.'); return; }
+
+    const btn = document.getElementById('btnSendContract');
+    btn.disabled = true;
+    btn.textContent = 'Envoi en cours...';
+
+    const heureDebut = '09:00';
+    const finTotal = 9 * 60 + heures * 60;
+    const heureFin = String(Math.floor(finTotal / 60) % 24).padStart(2, '0') + ':' + String(Math.round(finTotal % 60)).padStart(2, '0');
+    const brut = heures * taux;
+
+    const missionPayload = {
+      email_employeur: currentUser.email,
+      nom_entreprise: employerProfile?.nom_entreprise || '—',
+      titre,
+      description: desc || null,
+      lieu: 'onsite',
+      date_debut: date,
+      date_fin: date,
+      heure_debut: selectedContrat === 'test_jour' ? heureDebut : null,
+      heure_fin: selectedContrat === 'test_jour' ? heureFin : null,
+      heures_prestees: selectedContrat === 'test_jour' ? heures : null,
+      taux_horaire: taux,
+      salaire_brut: brut,
+      commission_taux: 5,
+      commission_montant: brut * 0.05,
+      cout_total_employeur: brut * 1.30,
+      statut: 'acceptee' // proposition directe à ce travailleur, pas de listing public
+    };
+
+    let missionId = null;
+    try {
+      const { data: mRows, error: mErr } = await sb.from('missions').insert(missionPayload).select().single();
+      if (!mErr && mRows) missionId = mRows.id;
+    } catch(e) { console.log('Mission non créée', e); }
+
+    const candPayload = {
+      mission_id: missionId,
+      worker_email: worker.email,
+      worker_nom: worker.nom,
+      worker_prenom: worker.prenom,
+      message: desc || null,
+      type_contrat: selectedContrat,
+      statut: selectedContrat === 'test_jour' ? 'date_proposee' : 'acceptee',
+      date_test: selectedContrat === 'test_jour' ? date : null,
+      heure_debut: selectedContrat === 'test_jour' ? heureDebut : null,
+      heure_fin: selectedContrat === 'test_jour' ? heureFin : null
+    };
+
+    let candId = null;
+    try {
+      const { data: cRows, error: cErr } = await sb.from('candidatures').insert(candPayload).select().single();
+      if (!cErr && cRows) candId = cRows.id;
+    } catch(e) { console.log('Candidature non créée', e); }
+
+    if (candId) {
+      try {
+        if (selectedContrat === 'test_jour') {
+          const confirmUrl = `${window.location.origin}/confirmation-creneau.html?cid=${candId}`;
+          const dateLabel = new Date(date).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' });
+          await emailjs.send(EJS_SERVICE_ID, EJS_TPL_PROPOSITION, {
+            to_email: worker.email,
+            to_name: `${worker.prenom || ''} ${worker.nom || ''}`,
+            entreprise: employerProfile?.nom_entreprise || 'L\'employeur',
+            mission_titre: titre,
+            date_proposee: dateLabel,
+            heure_debut: heureDebut,
+            heure_fin: heureFin,
+            lien_confirmation: confirmUrl,
+            reply_to: currentUser.email
+          });
+        } else {
+          const complianceUrl = `${window.location.origin}/compliance.html?cid=${candId}`;
+          await emailjs.send(EJS_SERVICE_ID, EJS_TPL_WORKER, {
+            to_email: worker.email,
+            prenom: worker.prenom || worker.nom,
+            to_name: `${worker.prenom || ''} ${worker.nom || ''}`,
+            eligible: `✅ ${employerProfile?.nom_entreprise || 'Un employeur'} vous propose un nouveau contrat (mission récurrente écrite trimestrielle) : "${titre}". Complétez votre dossier DIMONA ici : ${complianceUrl}`,
+            competences: 'NISS · Éligibilité · Document de preuve · IBAN — obligatoires avant le début de la mission',
+            reply_to: currentUser.email
+          });
+        }
+      } catch(e) { console.log('Email non bloquant', e); }
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Envoyer la proposition →';
+
+    if (candId) {
+      alert(`✅ Proposition envoyée à ${worker.prenom} !`);
+      closeModal();
+      await loadPastWorkers();
+    } else {
+      alert("⚠️ La proposition n'a pas pu être enregistrée. Réessayez.");
+    }
+  }
+
+  async function signOut() {
+    await sb.auth.signOut();
+    window.location.href = 'auth.html';
+  }
+
+  init();
+</script>
+</body>
+</html>
