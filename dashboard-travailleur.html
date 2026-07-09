@@ -211,12 +211,8 @@
   </div>
 </div>
 
+<script src="shared.js"></script>
 <script>
-  const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
-  const { createClient } = supabase;
-  const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
-
   let currentUser = null;
   let workerProfile = null;
 
@@ -347,11 +343,6 @@
   async function postuler(missionId) {
     if (!workerProfile) return;
     alert(`✅ Candidature envoyée !\n\nL'employeur sera notifié et vous contactera à l'adresse ${workerProfile.email}.`);
-  }
-
-  async function signOut() {
-    await sb.auth.signOut();
-    window.location.href = 'auth.html';
   }
 
   function fmt(n) {

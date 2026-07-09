@@ -564,18 +564,9 @@
 
 </div>
 
+<script src="shared.js"></script>
 <script>
-  const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
-  const { createClient } = supabase;
-  const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-  // ── EMAILJS CONFIG ──────────────────────────────────────
-  const EMAILJS_PUBLIC_KEY  = 'YAyl_sI2uC4Q2YCCF';
-  const EMAILJS_SERVICE_ID  = 'service_2749nt8';
   const EMAILJS_TEMPLATE_ID = 'template_y3zn6ll';
-  emailjs.init(EMAILJS_PUBLIC_KEY);
-
   let currentStep = 1;
   let formData = {};
   let selectedComps = [];
@@ -886,7 +877,7 @@
 
     // ── ENVOI EMAIL CONFIRMATION ─────────────────────────────
     try {
-      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      await emailjs.send(EJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
         to_email:    formData.email,
         to_name:     formData.prenom + ' ' + formData.nom,
         prenom:      formData.prenom,

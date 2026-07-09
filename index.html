@@ -386,6 +386,7 @@
   <p class="hero-note">Rejoins la liste d'attente · Gratuit · Sans engagement</p>
 </section>
 
+<script src="shared.js"></script>
 <script>
   let advTimeout;
   let lastProfile = null;
@@ -637,9 +638,6 @@
 </footer>
 
 <script>
-  const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
-
   function switchTab(id, el) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));

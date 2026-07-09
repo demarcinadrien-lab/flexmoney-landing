@@ -197,17 +197,9 @@
 
 </div>
 
+<script src="shared.js"></script>
 <script>
-  const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
-  const EJS_PUBLIC_KEY = 'YAyl_sI2uC4Q2YCCF';
-  const EJS_SERVICE_ID = 'service_2749nt8';
   const EJS_TPL_EMPLOYEUR = 'template_y3zn6ll';
-  emailjs.init(EJS_PUBLIC_KEY);
-
-  const { createClient } = supabase;
-  const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
-
   const params = new URLSearchParams(window.location.search);
   const candidatureId = params.get('cid');
 
@@ -508,10 +500,6 @@
     const hh = Math.floor(abs);
     const mm = Math.round((abs - hh) * 60);
     return `${sign}${hh}h${mm > 0 ? mm.toString().padStart(2,'0') : '00'}`;
-  }
-
-  function fmt(n) {
-    return (n || 0).toLocaleString('fr-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
   init();

@@ -325,17 +325,9 @@
 
 </div>
 
+<script src="shared.js"></script>
 <script>
-  const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
-  const { createClient } = supabase;
-  const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-  const EJS_PUBLIC_KEY = 'YAyl_sI2uC4Q2YCCF';
-  const EJS_SERVICE_ID = 'service_2749nt8';
   const EJS_TPL_WORKER = 'template_0hbqgjd';
-  emailjs.init(EJS_PUBLIC_KEY);
-
   let currentStep = 1;
   let selectedStatut = null;
   let selectedFile = null;

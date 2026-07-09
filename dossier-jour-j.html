@@ -167,12 +167,8 @@
 
 </div>
 
+<script src="shared.js"></script>
 <script>
-  const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
-  const { createClient } = supabase;
-  const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
-
   const params = new URLSearchParams(window.location.search);
   const candidatureId = params.get('cid');
 
@@ -544,10 +540,6 @@
 
   function statutLabel(s) {
     return { salarie_4_5: 'Salarié à minimum 4/5e', pensionné: 'Pensionné(e)', independant: 'Indépendant à titre principal' }[s] || (s || '—');
-  }
-
-  function fmt(n) {
-    return (n || 0).toLocaleString('fr-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
   function formatIBAN(iban) {

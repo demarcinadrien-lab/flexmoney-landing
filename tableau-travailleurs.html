@@ -206,17 +206,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="competences.js"></script>
+<script src="shared.js"></script>
 <script>
-  const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
-  const { createClient } = supabase;
-  const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-  const EJS_PUBLIC_KEY = 'YAyl_sI2uC4Q2YCCF';
-  const EJS_SERVICE_ID = 'service_2749nt8';
   const EJS_TPL_PROPOSITION = 'template_lk3kj9n'; // proposition de créneau au travailleur
-  emailjs.init(EJS_PUBLIC_KEY);
-
   let currentUser = null;
   let employerProfile = null;
 
@@ -489,11 +481,6 @@
       alert("⚠️ La proposition n'a pas pu être enregistrée. Réessayez, ou postez une mission complète.");
     }
     closeModal();
-  }
-
-  async function signOut() {
-    await sb.auth.signOut();
-    window.location.href = 'auth.html';
   }
 
   function resetFilters() {
