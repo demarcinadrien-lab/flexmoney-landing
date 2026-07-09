@@ -101,8 +101,9 @@
   <div class="logo">Flex<span>Money</span></div>
   <nav>
     <a href="poster-mission.html">📢 Poster une mission</a>
-    <a href="tableau-missions.html">📋 Missions</a>
-    <a href="inscription-employeur.html" style="background:#6366f1;color:#fff;padding:8px 16px;border-radius:8px;">M'inscrire employeur</a>
+    <a href="mes-travailleurs.html">🤝 Mes travailleurs</a>
+    <a href="dashboard-employeur.html">🏢 Mon espace</a>
+    <button onclick="signOut()" style="background:#6366f1;color:#fff;padding:8px 16px;border-radius:8px;border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">Déconnexion</button>
   </nav>
 </header>
 
@@ -488,6 +489,11 @@
       alert("⚠️ La proposition n'a pas pu être enregistrée. Réessayez, ou postez une mission complète.");
     }
     closeModal();
+  }
+
+  async function signOut() {
+    await sb.auth.signOut();
+    window.location.href = 'auth.html';
   }
 
   function resetFilters() {

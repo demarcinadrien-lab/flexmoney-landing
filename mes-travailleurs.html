@@ -42,6 +42,8 @@
 
     .btn-propose { padding: 10px 18px; background: #6366f1; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: background 0.2s; white-space: nowrap; }
     .btn-propose:hover { background: #4f46e5; }
+    .btn-validate { padding: 9px 18px; background: #fffbeb; color: #92400e; border: 1.5px solid #fde68a; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; text-decoration: none; text-align: center; white-space: nowrap; transition: background 0.2s; }
+    .btn-validate:hover { background: #fef3c7; }
 
     /* Modal */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
@@ -199,6 +201,18 @@
     });
 
     pastWorkers = Object.values(byEmail);
+
+    // Déclarations d'heures en attente de validation, par travailleur
+    let decls = [];
+    if (missionIds.length > 0) {
+      const { data } = await sb.from('declarations_heures')
+        .select('*').in('mission_id', missionIds).eq('statut', 'en_attente');
+      decls = data || [];
+    }
+    const pendingByEmail = {};
+    decls.forEach(d => { pendingByEmail[d.worker_email] = (pendingByEmail[d.worker_email] || 0) + 1; });
+    pastWorkers.forEach(w => { w.heures_a_valider = pendingByEmail[w.email] || 0; });
+
     renderWorkers();
   }
 
@@ -232,7 +246,10 @@
               ${w.nb_missions > 1 ? `<span class="missions-count">· ${w.nb_missions} missions ensemble</span>` : ''}
             </div>
           </div>
-          <button class="btn-propose" onclick="ouvrirNouveauContrat('${w.email}', '${(w.prenom||'').replace(/'/g,"\\'")}', '${(w.nom||'').replace(/'/g,"\\'")}')">📄 Proposer un nouveau contrat</button>
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:stretch;">
+            ${w.heures_a_valider > 0 ? `<a href="dashboard-employeur.html#declarationsSection" class="btn-validate">⏱️ Valider les heures (${w.heures_a_valider})</a>` : ''}
+            <button class="btn-propose" onclick="ouvrirNouveauContrat('${w.email}', '${(w.prenom||'').replace(/'/g,"\\'")}', '${(w.nom||'').replace(/'/g,"\\'")}')">📄 Proposer un nouveau contrat</button>
+          </div>
         </div>`;
     }).join('');
   }

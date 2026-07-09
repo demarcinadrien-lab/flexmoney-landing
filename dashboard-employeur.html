@@ -242,10 +242,10 @@
         <div class="label">Mes travailleurs</div>
         <div class="desc">Déjà engagés · proposer un nouveau contrat</div>
       </a>
-      <a href="validation-mission.html" class="qa-card">
+      <a href="#declarationsSection" class="qa-card">
         <div class="icon">✅</div>
-        <div class="label">Valider une mission</div>
-        <div class="desc">Post-prestation & récap social</div>
+        <div class="label">Valider les heures</div>
+        <div class="desc">Heures déclarées par les travailleurs</div>
       </a>
     </div>
 
@@ -828,6 +828,9 @@ Type : FLX`;
     if (decls.length > 0) {
       document.getElementById('declarationsSection').style.display = 'block';
       renderDeclarations(decls);
+      if (window.location.hash === '#declarationsSection') {
+        document.getElementById('declarationsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
   }
 
