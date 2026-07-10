@@ -75,7 +75,7 @@
   <nav>
     <a href="poster-mission.html">📢 Poster une mission</a>
     <a href="tableau-travailleurs.html">👥 Tous les profils</a>
-    <a href="dashboard-employeur.html">🏢 Mon espace</a>
+    <a href="dashboard-employeur.html">🏠 Accueil</a>
     <button onclick="signOut()">Déconnexion</button>
   </nav>
 </header>
@@ -327,8 +327,8 @@
       worker_prenom: worker.prenom,
       message: desc || null,
       type_contrat: selectedContrat,
-      statut: selectedContrat === 'test_jour' ? 'date_proposee' : 'acceptee',
-      date_test: selectedContrat === 'test_jour' ? date : null,
+      statut: 'date_proposee', // le travailleur doit accepter la proposition
+      date_test: date,
       heure_debut: selectedContrat === 'test_jour' ? heureDebut : null,
       heure_fin: selectedContrat === 'test_jour' ? heureFin : null
     };
@@ -356,13 +356,20 @@
             reply_to: currentUser.email
           });
         } else {
-          const complianceUrl = `${window.location.origin}/compliance.html?cid=${candId}`;
-          await emailjs.send(EJS_SERVICE_ID, EJS_TPL_WORKER, {
+          const confirmUrl = `${window.location.origin}/confirmation-creneau.html?cid=${candId}`;
+          const dateLabel = new Date(date).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' });
+          await emailjs.send(EJS_SERVICE_ID, EJS_TPL_PROPOSITION, {
             to_email: worker.email,
-            prenom: worker.prenom || worker.nom,
             to_name: `${worker.prenom || ''} ${worker.nom || ''}`,
-            eligible: `✅ ${employerProfile?.nom_entreprise || 'Un employeur'} vous propose un nouveau contrat (mission récurrente écrite trimestrielle) : "${titre}". Complétez votre dossier DIMONA ici : ${complianceUrl}`,
-            competences: 'NISS · Éligibilité · Document de preuve · IBAN — obligatoires avant le début de la mission',
+            entreprise: employerProfile?.nom_entreprise || 'L\'employeur',
+            mission_titre: `${titre} — contrat trimestriel`,
+            description: desc || '—',
+            taux_horaire: `${taux} €/h`,
+            lieu_prestation: 'À convenir avec l\'employeur',
+            date_proposee: `à partir du ${dateLabel} — horaires à convenir`,
+            heure_debut: '—',
+            heure_fin: '—',
+            lien_confirmation: confirmUrl,
             reply_to: currentUser.email
           });
         }

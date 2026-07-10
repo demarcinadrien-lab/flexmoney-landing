@@ -73,7 +73,7 @@
         <div class="meta" id="missionTaux" style="margin-top:6px;font-weight:700;color:var(--dark);"></div>
       </div>
 
-      <h1>Proposition de mission</h1>
+      <h1 id="pageTitle">Proposition de mission</h1>
       <p class="sub" id="subText">Un employeur vous propose directement cette mission. Consultez les détails et confirmez le créneau si cela vous convient.</p>
 
       <div class="creneau-box">
@@ -81,6 +81,7 @@
         <div class="heure" id="creneauHeure">—</div>
       </div>
 
+      <a id="draftLink" class="hidden" href="#" target="_blank" style="display:block;text-align:center;margin:-8px 0 20px;font-size:14px;font-weight:700;color:var(--brand);">📄 Consulter le projet de contrat →</a>
       <button class="btn btn-primary" id="btnConfirm" onclick="confirmerCreneau()">✅ Confirmer ce créneau</button>
       <button class="btn btn-outline" id="btnDecline" onclick="declinerCreneau()">Décliner ce créneau</button>
     </div>
@@ -180,6 +181,21 @@
     document.getElementById('creneauHeure').textContent = (cand.heure_debut && cand.heure_fin)
       ? `🕐 ${cand.heure_debut.slice(0,5)} → ${cand.heure_fin.slice(0,5)}`
       : '';
+
+    // Contrat trimestriel : adapter le wording et proposer le projet de contrat
+    if (cand.type_contrat && cand.type_contrat !== 'test_jour') {
+      document.getElementById('pageTitle').textContent = 'Proposition de contrat trimestriel';
+      document.getElementById('subText').textContent = `${mission?.nom_entreprise || "L'employeur"} vous propose un contrat récurrent (missions régulières). Consultez le projet de contrat et acceptez si cela vous convient.`;
+      document.getElementById('creneauDate').textContent = cand.date_test
+        ? 'Début souhaité : ' + new Date(cand.date_test).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' })
+        : 'Dates à convenir';
+      document.getElementById('creneauHeure').textContent = '🗓️ Horaires à convenir avec l\'employeur';
+      document.getElementById('btnConfirm').textContent = '✅ Accepter ce contrat';
+      document.getElementById('btnDecline').textContent = 'Décliner cette proposition';
+      const dl = document.getElementById('draftLink');
+      dl.href = `dossier-jour-j.html?cid=${cand.id}`;
+      dl.classList.remove('hidden');
+    }
 
     showState('formState');
   }
