@@ -193,16 +193,16 @@
         <input type="text" id="company-name" placeholder="Sera rempli automatiquement ou manuellement"/>
       </div>
       <div class="field">
-        <label>Adresse du siège social</label>
-        <input type="text" id="company-address" placeholder="Sera rempli automatiquement ou manuellement"/>
+        <label>Adresse du siège social — rue et numéro <span class="required">*</span></label>
+        <input type="text" id="company-address" placeholder="Rue de la Loi 14"/>
       </div>
       <div class="fields-row">
         <div class="field">
-          <label>Code postal</label>
-          <input type="text" id="company-cp" placeholder="1000"/>
+          <label>Code postal <span class="required">*</span></label>
+          <input type="text" id="company-cp" placeholder="1000" maxlength="4"/>
         </div>
         <div class="field">
-          <label>Ville</label>
+          <label>Ville <span class="required">*</span></label>
           <input type="text" id="company-city" placeholder="Bruxelles"/>
         </div>
       </div>
@@ -652,10 +652,17 @@
     }
     const name = document.getElementById('company-name').value.trim();
     if (!name) { alert('Veuillez entrer le nom de votre entreprise.'); return; }
+    const address = document.getElementById('company-address').value.trim();
+    const cp      = document.getElementById('company-cp').value.trim();
+    const city    = document.getElementById('company-city').value.trim();
+    if (!address) { alert("Veuillez entrer l'adresse du siège social (rue et numéro)."); return; }
+    if (!/\d/.test(address)) { alert("L'adresse doit contenir un numéro de rue (ex. : Rue de la Loi 14)."); return; }
+    if (!/^\d{4}$/.test(cp)) { alert('Veuillez entrer un code postal belge valide (4 chiffres).'); return; }
+    if (!city) { alert('Veuillez entrer la ville.'); return; }
     formData.company_name = name;
-    formData.company_address = document.getElementById('company-address').value;
-    formData.company_cp   = document.getElementById('company-cp').value;
-    formData.company_city = document.getElementById('company-city').value;
+    formData.company_address = address;
+    formData.company_cp   = cp;
+    formData.company_city = city;
     document.getElementById('err-step1').classList.remove('show');
     goToStep(2);
   }
