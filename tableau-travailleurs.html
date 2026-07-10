@@ -193,7 +193,23 @@
       </select>
     </div>
     <div class="form-group">
-      <label>Description de la mission</label>
+      <label>Taux horaire (€/h) *</label>
+      <input type="number" id="contactTaux" min="12" step="0.5" value="20">
+    </div>
+    <div class="form-group">
+      <label>Lieu de la prestation *</label>
+      <select id="contactLieu" onchange="document.getElementById('lieuAutreGroup').style.display = this.value === 'autre' ? 'block' : 'none'">
+        <option value="siege">🏢 Au siège social</option>
+        <option value="remote">🏠 Télétravail</option>
+        <option value="autre">📍 Autre adresse</option>
+      </select>
+    </div>
+    <div class="form-group" id="lieuAutreGroup" style="display:none;">
+      <label>Adresse de la prestation *</label>
+      <input type="text" id="contactLieuAutre" placeholder="Rue, numéro, code postal, ville">
+    </div>
+    <div class="form-group">
+      <label>Description de la mission *</label>
       <textarea id="contactDesc" rows="2" placeholder="Encodage TVA du trimestre, reporting mensuel..."></textarea>
     </div>
     <div class="modal-buttons">
@@ -224,6 +240,8 @@
     if (employerProfile) {
       document.getElementById('contactEmail').value = currentUser.email;
       document.getElementById('contactEntreprise').value = employerProfile.nom_entreprise || '';
+      const siegeAdr = [employerProfile.adresse, employerProfile.code_postal, employerProfile.ville].filter(Boolean).join(', ');
+      if (siegeAdr) document.querySelector('#contactLieu option[value="siege"]').textContent = `🏢 Au siège social — ${siegeAdr}`;
     }
     document.body.classList.remove('access-checking');
   })();
@@ -396,7 +414,13 @@
     const date = document.getElementById('contactDate').value;
     const heures = parseFloat(document.getElementById('contactHeures').value) || 8;
     const desc = document.getElementById('contactDesc').value.trim();
-    if (!email || !ent || !date) { alert('Veuillez remplir les champs obligatoires.'); return; }
+    const taux = parseFloat(document.getElementById('contactTaux').value);
+    const lieuChoix = document.getElementById('contactLieu').value;
+    const lieuAutre = document.getElementById('contactLieuAutre').value.trim();
+    if (!email || !ent || !date || !desc || !taux) { alert('Veuillez remplir tous les champs obligatoires (description et taux horaire compris).'); return; }
+    if (lieuChoix === 'autre' && !lieuAutre) { alert("Veuillez indiquer l'adresse de la prestation."); return; }
+    const siegeAdr = employerProfile ? [employerProfile.adresse, employerProfile.code_postal, employerProfile.ville].filter(Boolean).join(', ') : '';
+    const adresseLieu = lieuChoix === 'remote' ? null : (lieuChoix === 'siege' ? siegeAdr : lieuAutre);
 
     const worker = allWorkers.find(w => String(w.id) === String(selectedWorker));
     if (!worker || !worker.email) {
@@ -424,18 +448,19 @@
       description: desc || null,
       fonction: comps[0] || null,
       secteur: secteurObj ? secteurObj.id : null,
-      lieu: (worker.teletravail_preference === 'oui' || worker.teletravail_preference === 'uniquement') ? 'remote' : 'onsite',
+      lieu: lieuChoix === 'remote' ? 'remote' : 'onsite',
+      adresse_lieu: adresseLieu || null,
       ville: worker.ville || null,
       date_debut: date,
       date_fin: date,
       heure_debut: heureDebut,
       heure_fin: heureFin,
       heures_prestees: heures,
-      taux_horaire: 20,
-      salaire_brut: heures * 20,
+      taux_horaire: taux,
+      salaire_brut: heures * taux,
       commission_taux: 5,
-      commission_montant: heures * 20 * 0.05,
-      cout_total_employeur: heures * 20 * 1.30,
+      commission_montant: heures * taux * 0.05,
+      cout_total_employeur: heures * taux * 1.30,
       statut: 'acceptee' // proposition directe à ce travailleur, pas de listing public
     };
 
