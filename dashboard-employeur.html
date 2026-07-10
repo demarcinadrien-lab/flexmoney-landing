@@ -691,11 +691,15 @@
       const confirmUrl = `${window.location.origin}/confirmation-creneau.html?cid=${cand.id}`;
       const dateLabel = new Date(date).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' });
       try {
+        const missionData = myMissionsList.find(m => m.id === cand.mission_id);
         await emailjs.send(EJS_SERVICE_ID, EJS_TPL_PROPOSITION, {
           to_email:        cand.worker_email,
           to_name:         `${cand.worker_prenom || ''} ${cand.worker_nom || ''}`,
           entreprise:      employerProfile?.nom_entreprise || 'L\'employeur',
-          mission_titre:   (myMissionsList.find(m => m.id === cand.mission_id)?.titre) || 'la mission',
+          mission_titre:   missionData?.titre || 'la mission',
+          description:     missionData?.description || cand.message || '—',
+          taux_horaire:    missionData?.taux_horaire ? `${missionData.taux_horaire} €/h` : '—',
+          lieu_prestation: missionData?.lieu === 'remote' ? 'Télétravail' : (missionData?.adresse_lieu || '—'),
           date_proposee:   dateLabel,
           heure_debut:     hdeb,
           heure_fin:       hfin,
