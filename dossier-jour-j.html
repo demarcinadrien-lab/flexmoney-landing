@@ -292,7 +292,7 @@
       <p><strong>L'employeur :</strong><br>
       Dénomination : <span class="fv">${employer?.nom_entreprise || miss()}</span><br>
       Numéro BCE : <span class="fv">${employer?.numero_bce || miss()}</span><br>
-      Siège social : <span class="fv">${employer?.adresse || miss()}</span><br>
+      Siège social : <span class="fv">${employer?.adresse ? `${employer.adresse}, ${employer.code_postal || ''} ${employer.ville || ''}`.trim() : miss()}</span><br>
       Représenté par : <span class="fv">${employer?.prenom_contact || ''} ${employer?.nom_contact || ''}</span><br>
       Email : <span class="fv">${employer?.email_contact || miss()}</span></p>
 
