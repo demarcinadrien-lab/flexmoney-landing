@@ -65,13 +65,16 @@
     <!-- État normal -->
     <div id="formState">
       <div class="mission-card">
-        <div class="label">Mission</div>
+        <div class="label">Proposition de mission</div>
         <div class="titre" id="missionTitre">—</div>
         <div class="meta" id="missionMeta">—</div>
+        <div class="meta" id="missionDesc" style="margin-top:8px;"></div>
+        <div class="meta" id="missionLieu" style="margin-top:6px;"></div>
+        <div class="meta" id="missionTaux" style="margin-top:6px;font-weight:700;color:var(--dark);"></div>
       </div>
 
-      <h1>Créneau proposé</h1>
-      <p class="sub">L'employeur a accepté votre candidature et propose le créneau suivant pour votre journée de test.</p>
+      <h1>Proposition de mission</h1>
+      <p class="sub" id="subText">Un employeur vous propose directement cette mission. Consultez les détails et confirmez le créneau si cela vous convient.</p>
 
       <div class="creneau-box">
         <div class="date" id="creneauDate">—</div>
@@ -158,7 +161,17 @@
       mission = m;
     }
     document.getElementById('missionTitre').textContent = mission?.titre || 'Mission flexi-job';
-    document.getElementById('missionMeta').textContent = mission?.nom_entreprise || '—';
+    document.getElementById('missionMeta').textContent = '🏢 ' + (mission?.nom_entreprise || '—');
+    if (mission?.nom_entreprise) {
+      document.getElementById('subText').textContent = `${mission.nom_entreprise} vous propose directement cette mission. Consultez les détails et confirmez le créneau si cela vous convient.`;
+    }
+    if (mission?.description) document.getElementById('missionDesc').textContent = '📝 ' + mission.description;
+    const lieuTxt = mission?.lieu === 'remote' ? '🏠 Télétravail' : (mission?.adresse_lieu ? '📍 ' + mission.adresse_lieu : '');
+    if (lieuTxt) document.getElementById('missionLieu').textContent = lieuTxt;
+    if (mission?.taux_horaire) {
+      const gain = mission.heures_prestees ? ` · gain estimé ${(mission.heures_prestees * mission.taux_horaire).toLocaleString('fr-BE')} € net` : '';
+      document.getElementById('missionTaux').textContent = `💶 ${mission.taux_horaire} €/h${gain}`;
+    }
 
     const dateLabel = cand.date_test
       ? new Date(cand.date_test).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' })
