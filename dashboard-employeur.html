@@ -261,30 +261,36 @@
       <div id="declarationsList"></div>
     </div>
 
-    <!-- CANDIDATURES REÇUES -->
+    <!-- 1. MISSIONS POSTÉES + CANDIDATURES PAR MISSION -->
     <div class="candidatures-section">
       <div class="section-header">
-        <h2>📬 Candidatures reçues <span class="badge-count" id="candCount">0</span></h2>
+        <h2>📢 Missions postées <span class="badge-count" id="posteesCount">0</span></h2>
       </div>
-      <div id="candidaturesList">
-        <div class="loading">⏳ Chargement des candidatures...</div>
-      </div>
+      <div id="posteesList"><div class="loading">⏳ Chargement...</div></div>
     </div>
 
-    <div class="grid2">
-      <!-- Mes missions -->
-      <div class="card">
-        <h2>📋 Mes missions</h2>
-        <div id="myMissions"><div class="empty"><div class="icon">📭</div>Aucune mission postée.<br><a href="poster-mission.html" style="color:#6366f1;font-weight:600;">Postez votre première mission →</a></div></div>
+    <!-- 2. PROPOSITIONS DIRECTES -->
+    <div class="candidatures-section">
+      <div class="section-header">
+        <h2>🎯 Propositions directes <span class="badge-count" id="directesCount">0</span></h2>
       </div>
+      <div id="directesList"><div class="loading">⏳ Chargement...</div></div>
+    </div>
 
-      <!-- Candidats récents -->
-      <div class="card">
-        <h2>🎯 Profils suggérés pour vos missions</h2>
-        <div id="suggestedWorkers"><div class="loading">Chargement...</div></div>
-        <div style="margin-top:12px;">
-          <a href="tableau-travailleurs.html"><button class="btn btn-outline" style="width:100%;">Voir tous les profils →</button></a>
-        </div>
+    <!-- 3. MISSIONS EN COURS -->
+    <div class="candidatures-section">
+      <div class="section-header">
+        <h2>⚡ Missions en cours <span class="badge-count" id="encoursCount">0</span></h2>
+      </div>
+      <div id="encoursList"><div class="loading">⏳ Chargement...</div></div>
+    </div>
+
+    <!-- Profils suggérés -->
+    <div class="card">
+      <h2>🎯 Profils suggérés pour vos missions</h2>
+      <div id="suggestedWorkers"><div class="loading">Chargement...</div></div>
+      <div style="margin-top:12px;">
+        <a href="tableau-travailleurs.html"><button class="btn btn-outline" style="width:100%;">Voir tous les profils →</button></a>
       </div>
     </div>
 
@@ -458,38 +464,12 @@
       .order('created_at', { ascending: false });
 
     myMissionsList = missions && missions.length > 0 ? missions : [];
-    const myMissionsEl = document.getElementById('myMissions');
 
     document.getElementById('statMissions').textContent = myMissionsList.length;
     const actives = myMissionsList.filter(m => ['proposee','acceptee','en_cours'].includes(m.statut));
     document.getElementById('statActives').textContent = actives.length;
     const totalComm = myMissionsList.reduce((s, m) => s + (m.commission_montant || 0), 0);
     document.getElementById('statCommission').textContent = fmt(totalComm) + ' €';
-
-    if (myMissionsList.length === 0) {
-      myMissionsEl.innerHTML = `<div class="empty"><div class="icon">📭</div>Aucune mission postée.<br><a href="poster-mission.html" style="color:#6366f1;font-weight:600;">Postez votre première mission →</a></div>`;
-    } else {
-      myMissionsEl.innerHTML = myMissionsList.slice(0, 6).map(m => {
-        const statusMap = {
-          proposee: ['Ouverte', 's-proposee'],
-          acceptee: ['Acceptée', 's-acceptee'],
-          attente_validation: ['À valider', 's-validation'],
-          cloturee: ['Clôturée', 's-cloturee']
-        };
-        const [sLabel, sClass] = statusMap[m.statut] || ['—', ''];
-        const btn = m.statut === 'attente_validation'
-          ? `<a href="validation-mission.html"><button class="btn btn-green btn-sm">Valider</button></a>`
-          : `<span class="status-badge ${sClass}">${sLabel}</span>`;
-        return `
-          <div class="mission-row">
-            <div class="info">
-              <div class="titre">${m.titre || 'Mission'}</div>
-              <div class="meta">📅 ${m.date_debut ? new Date(m.date_debut).toLocaleDateString('fr-BE') : '—'} · ⏱️ ${m.heures_prestees || '?'}h · ${m.taux_horaire || '?'} €/h</div>
-            </div>
-            ${btn}
-          </div>`;
-      }).join('');
-    }
 
     // Profils suggérés
     const { data: workers } = await sb.from('workers_inscription')
@@ -519,11 +499,12 @@
     await loadDeclarations();
   }
 
-  /* ===== CANDIDATURES ===== */
+  /* ===== TABLEAUX : POSTÉES / DIRECTES / EN COURS ===== */
+
+  let allCandidatures = [];
 
   async function loadCandidatures() {
     const missionIds = myMissionsList.map(m => m.id).filter(Boolean);
-
     let cands = [];
     if (missionIds.length > 0) {
       const { data } = await sb.from('candidatures')
@@ -532,96 +513,163 @@
         .order('created_at', { ascending: false });
       cands = data || [];
     }
-
-    // Aussi les candidatures sans mission_id mais liées à cet email employeur (mode démo)
-    // Pour l'instant on affiche toutes les candidatures en_attente comme démo si aucune mission
-    if (cands.length === 0 && myMissionsList.length === 0) {
-      const { data: allCands } = await sb.from('candidatures')
-        .select('*').order('created_at', { ascending: false }).limit(10);
-      cands = allCands || [];
-    }
-
-    document.getElementById('candCount').textContent = cands.filter(c => c.statut === 'en_attente').length;
-    renderCandidatures(cands);
+    allCandidatures = cands;
+    renderBoards();
   }
 
-  function renderCandidatures(cands) {
-    const el = document.getElementById('candidaturesList');
+  function missionMeta(m) {
+    if (!m) return '';
+    const lieu = m.lieu === 'remote' ? '🏠 Télétravail' : (m.adresse_lieu ? `🏢 ${m.adresse_lieu}` : '🏢 Sur place');
+    return `📅 ${m.date_debut ? new Date(m.date_debut).toLocaleDateString('fr-BE') : '—'} · ⏱️ ${m.heures_prestees || '?'}h · 💶 ${m.taux_horaire || '?'} €/h · ${lieu}`;
+  }
 
-    if (cands.length === 0) {
-      el.innerHTML = `<div class="cand-card" style="text-align:center;color:#94a3b8;padding:32px;">
+  function renderBoards() {
+    const postees  = myMissionsList.filter(m => m.origine !== 'directe');
+    const directes = myMissionsList.filter(m => m.origine === 'directe');
+    const enCours  = allCandidatures.filter(c => c.statut === 'acceptee');
+
+    // ── 1. Missions postées, avec le détail des candidatures par mission ──
+    document.getElementById('posteesCount').textContent = postees.length;
+    const postEl = document.getElementById('posteesList');
+    if (postees.length === 0) {
+      postEl.innerHTML = `<div class="cand-card" style="text-align:center;color:#94a3b8;padding:32px;">
         <div style="font-size:32px;margin-bottom:8px;">📭</div>
-        Aucune candidature pour le moment.<br>
-        <a href="poster-mission.html" style="color:#6366f1;font-weight:600;">Postez une mission pour recevoir des candidatures →</a>
+        Aucune mission postée.<br>
+        <a href="poster-mission.html" style="color:#6366f1;font-weight:600;">Postez votre première mission →</a>
       </div>`;
-      return;
+    } else {
+      const statusMap = { proposee: 'Ouverte', acceptee: 'Pourvue', en_cours: 'En cours', attente_validation: 'À valider', cloturee: 'Clôturée' };
+      postEl.innerHTML = postees.map(m => {
+        const mc = allCandidatures.filter(c => c.mission_id === m.id);
+        return `
+        <div class="cand-card" style="margin-bottom:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+            <div>
+              <div style="font-weight:700;font-size:15px;">${m.titre || 'Mission'}</div>
+              <div style="font-size:12px;color:#64748b;margin-top:2px;">${missionMeta(m)}</div>
+            </div>
+            <span class="cand-type-badge badge-trim">${statusMap[m.statut] || m.statut || '—'}</span>
+          </div>
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid #f1f5f9;">
+            <div style="font-size:12px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">📬 Candidatures (${mc.length})</div>
+            ${mc.length === 0
+              ? '<div style="font-size:13px;color:#94a3b8;">Aucune candidature reçue pour cette mission.</div>'
+              : mc.map(c => candCard(c, m)).join('')}
+          </div>
+        </div>`;
+      }).join('');
     }
 
-    el.innerHTML = cands.map(c => {
-      const initials = ((c.worker_prenom || '?')[0] + (c.worker_nom || '?')[0]).toUpperCase();
-      const mission = myMissionsList.find(m => m.id === c.mission_id);
-      const isTest = c.type_contrat === 'test_jour';
-      const isPending = c.statut === 'en_attente';
-      const isDateProposee = c.statut === 'date_proposee';
-      const isAccepted = c.statut === 'acceptee';
-      const isRefused = c.statut === 'refusee';
-
-      const badgeClass = isAccepted ? 'badge-acceptee' : isRefused ? 'badge-refusee' : isDateProposee ? 'badge-date-proposee' : isTest ? 'badge-test' : 'badge-trim';
-      const badgeLabel = isAccepted ? '✅ Acceptée' : isRefused ? '❌ Refusée' : isDateProposee ? '📅 Créneau proposé' : isTest ? '🧪 Journée de test' : '📋 Mission récurrente';
-
-      let dateInfo = '';
-      if (isTest && c.date_test) {
-        const d = new Date(c.date_test).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' });
-        dateInfo = `<div class="cand-detail">📅 ${d}</div>`;
-        if (c.heure_debut && c.heure_fin) {
-          dateInfo += `<div class="cand-detail">🕐 ${c.heure_debut.slice(0,5)} → ${c.heure_fin.slice(0,5)}</div>`;
-        }
-      }
-      if (isTest && c.disponibilites && c.disponibilites.length) {
-        dateInfo += `<div class="cand-detail">🗓️ Disponibilités indiquées : ${c.disponibilites.join(', ')}</div>`;
-      }
-
-      const jourJBtn = c.compliance_complete
-        ? `<a href="dossier-jour-j.html?cid=${c.id}" target="_blank" style="padding:9px 16px;background:#6366f1;color:#fff;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;display:inline-block;">📁 Dossier Jour J</a>`
-        : `<span style="font-size:12px;color:#f59e0b;font-weight:600;">⏳ En attente compliance</span>`;
-
-      const actions = isPending ? `
-        <div class="cand-actions">
-          <button class="btn-accept" onclick="accepterCandidature('${c.id}', '${c.type_contrat}')">✅ Accepter</button>
-          <button class="btn-refuse" onclick="refuserCandidature('${c.id}')">❌ Refuser</button>
-        </div>` : isDateProposee ? `
-        <div class="cand-actions">
-          <span style="font-size:12px;color:#4338ca;font-weight:600;">⏳ En attente de confirmation du travailleur</span>
-        </div>` : isAccepted ? `
-        <div class="cand-actions">
-          ${isTest
-            ? `<button class="btn-dimona" onclick="showDimonaFiche('${c.id}')">📋 Voir fiche DIMONA</button>`
-            : `<button class="btn-compliance" onclick="showComplianceInfo('${c.id}')">📁 Dossier de conformité</button>`
-          }
-          ${jourJBtn}
-        </div>` : '';
-
-      return `
-        <div class="cand-card ${isTest ? 'test' : 'trimestriel'} ${c.statut}">
-          <div class="cand-top">
-            <div class="cand-avatar">${initials}</div>
-            <div class="cand-info">
-              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                <span class="cand-name">${c.worker_prenom || ''} ${c.worker_nom || ''}</span>
-                <span class="cand-type-badge ${badgeClass}">${badgeLabel}</span>
-              </div>
-              <div class="cand-email">✉️ ${c.worker_email}</div>
-              ${mission ? `<div class="cand-mission">📌 ${mission.titre}</div>` : ''}
-              ${c.message ? `<div class="cand-msg">"${c.message}"</div>` : ''}
+    // ── 2. Propositions directes à un profil, avec statut ──
+    document.getElementById('directesCount').textContent = directes.length;
+    const dirEl = document.getElementById('directesList');
+    if (directes.length === 0) {
+      dirEl.innerHTML = `<div class="cand-card" style="text-align:center;color:#94a3b8;padding:32px;">
+        <div style="font-size:32px;margin-bottom:8px;">🎯</div>
+        Aucune proposition directe envoyée.<br>
+        <a href="tableau-travailleurs.html" style="color:#6366f1;font-weight:600;">Parcourez les profils pour proposer une mission →</a>
+      </div>`;
+    } else {
+      dirEl.innerHTML = directes.map(m => {
+        const c = allCandidatures.find(x => x.mission_id === m.id);
+        const st = c?.statut;
+        const badge = st === 'acceptee'
+          ? '<span class="cand-type-badge badge-acceptee">✅ Acceptée par le travailleur</span>'
+          : st === 'refusee'
+          ? '<span class="cand-type-badge badge-refusee">❌ Déclinée</span>'
+          : st === 'date_proposee'
+          ? '<span class="cand-type-badge badge-date-proposee">⏳ En attente de réponse</span>'
+          : '<span class="cand-type-badge badge-trim">—</span>';
+        const worker = c ? `${c.worker_prenom || ''} ${c.worker_nom || ''}`.trim() : (m.nom_travailleur || '—');
+        return `
+        <div class="cand-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+            <div>
+              <div style="font-weight:700;font-size:15px;">👤 ${worker} <span style="font-weight:400;color:#64748b;">· ${m.titre || 'Mission'}</span></div>
+              <div style="font-size:12px;color:#64748b;margin-top:2px;">${missionMeta(m)}</div>
             </div>
+            ${badge}
           </div>
-          <div class="cand-details">
-            ${dateInfo}
-            <div class="cand-detail">🕑 Reçue le ${new Date(c.created_at).toLocaleDateString('fr-BE')}</div>
-          </div>
-          ${actions}
         </div>`;
-    }).join('');
+      }).join('');
+    }
+
+    // ── 3. Missions acceptées en cours ──
+    document.getElementById('encoursCount').textContent = enCours.length;
+    const ecEl = document.getElementById('encoursList');
+    if (enCours.length === 0) {
+      ecEl.innerHTML = `<div class="cand-card" style="text-align:center;color:#94a3b8;padding:32px;">
+        <div style="font-size:32px;margin-bottom:8px;">⚡</div>
+        Aucune mission en cours. Les missions dont le créneau est confirmé par le travailleur apparaîtront ici.
+      </div>`;
+    } else {
+      ecEl.innerHTML = enCours.map(c => candCard(c, myMissionsList.find(m => m.id === c.mission_id))).join('');
+    }
+  }
+
+  function candCard(c, mission) {
+    const initials = ((c.worker_prenom || '?')[0] + (c.worker_nom || '?')[0]).toUpperCase();
+    const isTest = c.type_contrat === 'test_jour';
+    const isPending = c.statut === 'en_attente';
+    const isDateProposee = c.statut === 'date_proposee';
+    const isAccepted = c.statut === 'acceptee';
+    const isRefused = c.statut === 'refusee';
+
+    const badgeClass = isAccepted ? 'badge-acceptee' : isRefused ? 'badge-refusee' : isDateProposee ? 'badge-date-proposee' : isTest ? 'badge-test' : 'badge-trim';
+    const badgeLabel = isAccepted ? '✅ Acceptée' : isRefused ? '❌ Refusée' : isDateProposee ? '📅 Créneau proposé' : isTest ? '🧪 Journée de test' : '📋 Mission récurrente';
+
+    let dateInfo = '';
+    if (isTest && c.date_test) {
+      const d = new Date(c.date_test).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' });
+      dateInfo = `<div class="cand-detail">📅 ${d}</div>`;
+      if (c.heure_debut && c.heure_fin) {
+        dateInfo += `<div class="cand-detail">🕐 ${c.heure_debut.slice(0,5)} → ${c.heure_fin.slice(0,5)}</div>`;
+      }
+    }
+    if (isTest && c.disponibilites && c.disponibilites.length) {
+      dateInfo += `<div class="cand-detail">🗓️ Disponibilités indiquées : ${c.disponibilites.join(', ')}</div>`;
+    }
+
+    const jourJBtn = c.compliance_complete
+      ? `<a href="dossier-jour-j.html?cid=${c.id}" target="_blank" style="padding:9px 16px;background:#6366f1;color:#fff;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;display:inline-block;">📁 Dossier Jour J</a>`
+      : `<span style="font-size:12px;color:#f59e0b;font-weight:600;">⏳ En attente compliance</span>`;
+
+    const actions = isPending ? `
+      <div class="cand-actions">
+        <button class="btn-accept" onclick="accepterCandidature('${c.id}', '${c.type_contrat}')">✅ Accepter</button>
+        <button class="btn-refuse" onclick="refuserCandidature('${c.id}')">❌ Refuser</button>
+      </div>` : isDateProposee ? `
+      <div class="cand-actions">
+        <span style="font-size:12px;color:#4338ca;font-weight:600;">⏳ En attente de confirmation du travailleur</span>
+      </div>` : isAccepted ? `
+      <div class="cand-actions">
+        ${isTest
+          ? `<button class="btn-dimona" onclick="showDimonaFiche('${c.id}')">📋 Voir fiche DIMONA</button>`
+          : `<button class="btn-compliance" onclick="showComplianceInfo('${c.id}')">📁 Dossier de conformité</button>`
+        }
+        ${jourJBtn}
+      </div>` : '';
+
+    return `
+      <div class="cand-card ${isTest ? 'test' : 'trimestriel'} ${c.statut}">
+        <div class="cand-top">
+          <div class="cand-avatar">${initials}</div>
+          <div class="cand-info">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <span class="cand-name">${c.worker_prenom || ''} ${c.worker_nom || ''}</span>
+              <span class="cand-type-badge ${badgeClass}">${badgeLabel}</span>
+            </div>
+            <div class="cand-email">✉️ ${c.worker_email}</div>
+            ${mission ? `<div class="cand-mission">📌 ${mission.titre}</div>` : ''}
+            ${c.message ? `<div class="cand-msg">"${c.message}"</div>` : ''}
+          </div>
+        </div>
+        <div class="cand-details">
+          ${dateInfo}
+          <div class="cand-detail">🕑 Reçue le ${new Date(c.created_at).toLocaleDateString('fr-BE')}</div>
+        </div>
+        ${actions}
+      </div>`;
   }
 
   let pendingCandidatureId = null;
