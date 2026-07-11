@@ -181,10 +181,17 @@
     const { data: cand } = await sb.from('candidatures').select('*').eq('id', candidatureId).single();
     D.cand = cand;
 
-    // Charger dossier compliance (NISS, IBAN, etc.)
-    const { data: dossier } = await sb.from('dimona_dossiers')
-      .select('*').eq('candidature_id', candidatureId).order('created_at', { ascending: false }).limit(1).single();
-    D.dossier = dossier;
+    // Charger dossier compliance (NISS, IBAN, etc.) — peut ne pas exister (ex: contrat trimestriel direct)
+    const { data: dossiers } = await sb.from('dimona_dossiers')
+      .select('*').eq('candidature_id', candidatureId).order('created_at', { ascending: false }).limit(1);
+    D.dossier = (dossiers && dossiers[0]) || null;
+
+    // Charger les données d'inscription du travailleur (pour compléter les données manquantes)
+    if (cand?.worker_email) {
+      const { data: wrk } = await sb.from('workers_inscription')
+        .select('*').eq('email', cand.worker_email).order('created_at', { ascending: false }).limit(1);
+      D.worker = (wrk && wrk[0]) || null;
+    }
 
     // Charger mission
     if (cand?.mission_id) {
@@ -195,8 +202,9 @@
     // Charger profil employeur
     if (D.mission?.email_employeur) {
       const { data: emp } = await sb.from('employers_inscription')
-        .select('*').eq('email_contact', D.mission.email_employeur).limit(1).single();
-      D.employer = emp;
+        .select('*').eq('email_contact', D.mission.email_employeur)
+        .order('created_at', { ascending: false }).limit(1);
+      D.employer = (emp && emp[0]) || null;
     }
 
     render();
@@ -250,10 +258,21 @@
     document.getElementById('loadingState').classList.add('hidden');
     document.getElementById('mainContent').classList.remove('hidden');
 
+    // Compléter les données manquantes du dossier avec l'inscription du travailleur
+    const w = D.worker || {};
+    const base = D.dossier || {};
+    const workerName = `${D.cand?.worker_prenom || w.prenom || ''} ${D.cand?.worker_nom || w.nom || ''}`.trim();
+    D.dossier = {
+      ...base,
+      date_naissance:     base.date_naissance     || w.date_naissance || null,
+      adresse:            base.adresse            || [w.code_postal, w.ville].filter(Boolean).join(' ') || null,
+      statut_eligibilite: base.statut_eligibilite || w.statut_eligibilite || null,
+      titulaire_compte:   base.titulaire_compte   || workerName || null
+    };
+
     const { cand, dossier, mission, employer } = D;
     const isRecurrent = cand?.type_contrat === 'trimestriel';
     const today = new Date().toLocaleDateString('fr-BE', { day:'2-digit', month:'long', year:'numeric' });
-    const workerName = `${cand?.worker_prenom || ''} ${cand?.worker_nom || ''}`.trim();
 
     // En-tête
     document.getElementById('dossierSubtitle').textContent =
@@ -293,7 +312,7 @@
       Dénomination : <span class="fv">${employer?.nom_entreprise || miss()}</span><br>
       Numéro BCE : <span class="fv">${employer?.numero_bce || miss()}</span><br>
       Siège social : <span class="fv">${employer?.adresse ? `${employer.adresse}, ${employer.code_postal || ''} ${employer.ville || ''}`.trim() : miss()}</span><br>
-      Représenté par : <span class="fv">${employer?.prenom_contact || ''} ${employer?.nom_contact || ''}</span><br>
+      Représenté par : <span class="fv">${employer?.prenom_contact || ''} ${employer?.nom_contact || ''}${employer?.fonction_contact ? ', ' + employer.fonction_contact : ''}</span><br>
       Email : <span class="fv">${employer?.email_contact || miss()}</span></p>
 
       <p style="margin-top:12px;"><strong>Le travailleur flexi :</strong><br>
@@ -374,7 +393,12 @@
 
       <h2>Article 1 — Identification des parties</h2>
       <p><strong>Employeur :</strong> <span class="fv">${employer?.nom_entreprise || miss()}</span> · BCE : <span class="fv">${employer?.numero_bce || miss()}</span><br>
-      <strong>Travailleur :</strong> <span class="fv">${workerName}</span> · NISS : <span class="fv">${dossier?.niss || miss()}</span></p>
+      Siège social : <span class="fv">${employer?.adresse ? `${employer.adresse}, ${employer.code_postal || ''} ${employer.ville || ''}`.trim() : miss()}</span><br>
+      Représenté par : <span class="fv">${employer?.prenom_contact || ''} ${employer?.nom_contact || ''}${employer?.fonction_contact ? ', ' + employer.fonction_contact : ''}</span></p>
+      <p><strong>Travailleur :</strong> <span class="fv">${workerName}</span> · NISS : <span class="fv">${dossier?.niss || miss()}</span><br>
+      Date de naissance : <span class="fv">${dossier?.date_naissance ? new Date(dossier.date_naissance).toLocaleDateString('fr-BE') : miss()}</span><br>
+      Adresse : <span class="fv">${dossier?.adresse || miss()}</span><br>
+      Statut professionnel : <span class="fv">${statutLabel(dossier?.statut_eligibilite)}</span></p>
 
       <h2>Article 2 — Type de contrat</h2>
       <p>Contrat de travail à durée déterminée flexi-job — régime <strong>contrat écrit trimestriel</strong>.<br>
@@ -539,7 +563,7 @@
   function miss() { return '<span class="missing">⚠️ Manquant</span>'; }
 
   function statutLabel(s) {
-    return { salarie_4_5: 'Salarié à minimum 4/5e', pensionné: 'Pensionné(e)', independant: 'Indépendant à titre principal' }[s] || (s || '—');
+    return { salarie_4_5: 'Salarié à minimum 4/5e', salarie: 'Salarié à minimum 4/5e', pensionné: 'Pensionné(e)', independant: 'Indépendant à titre principal' }[s] || (s || '—');
   }
 
   function formatIBAN(iban) {
@@ -547,6 +571,7 @@
   }
 
   init();
+  // v2 — données d'inscription reprises dans le contrat
 </script>
 </body>
 </html>

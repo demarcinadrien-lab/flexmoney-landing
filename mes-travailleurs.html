@@ -272,6 +272,14 @@
     document.getElementById('heuresGroup').classList.toggle('hidden', type === 'trimestriel');
   }
 
+  // Dernier jour du trimestre de la date donnée (contrat écrit trimestriel)
+  function finTrimestre(dateStr) {
+    const d = new Date(dateStr);
+    const q = Math.floor(d.getMonth() / 3);
+    const fin = new Date(d.getFullYear(), q * 3 + 3, 0);
+    return `${fin.getFullYear()}-${String(fin.getMonth() + 1).padStart(2, '0')}-${String(fin.getDate()).padStart(2, '0')}`;
+  }
+
   async function submitNouveauContrat() {
     const titre = document.getElementById('f-titre').value.trim();
     const desc = document.getElementById('f-desc').value.trim();
@@ -301,7 +309,7 @@
       description: desc || null,
       lieu: 'onsite',
       date_debut: date,
-      date_fin: date,
+      date_fin: selectedContrat === 'trimestriel' ? finTrimestre(date) : date,
       heure_debut: selectedContrat === 'test_jour' ? heureDebut : null,
       heure_fin: selectedContrat === 'test_jour' ? heureFin : null,
       heures_prestees: selectedContrat === 'test_jour' ? heures : null,
@@ -389,6 +397,7 @@
   }
 
   init();
+  // v2 — contrat trimestriel : date de fin = fin du trimestre
 </script>
 </body>
 </html>
