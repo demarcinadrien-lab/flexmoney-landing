@@ -446,7 +446,7 @@
     const { data: missions } = await sb.from('missions')
       .select('*').eq('statut', 'proposee').order('created_at', { ascending: false }).limit(20);
 
-    const allMissions = missions && missions.length > 0 ? missions : getMockMissions();
+    const allMissions = missions || [];
 
     // Scorer et filtrer
     const scored = allMissions.map(m => {
@@ -516,13 +516,6 @@
 
   function fmt(n) {
     return (n || 0).toLocaleString('fr-BE', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-  }
-
-  function getMockMissions() {
-    return [
-      { id: 'mock1', titre: 'Assistant comptable — Encodage TVA', nom_entreprise: 'Fiduciaire Dupont SA', taux_horaire: 22, heures_prestees: 8, lieu: 'remote', date_debut: new Date(Date.now()+86400000*3).toISOString(), fonction: 'Comptabilité Encodage TVA', statut: 'proposee' },
-      { id: 'mock2', titre: 'Reporting Excel mensuel', nom_entreprise: 'Startup Fintech', taux_horaire: 26, heures_prestees: 4, lieu: 'remote', date_debut: new Date(Date.now()+86400000*5).toISOString(), fonction: 'Excel Reporting', statut: 'proposee' },
-    ];
   }
 
   init();

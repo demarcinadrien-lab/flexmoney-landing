@@ -371,10 +371,7 @@
       allMissions = [];
     }
 
-    // Si pas encore de missions réelles, afficher des exemples
-    if (!Array.isArray(allMissions) || allMissions.length === 0) {
-      allMissions = getMockMissions();
-    }
+    if (!Array.isArray(allMissions)) allMissions = [];
 
     document.getElementById('statMissions').textContent = allMissions.length;
     applyFilters();
@@ -583,15 +580,6 @@
 
   function fmt(n) {
     return (n || 0).toLocaleString('fr-BE', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-  }
-
-  function getMockMissions() {
-    return [
-      { id: 'mock1', titre: 'Assistant comptable — Encodage TVA', nom_entreprise: 'Fiduciaire Dupont SA', taux_horaire: 22, heures_prestees: 8, lieu: 'remote', secteur: 'bureau', ville: null, date_debut: new Date(Date.now()+86400000*3).toISOString(), fonction: 'Comptabilité Encodage TVA', description: 'Encodage de factures et déclaration TVA trimestrielle', created_at: new Date().toISOString(), statut: 'proposee' },
-      { id: 'mock2', titre: 'Support back-office — Gestion dossiers', nom_entreprise: 'PME Bruxelles', taux_horaire: 19, heures_prestees: 6, lieu: 'onsite', secteur: 'bureau', ville: 'Bruxelles', date_debut: new Date(Date.now()+86400000*5).toISOString(), fonction: 'Back-office Administration', description: 'Gestion administrative de dossiers clients', created_at: new Date(Date.now()-3600000).toISOString(), statut: 'proposee' },
-      { id: 'mock3', titre: 'Vendeur en magasin — Weekend', nom_entreprise: 'Retail Store', taux_horaire: 16, heures_prestees: 8, lieu: 'onsite', secteur: 'commerce', ville: 'Namur', date_debut: new Date(Date.now()+86400000*7).toISOString(), fonction: 'Vente Caisse', description: 'Vente et conseil client en magasin le weekend', created_at: new Date(Date.now()-7200000).toISOString(), statut: 'proposee' },
-      { id: 'mock4', titre: 'Community Manager — Réseaux sociaux', nom_entreprise: 'E-commerce Belge', taux_horaire: 20, heures_prestees: 8, lieu: 'remote', secteur: 'digital', ville: null, date_debut: new Date(Date.now()+86400000*4).toISOString(), fonction: 'Marketing digital Réseaux sociaux', description: 'Gestion des réseaux sociaux et création de contenu', created_at: new Date(Date.now()-10800000).toISOString(), statut: 'proposee' },
-    ];
   }
 
   loadMissions();

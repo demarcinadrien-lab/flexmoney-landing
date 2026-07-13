@@ -275,10 +275,6 @@
       return true;
     });
 
-    if (allWorkers.length === 0) {
-      allWorkers = getMockWorkers();
-    }
-
     const remoteCount = allWorkers.filter(w => w.teletravail_preference === 'oui' || w.teletravail_preference === 'uniquement').length;
     document.getElementById('statWorkers').textContent = allWorkers.length;
     document.getElementById('statRemote').textContent = remoteCount;
@@ -488,17 +484,6 @@
     document.getElementById('teletravailFilter').value = '';
     document.getElementById('secteurFilter').value = '';
     applyFilters();
-  }
-
-  function getMockWorkers() {
-    return [
-      { id: 'w1', prenom: 'Sophie', nom: 'Martin', ville: 'Bruxelles', regime_travail: 'Salariée 4/5e', eligible: true, competences: ['Comptabilité','TVA','Encodage','Excel / Reporting'], teletravail_preference: 'oui', disponibilites: { 'Samedi': true, 'Mercredi après-midi': true }, created_at: new Date().toISOString() },
-      { id: 'w2', prenom: 'Thomas', nom: 'Lejeune', ville: 'Liège', regime_travail: 'Salarié 4/5e', eligible: true, competences: ['Payroll','Back-office','Administration'], teletravail_preference: 'oui', disponibilites: { 'Vendredi': true, 'Weekend': true }, created_at: new Date().toISOString() },
-      { id: 'w3', prenom: 'Marie', nom: 'Dubois', ville: 'Gand', regime_travail: 'Pensionnée', eligible: true, competences: ['Bilan annuel','Audit','Comptabilité','Payroll'], teletravail_preference: 'oui', disponibilites: { 'Tous les jours': true }, created_at: new Date().toISOString() },
-      { id: 'w4', prenom: 'Kevin', nom: 'Peeters', ville: 'Anvers', regime_travail: 'Salarié 4/5e', eligible: true, competences: ['Marketing digital','Réseaux sociaux','Design graphique'], teletravail_preference: 'oui', disponibilites: { 'Samedi': true }, created_at: new Date().toISOString() },
-      { id: 'w5', prenom: 'Julie', nom: 'Renard', ville: 'Namur', regime_travail: 'Salariée 4/5e', eligible: true, competences: ['Support client','Back-office','Administration','Excel / Reporting'], teletravail_preference: 'hybride', disponibilites: { 'Mercredi': true, 'Weekend': true }, created_at: new Date().toISOString() },
-      { id: 'w6', prenom: 'Ahmed', nom: 'Benali', ville: 'Bruxelles', regime_travail: 'Salarié 4/5e', eligible: true, competences: ['IT / Développement','Excel / Reporting','Back-office'], teletravail_preference: 'oui', disponibilites: { 'Vendredi': true, 'Samedi': true }, created_at: new Date().toISOString() },
-    ];
   }
 
   loadWorkers();

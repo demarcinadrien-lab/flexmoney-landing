@@ -429,7 +429,7 @@
 
 <script src="shared.js"></script>
 <script>
-  const EJS_TPL_WORKER  = 'template_0hbqgjd'; // email travailleur
+  const EJS_TPL_WORKER  = 'template_y3zn6ll'; // email travailleur (vérifié dans EmailJS)
   const EJS_TPL_PROPOSITION = 'template_lk3kj9n'; // proposition de créneau au travailleur
   let currentUser = null;
   let employerProfile = null;
@@ -487,9 +487,12 @@
     const { data: workers } = await sb.from('workers_inscription')
       .select('*').eq('eligible', true).order('created_at', { ascending: false }).limit(20);
 
-    const wList = workers && workers.length > 0 ? workers : getMockWorkers();
+    const wList = workers || [];
     const suggestedEl = document.getElementById('suggestedWorkers');
 
+    if (wList.length === 0) {
+      suggestedEl.innerHTML = `<div style="text-align:center;padding:24px;color:#94a3b8;font-size:13px;">Aucun travailleur inscrit pour le moment.<br>Les profils apparaîtront ici dès les premières inscriptions.</div>`;
+    } else
     suggestedEl.innerHTML = wList.slice(0, 5).map(w => {
       const initials = ((w.prenom || '?')[0] + (w.nom || '?')[0]).toUpperCase();
       const comps = (w.competences || []).slice(0, 3);
@@ -1182,14 +1185,6 @@ Type : FLX`;
 
   function contactWorker(name) {
     window.location.href = 'tableau-travailleurs.html';
-  }
-
-  function getMockWorkers() {
-    return [
-      { prenom: 'Sophie', nom: 'Martin', ville: 'Bruxelles', eligible: true, regime_travail: 'Salariée 4/5e', competences: ['Comptabilité','TVA','Encodage'], teletravail_preference: 'oui' },
-      { prenom: 'Thomas', nom: 'Lejeune', ville: 'Liège', eligible: true, regime_travail: 'Salarié 4/5e', competences: ['Payroll','Back-office'], teletravail_preference: 'oui' },
-      { prenom: 'Marie', nom: 'Dubois', ville: 'Gand', eligible: true, regime_travail: 'Pensionnée', competences: ['Audit','Bilan annuel'], teletravail_preference: 'oui' },
-    ];
   }
 
   init();
