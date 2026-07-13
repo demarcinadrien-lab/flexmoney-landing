@@ -257,6 +257,38 @@
     loadJoursProposes();
   }
 
+  // ── Envoi du contrat signé (scan/photo/PDF) par le travailleur ──
+  function uploadContratSigne(candId) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf,.jpg,.jpeg,.png';
+    input.onchange = async () => {
+      const file = input.files[0];
+      if (!file) return;
+      if (file.size > 10 * 1024 * 1024) { alert('Fichier trop volumineux (max 10 MB).'); return; }
+      try {
+        const ext = file.name.split('.').pop();
+        const path = `${candId}/contrat-signe-${Date.now()}.${ext}`;
+        const { data: up, error: upErr } = await sb.storage
+          .from('compliance-docs')
+          .upload(path, file, { contentType: file.type, upsert: false });
+        if (upErr || !up) { alert("⚠️ L'envoi du fichier a échoué. Réessayez."); return; }
+        const { data: urlData } = sb.storage.from('compliance-docs').getPublicUrl(path);
+        await sb.from('candidatures').update({
+          contrat_signe_url: urlData?.publicUrl || path,
+          contrat_signe_le: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }).eq('id', candId);
+        alert('✅ Contrat signé envoyé ! Votre employeur le retrouvera dans votre dossier.');
+        await loadCandidatures();
+      } catch(e) {
+        console.warn('Upload contrat', e);
+        alert("⚠️ L'envoi a échoué. Réessayez.");
+      }
+    };
+    input.click();
+  }
+
   // ── Jours de travail proposés par l'employeur (contrat trimestriel) ──
   async function loadJoursProposes() {
     const { data: jours } = await sb.from('declarations_heures')
@@ -349,7 +381,10 @@
         action = `<button class="btn btn-primary" onclick="window.location.href='compliance.html?cid=${c.id}'">Compléter mon dossier →</button>`;
       } else if (c.statut === 'acceptee') {
         badge = '<span class="status-badge status-acceptee">✅ Acceptée — dossier complet</span>';
-        action = `<button class="btn btn-outline" onclick="window.location.href='dossier-jour-j.html?cid=${c.id}'">Voir mon dossier →</button>`;
+        const contratBtn = c.contrat_signe_url
+          ? `<a href="${c.contrat_signe_url}" target="_blank" class="btn btn-outline" style="text-decoration:none;">📎 Contrat signé envoyé ✓</a>`
+          : `<button class="btn btn-green" onclick="uploadContratSigne('${c.id}')">📤 Envoyer mon contrat signé</button>`;
+        action = `<button class="btn btn-outline" onclick="window.location.href='dossier-jour-j.html?cid=${c.id}'">Voir mon dossier →</button>${contratBtn}`;
       } else if (c.statut === 'refusee') {
         badge = '<span class="status-badge status-cloturee">Refusée</span>';
       } else {
