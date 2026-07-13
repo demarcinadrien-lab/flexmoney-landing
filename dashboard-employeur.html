@@ -541,14 +541,21 @@
       const statusMap = { proposee: 'Ouverte', acceptee: 'Pourvue', en_cours: 'En cours', attente_validation: 'À valider', cloturee: 'Clôturée' };
       postEl.innerHTML = postees.map(m => {
         const mc = allCandidatures.filter(c => c.mission_id === m.id);
+        const isCloturee = m.statut === 'cloturee';
+        const actionBtn = isCloturee
+          ? `<button onclick="rouvrirMission('${m.id}')" style="padding:7px 14px;background:#fff;color:#6366f1;border:1.5px solid #6366f1;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">🔓 Rouvrir</button>`
+          : `<button onclick="cloturerMission('${m.id}')" style="padding:7px 14px;background:#fff;color:#64748b;border:1.5px solid #e2e8f0;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">🔒 Clôturer</button>`;
         return `
-        <div class="cand-card" style="margin-bottom:14px;">
+        <div class="cand-card" style="margin-bottom:14px;${isCloturee ? 'opacity:0.65;' : ''}">
           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
             <div>
               <div style="font-weight:700;font-size:15px;">${m.titre || 'Mission'}</div>
               <div style="font-size:12px;color:#64748b;margin-top:2px;">${missionMeta(m)}</div>
             </div>
-            <span class="cand-type-badge badge-trim">${statusMap[m.statut] || m.statut || '—'}</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="cand-type-badge ${isCloturee ? 's-cloturee' : 'badge-trim'}">${statusMap[m.statut] || m.statut || '—'}</span>
+              ${actionBtn}
+            </div>
           </div>
           <div style="margin-top:12px;padding-top:12px;border-top:1px solid #f1f5f9;">
             <div style="font-size:12px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">📬 Candidatures (${mc.length})</div>
@@ -670,6 +677,20 @@
         </div>
         ${actions}
       </div>`;
+  }
+
+  // ── Clôture / réouverture d'une mission postée ──
+  // Une mission reste ouverte (visible des travailleurs, candidatures possibles)
+  // tant que l'employeur ne la clôture pas manuellement, même après acceptation.
+  async function cloturerMission(id) {
+    if (!confirm('Clôturer cette mission ?\nElle ne sera plus visible par les travailleurs et ne recevra plus de candidatures.\nLes candidatures déjà acceptées ne sont pas affectées.')) return;
+    await sb.from('missions').update({ statut: 'cloturee', updated_at: new Date().toISOString() }).eq('id', id);
+    await loadData();
+  }
+
+  async function rouvrirMission(id) {
+    await sb.from('missions').update({ statut: 'proposee', updated_at: new Date().toISOString() }).eq('id', id);
+    await loadData();
   }
 
   let pendingCandidatureId = null;
