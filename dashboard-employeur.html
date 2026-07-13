@@ -404,6 +404,18 @@
     </div>
   </div>
 
+  <!-- MODAL HISTORIQUE TRAVAILLEUR -->
+  <div class="modal-overlay hidden" id="historiqueModal">
+    <div class="modal-box">
+      <h2 id="histTitle">📜 Historique</h2>
+      <p class="modal-subtitle" id="histSub"></p>
+      <div id="histContent"></div>
+      <div class="modal-footer">
+        <button class="btn-close-modal" onclick="closeHistoriqueModal()">Fermer</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Pas de profil -->
   <div id="noProfileState" class="hidden">
     <div class="card" style="text-align:center;padding:40px;max-width:500px;margin:0 auto;">
@@ -610,7 +622,35 @@
         Aucune mission en cours. Les missions dont le créneau est confirmé par le travailleur apparaîtront ici.
       </div>`;
     } else {
-      ecEl.innerHTML = enCours.map(c => candCard(c, myMissionsList.find(m => m.id === c.mission_id))).join('');
+      // Liste des travailleurs (dédupliqués par email), cliquables pour voir leur historique
+      const byEmail = {};
+      enCours.forEach(c => {
+        if (!c.worker_email) return;
+        if (!byEmail[c.worker_email]) byEmail[c.worker_email] = { prenom: c.worker_prenom, nom: c.worker_nom, email: c.worker_email, cands: [] };
+        byEmail[c.worker_email].cands.push(c);
+      });
+      ecEl.innerHTML = Object.values(byEmail).map(w => {
+        const initials = ((w.prenom || '?')[0] + (w.nom || '?')[0]).toUpperCase();
+        const last = w.cands[0];
+        const mission = myMissionsList.find(m => m.id === last.mission_id);
+        const typeBadge = last.type_contrat === 'test_jour'
+          ? '<span class="cand-type-badge badge-test">🧪 Journée de test</span>'
+          : '<span class="cand-type-badge badge-trim">📋 Contrat trimestriel</span>';
+        return `
+        <div class="cand-card" style="cursor:pointer;" onclick="voirHistorique('${w.email}')">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div class="cand-avatar">${initials}</div>
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <span class="cand-name">${w.prenom || ''} ${w.nom || ''}</span>
+                ${typeBadge}
+              </div>
+              <div style="font-size:12px;color:#64748b;margin-top:3px;">📌 ${mission?.titre || '—'}${w.cands.length > 1 ? ` · ${w.cands.length} missions en cours` : ''}</div>
+            </div>
+            <span style="font-size:12px;color:#6366f1;font-weight:700;white-space:nowrap;">Voir l'historique →</span>
+          </div>
+        </div>`;
+      }).join('');
     }
   }
 
@@ -678,6 +718,72 @@
         ${actions}
       </div>`;
   }
+
+  // ── Historique d'un travailleur : journée de test, puis journées du contrat trimestriel ──
+  function voirHistorique(email) {
+    const cands = allCandidatures.filter(c => c.worker_email === email)
+      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    if (cands.length === 0) return;
+
+    const w = cands[cands.length - 1];
+    document.getElementById('histTitle').textContent = `📜 Historique — ${w.worker_prenom || ''} ${w.worker_nom || ''}`.trim();
+    document.getElementById('histSub').textContent = email;
+
+    const statutLbl = { en_attente: '⏳ En attente', date_proposee: '📅 Créneau proposé', acceptee: '✅ Acceptée', refusee: '❌ Refusée', annulee: '🚫 Annulée' };
+    const dLbl = d => d ? new Date(d).toLocaleDateString('fr-BE', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+
+    const secTitle = t => `<div style="font-size:12px;font-weight:800;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin:18px 0 8px;">${t}</div>`;
+    const vide = t => `<div style="font-size:13px;color:#94a3b8;">${t}</div>`;
+    const row = (titre, meta, badge, link) => `
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:8px;flex-wrap:wrap;">
+        <div>
+          <div style="font-size:13px;font-weight:700;">${titre}</div>
+          <div style="font-size:12px;color:#64748b;margin-top:2px;">${meta}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">${badge}${link || ''}</div>
+      </div>`;
+
+    const candRow = c => {
+      const mission = myMissionsList.find(m => m.id === c.mission_id);
+      const date = c.date_test || mission?.date_debut;
+      const fin = c.type_contrat === 'trimestriel' && mission?.date_fin ? ` → ${dLbl(mission.date_fin)}` : '';
+      const heure = c.heure_debut && c.heure_fin ? ` · 🕐 ${c.heure_debut.slice(0,5)}–${c.heure_fin.slice(0,5)}` : '';
+      const link = c.statut === 'acceptee'
+        ? `<a href="dossier-jour-j.html?cid=${c.id}" target="_blank" onclick="event.stopPropagation()" style="font-size:12px;color:#6366f1;font-weight:700;text-decoration:none;">📁 Dossier</a>` : '';
+      return row(
+        mission?.titre || 'Mission',
+        `📅 ${dLbl(date)}${fin}${heure}${mission?.taux_horaire ? ` · 💶 ${mission.taux_horaire} €/h` : ''}`,
+        `<span style="font-size:12px;font-weight:700;">${statutLbl[c.statut] || c.statut || '—'}</span>`,
+        link
+      );
+    };
+
+    const tests = cands.filter(c => c.type_contrat === 'test_jour');
+    const trims = cands.filter(c => c.type_contrat === 'trimestriel');
+    const decls = allDeclarations.filter(d => d.worker_email === email)
+      .sort((a, b) => new Date(a.date_prestation || a.created_at) - new Date(b.date_prestation || b.created_at));
+
+    let html = '';
+    html += secTitle('🧪 Journée de test');
+    html += tests.length ? tests.map(candRow).join('') : vide('Aucune journée de test.');
+    html += secTitle('📋 Contrat trimestriel — journées proposées');
+    html += trims.length ? trims.map(candRow).join('') : vide('Aucun contrat trimestriel proposé.');
+    html += secTitle('⏱️ Journées prestées (heures déclarées)');
+    html += decls.length ? decls.map(d => {
+      const h = d.heures_validees ?? d.heures_reelles ?? d.heures_prevues;
+      const badge = d.statut === 'validee' ? '✅ Validée' : d.statut === 'contestee' ? '⚠️ Contestée' : '⏳ À valider';
+      return row(
+        `${dLbl(d.date_prestation)}`,
+        `⏱️ ${h != null ? h + 'h' : '—'}${d.taux_horaire ? ` · 💶 ${d.taux_horaire} €/h` : ''}${d.salaire_brut ? ` · ${fmt(d.salaire_brut)} € brut` : ''}`,
+        `<span style="font-size:12px;font-weight:700;">${badge}</span>`
+      );
+    }).join('') : vide('Aucune journée déclarée pour le moment.');
+
+    document.getElementById('histContent').innerHTML = html;
+    document.getElementById('historiqueModal').classList.remove('hidden');
+  }
+
+  function closeHistoriqueModal() { document.getElementById('historiqueModal').classList.add('hidden'); }
 
   // ── Clôture / réouverture d'une mission postée ──
   // Une mission reste ouverte (visible des travailleurs, candidatures possibles)
@@ -877,6 +983,8 @@ Type : FLX`;
 
   /* ===== DECLARATIONS D'HEURES ===== */
 
+  let allDeclarations = [];
+
   async function loadDeclarations() {
     const missionIds = myMissionsList.map(m => m.id).filter(Boolean);
     let decls = [];
@@ -893,6 +1001,8 @@ Type : FLX`;
         .select('*').eq('employer_email', currentUser.email).order('created_at', { ascending: false });
       decls = data || [];
     }
+
+    allDeclarations = decls;
 
     const pending = decls.filter(d => d.statut === 'en_attente');
     document.getElementById('declCount').textContent = pending.length;
