@@ -265,9 +265,9 @@
         <textarea id="activite-desc" rows="3" placeholder="Ex. : Agence de marketing digital spécialisée en SEO et réseaux sociaux..."></textarea>
       </div>
       <div class="field">
-        <label>Code NACE principal (si connu)</label>
-        <input type="text" id="nace" placeholder="Ex. : 73.11 — Agences de publicité"/>
-        <div class="field-hint">Vous pouvez trouver votre code NACE sur <a href="https://kbopub.economie.fgov.be" target="_blank" style="color:var(--brand-light)">kbopub.economie.fgov.be</a></div>
+        <label>Commission(s) paritaire(s) de votre entreprise</label>
+        <input type="text" id="cp" placeholder="Ex. : CP 200 — Employés · CP 302 — Horeca"/>
+        <div class="field-hint">Indiquez la ou les commissions paritaires (CP) appliquées dans votre entreprise, séparées par une virgule. Vous les trouverez sur vos fiches de paie ou auprès de votre secrétariat social.</div>
       </div>
     </div>
 
@@ -672,7 +672,7 @@
     const secteur = document.getElementById('secteur').value;
     if (!secteur) { document.getElementById('err-secteur').classList.add('show'); return; }
     if (!secteurOk) { alert('Votre secteur est exclu du régime flexi-job. Contactez-nous pour en savoir plus.'); return; }
-    formData.nace = document.getElementById('nace').value;
+    formData.cp = document.getElementById('cp').value.trim();
     formData.activite = document.getElementById('activite-desc').value;
     goToStep(3);
   }
@@ -751,7 +751,7 @@
       adresse:          formData.company_address,
       code_postal:      formData.company_cp,
       ville:            formData.company_city,
-      code_nace:        formData.nace,
+      commission_paritaire: formData.cp || null,
       activite:         formData.activite,
       prenom_contact:   formData.contact_prenom,
       nom_contact:      formData.contact_nom,
@@ -883,7 +883,7 @@
       document.getElementById('secteur').value = row.secteur;
       checkSecteur(row.secteur);
     }
-    if (row.code_nace) document.getElementById('nace').value = row.code_nace;
+    if (row.commission_paritaire) document.getElementById('cp').value = row.commission_paritaire;
     if (row.activite) document.getElementById('activite-desc').value = row.activite;
 
     // Étape 3 — Contact

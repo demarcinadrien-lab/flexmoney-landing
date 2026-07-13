@@ -402,7 +402,7 @@
 
       <h2>Article 2 — Type de contrat</h2>
       <p>Contrat de travail à durée déterminée flexi-job — régime <strong>contrat écrit trimestriel</strong>.<br>
-      Commission paritaire : <span class="fv">XXX (flexi-job tous secteurs)</span><br>
+      Commission paritaire : <span class="fv">${employer?.commission_paritaire || 'XXX (flexi-job tous secteurs)'}</span><br>
       Période : du <span class="fv">${dateDebut}</span> au <span class="fv">${dateFin}</span></p>
 
       <h2>Article 3 — Fonction et lieu</h2>
@@ -466,7 +466,7 @@
 
     const cells = [
       ['Type travailleur', 'FLX', true],
-      ['Commission paritaire', 'XXX', true],
+      ['Commission paritaire', employer?.commission_paritaire || 'XXX', true],
       ['Type de déclaration', isTest ? 'Journalière (contrat oral)' : 'Trimestrielle (contrat écrit)', true],
       ['BCE Employeur', employer?.numero_bce, true],
       ['Nom employeur', employer?.nom_entreprise, true],
