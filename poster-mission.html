@@ -157,7 +157,7 @@
         </div>
         <div class="form-group">
           <label>Nombre d'heures *</label>
-          <input type="number" id="heures" placeholder="8" min="1" max="12" oninput="updateCalc()">
+          <input type="number" id="heures" value="8" min="1" max="12" oninput="updateCalc()">
         </div>
       </div>
       <div class="form-row">
@@ -245,11 +245,35 @@
 <script src="villes.js"></script>
 <script src="shared.js"></script>
 <script>
-  // ── Un travailleur connecté ne peut pas poster de mission ──
+  // ── Session : rediriger les travailleurs + pré-remplir les infos entreprise ──
   (async () => {
     const { data: { session } } = await sb.auth.getSession();
-    if (session && session.user.user_metadata?.role === 'travailleur') {
+    if (!session) return;
+    if (session.user.user_metadata?.role === 'travailleur') {
       window.location.replace('dashboard-travailleur.html');
+      return;
+    }
+
+    // Pré-remplissage depuis les données d'inscription de l'employeur
+    document.getElementById('emailEmployeur').value = session.user.email || '';
+    const { data: emp } = await sb.from('employers_inscription')
+      .select('*').eq('email_contact', session.user.email)
+      .order('created_at', { ascending: false }).limit(1);
+    const p = (emp && emp[0]) || null;
+    if (!p) return;
+
+    if (p.email_contact)  document.getElementById('emailEmployeur').value = p.email_contact;
+    if (p.numero_bce)     document.getElementById('bce').value = p.numero_bce;
+    if (p.nom_entreprise) document.getElementById('nomEntreprise').value = p.nom_entreprise;
+
+    // Adresse du siège comme adresse par défaut pour une mission sur place
+    if (p.adresse) {
+      document.getElementById('adresse').value =
+        `${p.adresse}, ${p.code_postal || ''} ${p.ville || ''}`.replace(/\s+/g, ' ').replace(/,\s*$/, '').trim();
+    }
+    if (p.ville) {
+      const sel = document.getElementById('villeMission');
+      if ([...sel.options].some(o => o.value === p.ville)) sel.value = p.ville;
     }
   })();
 
@@ -374,8 +398,16 @@
     const taux = parseFloat(document.getElementById('taux').value);
     const date = document.getElementById('dateMission').value;
 
-    if (!email || !nom || !titre || !heures || !taux || !date || selectedCompetences.length === 0) {
-      alert('Veuillez remplir tous les champs obligatoires et sélectionner au moins une compétence.');
+    const manquants = [];
+    if (!email) manquants.push('Email de contact');
+    if (!nom)   manquants.push("Nom de l'entreprise");
+    if (!titre) manquants.push('Titre de la mission');
+    if (!date)  manquants.push('Date de la mission');
+    if (!heures) manquants.push("Nombre d'heures");
+    if (!taux)  manquants.push('Taux horaire');
+    if (selectedCompetences.length === 0) manquants.push('Au moins une compétence');
+    if (manquants.length > 0) {
+      alert('Champs manquants :\n— ' + manquants.join('\n— '));
       return;
     }
     if (lieuMode === 'onsite' && !document.getElementById('villeMission').value) {
