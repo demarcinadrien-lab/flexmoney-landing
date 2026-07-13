@@ -202,12 +202,14 @@
   const EJS_TPL_EMPLOYEUR = 'template_y3zn6ll';
   const params = new URLSearchParams(window.location.search);
   const candidatureId = params.get('cid');
+  const declarationId = params.get('did'); // jour préenregistré (contrat trimestriel)
 
   let candidatureData = null;
   let missionData = null;
   let dimonaData = null;
+  let jourData = null; // ligne declarations_heures du jour préenregistré
   let tauxHoraire = 0;
-  let resubmitDeclId = null; // ID de la déclaration contestée à re-soumettre
+  let resubmitDeclId = null; // ID de la déclaration existante à mettre à jour
 
   async function init() {
     if (!candidatureId) {
@@ -279,6 +281,33 @@
         : '';
       document.getElementById('btnSubmit').textContent = '🔄 Re-soumettre ma déclaration corrigée';
       updateCalc();
+    }
+
+    // Jour de travail préenregistré (contrat trimestriel accepté) : on met à jour cette ligne
+    if (declarationId) {
+      const { data: jour } = await sb.from('declarations_heures').select('*').eq('id', declarationId).single();
+      if (jour) {
+        jourData = jour;
+        resubmitDeclId = jour.id;
+        if (jour.taux_horaire) {
+          tauxHoraire = parseFloat(jour.taux_horaire) || tauxHoraire;
+          document.getElementById('calcTaux').textContent = fmt(tauxHoraire) + ' €/h';
+        }
+        const dLbl = jour.date_prestation ? new Date(jour.date_prestation).toLocaleDateString('fr-BE', { weekday:'long', day:'numeric', month:'long', year:'numeric' }) : '—';
+        document.getElementById('prevDate').textContent = dLbl;
+        if (jour.heure_debut_prevue) {
+          document.getElementById('prevDebut').textContent = jour.heure_debut_prevue.slice(0,5);
+          document.getElementById('heureDebutReelle').value = jour.heure_debut_prevue.slice(0,5);
+        }
+        if (jour.heure_fin_prevue) {
+          document.getElementById('prevFin').textContent = jour.heure_fin_prevue.slice(0,5);
+          document.getElementById('heureFinReelle').value = jour.heure_fin_prevue.slice(0,5);
+        }
+        if (jour.heure_debut_prevue && jour.heure_fin_prevue) {
+          document.getElementById('prevTotal').textContent = formatH(heuresDiff(jour.heure_debut_prevue.slice(0,5), jour.heure_fin_prevue.slice(0,5)));
+        }
+        updateCalc();
+      }
     }
   }
 
@@ -382,7 +411,7 @@
     const hdebuPrev = dimonaData?.heure_debut || candidatureData?.heure_debut || null;
     const hfinPrev  = dimonaData?.heure_fin   || candidatureData?.heure_fin   || null;
     const heuresPrev = (hdebuPrev && hfinPrev) ? heuresDiff(hdebuPrev, hfinPrev) : null;
-    const datePrest  = dimonaData?.date_debut  || candidatureData?.date_test   || null;
+    const datePrest  = jourData?.date_prestation || dimonaData?.date_debut || candidatureData?.date_test || null;
 
     const payload = {
       candidature_id:          candidatureId || null,

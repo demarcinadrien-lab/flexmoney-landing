@@ -176,6 +176,13 @@
 
     <!-- Colonne droite : missions -->
     <div>
+      <!-- Jours de travail proposés par l'employeur -->
+      <div class="card" id="joursProposesCard" style="display:none;">
+        <h2>📅 Jours de travail proposés</h2>
+        <p style="font-size:13px;color:#64748b;margin-bottom:16px;">Votre employeur vous propose ces jours dans le cadre de votre contrat trimestriel. Acceptez-les pour confirmer.</p>
+        <div id="joursProposesList"></div>
+      </div>
+
       <!-- Mes candidatures -->
       <div class="card" id="candidaturesCard" style="display:none;">
         <h2>📌 Mes candidatures</h2>
@@ -247,6 +254,68 @@
     renderProfile();
     loadMissions();
     loadCandidatures();
+    loadJoursProposes();
+  }
+
+  // ── Jours de travail proposés par l'employeur (contrat trimestriel) ──
+  async function loadJoursProposes() {
+    const { data: jours } = await sb.from('declarations_heures')
+      .select('*').eq('worker_email', currentUser.email)
+      .in('statut', ['proposee', 'acceptee'])
+      .order('date_prestation', { ascending: true });
+    if (!jours || jours.length === 0) { document.getElementById('joursProposesCard').style.display = 'none'; return; }
+
+    // Noms des missions liées
+    const mIds = [...new Set(jours.map(j => j.mission_id).filter(Boolean))];
+    let missionsById = {};
+    if (mIds.length > 0) {
+      const { data: ms } = await sb.from('missions').select('id,titre,nom_entreprise').in('id', mIds);
+      (ms || []).forEach(m => { missionsById[m.id] = m; });
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('joursProposesList').innerHTML = jours.map(j => {
+      const m = missionsById[j.mission_id] || {};
+      const dateLbl = j.date_prestation ? new Date(j.date_prestation).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' }) : '—';
+      const heures = j.heure_debut_prevue ? `🕐 ${j.heure_debut_prevue.slice(0,5)}–${(j.heure_fin_prevue||'').slice(0,5)} (${j.heures_prevues || '?'}h)` : '';
+      const taux = j.taux_horaire ? `💶 ${j.taux_horaire} €/h` : '';
+
+      let footer;
+      if (j.statut === 'proposee') {
+        footer = `
+          <span class="status-badge status-proposee">⏳ À confirmer</span>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-green" onclick="repondreJour('${j.id}', 'acceptee')">✅ Accepter</button>
+            <button class="btn btn-outline" onclick="repondreJour('${j.id}', 'refusee')">Refuser</button>
+          </div>`;
+      } else if (j.date_prestation && j.date_prestation <= today) {
+        footer = `
+          <span class="status-badge status-acceptee">✅ Accepté</span>
+          <button class="btn btn-primary" onclick="window.location.href='declaration-heures.html?cid=${j.candidature_id || ''}&did=${j.id}'">⏱️ Déclarer mes heures →</button>`;
+      } else {
+        footer = `<span class="status-badge status-acceptee">✅ Accepté — à venir</span>`;
+      }
+
+      return `
+        <div class="mission-item">
+          <div class="top">
+            <div>
+              <div class="titre">📅 ${dateLbl}</div>
+              <div class="company">🏢 ${m.nom_entreprise || 'Employeur'} · ${m.titre || 'Contrat trimestriel'}</div>
+            </div>
+          </div>
+          <div class="meta"><span>${heures}</span><span>${taux}</span></div>
+          <div class="footer">${footer}</div>
+        </div>`;
+    }).join('');
+    document.getElementById('joursProposesCard').style.display = 'block';
+  }
+
+  async function repondreJour(id, statut) {
+    if (statut === 'refusee' && !confirm('Refuser ce jour de travail ?')) return;
+    await sb.from('declarations_heures').update({ statut, updated_at: new Date().toISOString() }).eq('id', id);
+    await loadJoursProposes();
+    if (statut === 'acceptee') alert('✅ Jour accepté ! Il apparaîtra chez votre employeur dans « Valider les heures ». Pensez à déclarer vos heures réelles après la journée.');
   }
 
   // ── Mes candidatures : en attente, à confirmer, dossier à compléter ──

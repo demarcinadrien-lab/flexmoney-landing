@@ -131,6 +131,43 @@
   </div>
 </div>
 
+<!-- Modal fiche travailleur : contrat + proposition de jours -->
+<div class="modal-overlay hidden" id="ficheOverlay">
+  <div class="modal">
+    <h2 id="ficheTitle">👤 Travailleur</h2>
+    <p class="sub" id="ficheEmail"></p>
+
+    <div id="ficheContrat"></div>
+
+    <div id="ficheJoursSection" class="hidden">
+      <div style="font-size:12px;font-weight:800;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin:18px 0 10px;">📅 Proposer des jours de travail</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Date *</label>
+          <input type="date" id="jour-date">
+        </div>
+        <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div>
+            <label>Début *</label>
+            <input type="time" id="jour-debut" value="09:00">
+          </div>
+          <div>
+            <label>Fin *</label>
+            <input type="time" id="jour-fin" value="17:00">
+          </div>
+        </div>
+      </div>
+      <button onclick="ajouterJour()" style="width:100%;padding:10px;background:#f0f0ff;color:#6366f1;border:1.5px dashed #6366f1;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:12px;">＋ Ajouter ce jour à la liste</button>
+      <div id="joursList"></div>
+    </div>
+
+    <div class="modal-buttons">
+      <button class="btn-cancel" onclick="closeFiche()">Fermer</button>
+      <button class="btn-send hidden" id="btnEnvoyerJours" onclick="envoyerJours()">Envoyer la proposition de jours →</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="competences.js"></script>
@@ -158,9 +195,13 @@
     await loadPastWorkers();
   }
 
+  let allMyMissions = [];
+  let allCandsAcceptees = [];
+
   async function loadPastWorkers() {
     const { data: missions } = await sb.from('missions').select('*').eq('email_employeur', currentUser.email);
     const myMissions = missions || [];
+    allMyMissions = myMissions;
     const missionIds = myMissions.map(m => m.id).filter(Boolean);
 
     let cands = [];
@@ -170,6 +211,7 @@
         .order('created_at', { ascending: false });
       cands = data || [];
     }
+    allCandsAcceptees = cands;
 
     document.getElementById('loadingState').classList.add('hidden');
 
@@ -227,7 +269,7 @@
       const dateLabel = w.derniere_date ? new Date(w.derniere_date).toLocaleDateString('fr-BE') : '—';
 
       return `
-        <div class="worker-row">
+        <div class="worker-row" style="cursor:pointer;" onclick="ouvrirFicheTravailleur('${w.email}')">
           <div class="avatar">${initials}</div>
           <div class="w-info">
             <div class="w-name">${w.prenom || ''} ${w.nom || ''}</div>
@@ -236,11 +278,12 @@
               <span class="type-badge ${badgeClass}">${badgeLabel}</span>
               <span class="missions-count">📌 ${w.derniere_mission} · ${dateLabel}</span>
               ${w.nb_missions > 1 ? `<span class="missions-count">· ${w.nb_missions} missions ensemble</span>` : ''}
+              <span class="missions-count" style="color:#6366f1;font-weight:700;">· Voir contrat & proposer des jours →</span>
             </div>
           </div>
           <div style="display:flex;flex-direction:column;gap:6px;align-items:stretch;">
-            ${w.heures_a_valider > 0 ? `<a href="dashboard-employeur.html#declarationsSection" class="btn-validate">⏱️ Valider les heures (${w.heures_a_valider})</a>` : ''}
-            <button class="btn-propose" onclick="ouvrirNouveauContrat('${w.email}', '${(w.prenom||'').replace(/'/g,"\\'")}', '${(w.nom||'').replace(/'/g,"\\'")}')">📄 Proposer un nouveau contrat</button>
+            ${w.heures_a_valider > 0 ? `<a href="dashboard-employeur.html#declarationsSection" class="btn-validate" onclick="event.stopPropagation()">⏱️ Valider les heures (${w.heures_a_valider})</a>` : ''}
+            <button class="btn-propose" onclick="event.stopPropagation();ouvrirNouveauContrat('${w.email}', '${(w.prenom||'').replace(/'/g,"\\'")}', '${(w.nom||'').replace(/'/g,"\\'")}')">📄 Proposer un nouveau contrat</button>
           </div>
         </div>`;
     }).join('');
@@ -394,6 +437,165 @@
     } else {
       alert("⚠️ La proposition n'a pas pu être enregistrée. Réessayez.");
     }
+  }
+
+  // ── Fiche travailleur : contrat en cours + proposition de jours de travail ──
+  let ficheWorker = null;
+  let ficheContratActif = null; // { cand, mission }
+  let joursProposes = [];
+
+  function ouvrirFicheTravailleur(email) {
+    const w = pastWorkers.find(x => x.email === email);
+    if (!w) return;
+    ficheWorker = w;
+    ficheContratActif = null;
+    joursProposes = [];
+
+    document.getElementById('ficheTitle').textContent = `👤 ${w.prenom || ''} ${w.nom || ''}`.trim();
+    document.getElementById('ficheEmail').textContent = w.email;
+
+    const today = new Date().toISOString().split('T')[0];
+    const trims = allCandsAcceptees.filter(c => c.worker_email === email && c.type_contrat === 'trimestriel');
+
+    let html = '<div style="font-size:12px;font-weight:800;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">📋 Contrat trimestriel</div>';
+    if (trims.length === 0) {
+      html += `<div style="font-size:13px;color:#94a3b8;padding:12px;border:1px dashed #e2e8f0;border-radius:10px;">Aucun contrat trimestriel accepté avec ce travailleur.<br>Utilisez « Proposer un nouveau contrat » pour en créer un.</div>`;
+    } else {
+      const fmtD = d => d ? new Date(d).toLocaleDateString('fr-BE') : '—';
+      html += trims.map(c => {
+        const m = allMyMissions.find(x => x.id === c.mission_id);
+        const deb = m?.date_debut, fin = m?.date_fin;
+        const valide = !!(deb && fin && today >= deb && today <= fin);
+        if (valide && !ficheContratActif) ficheContratActif = { cand: c, mission: m };
+        return `
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px;border:1.5px solid ${valide ? '#bbf7d0' : '#e2e8f0'};background:${valide ? '#f0fdf4' : '#fff'};border-radius:10px;margin-bottom:8px;flex-wrap:wrap;">
+            <div>
+              <div style="font-size:13px;font-weight:700;">${m?.titre || 'Contrat trimestriel'}</div>
+              <div style="font-size:12px;color:#64748b;margin-top:2px;">Période : ${fmtD(deb)} → ${fmtD(fin)} · 💶 ${m?.taux_horaire || '—'} €/h</div>
+            </div>
+            <span style="font-size:12px;font-weight:700;color:${valide ? '#16a34a' : '#94a3b8'};">${valide ? '✅ En cours de validité' : '⏱️ Hors période'}</span>
+          </div>`;
+      }).join('');
+      if (!ficheContratActif) {
+        html += `<div style="font-size:12px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;margin-top:4px;">⚠️ Aucun contrat dans sa période de validité — impossible de proposer des jours. Proposez un nouveau contrat trimestriel.</div>`;
+      }
+    }
+    document.getElementById('ficheContrat').innerHTML = html;
+
+    const joursSection = document.getElementById('ficheJoursSection');
+    if (ficheContratActif) {
+      joursSection.classList.remove('hidden');
+      const dInput = document.getElementById('jour-date');
+      dInput.min = today > ficheContratActif.mission.date_debut ? today : ficheContratActif.mission.date_debut;
+      dInput.max = ficheContratActif.mission.date_fin;
+      dInput.value = '';
+    } else {
+      joursSection.classList.add('hidden');
+    }
+    renderJours();
+    document.getElementById('ficheOverlay').classList.remove('hidden');
+  }
+
+  function closeFiche() { document.getElementById('ficheOverlay').classList.add('hidden'); }
+
+  function hDiff(deb, fin) {
+    const [h1, m1] = deb.split(':').map(Number);
+    const [h2, m2] = fin.split(':').map(Number);
+    return Math.round(((h2 * 60 + m2) - (h1 * 60 + m1)) / 60 * 100) / 100;
+  }
+
+  function ajouterJour() {
+    const date = document.getElementById('jour-date').value;
+    const deb = document.getElementById('jour-debut').value;
+    const fin = document.getElementById('jour-fin').value;
+    if (!date || !deb || !fin) { alert('Date, heure de début et heure de fin requises.'); return; }
+    const m = ficheContratActif.mission;
+    if (date < m.date_debut || date > m.date_fin) {
+      alert(`La date doit être dans la période du contrat (${new Date(m.date_debut).toLocaleDateString('fr-BE')} → ${new Date(m.date_fin).toLocaleDateString('fr-BE')}).`);
+      return;
+    }
+    if (hDiff(deb, fin) <= 0) { alert("L'heure de fin doit être après l'heure de début."); return; }
+    if (joursProposes.some(j => j.date === date)) { alert('Ce jour est déjà dans la liste.'); return; }
+    joursProposes.push({ date, deb, fin });
+    joursProposes.sort((a, b) => a.date.localeCompare(b.date));
+    renderJours();
+  }
+
+  function retirerJour(i) { joursProposes.splice(i, 1); renderJours(); }
+
+  function renderJours() {
+    const el = document.getElementById('joursList');
+    document.getElementById('btnEnvoyerJours').classList.toggle('hidden', joursProposes.length === 0);
+    el.innerHTML = joursProposes.map((j, i) => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:6px;font-size:13px;">
+        <span>📅 ${new Date(j.date).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' })} · 🕐 ${j.deb}–${j.fin} (${hDiff(j.deb, j.fin)}h)</span>
+        <button onclick="retirerJour(${i})" style="background:none;border:none;color:#ef4444;font-weight:700;cursor:pointer;">✕</button>
+      </div>`).join('');
+  }
+
+  async function envoyerJours() {
+    if (!ficheContratActif || joursProposes.length === 0) return;
+    const { cand, mission } = ficheContratActif;
+    const btn = document.getElementById('btnEnvoyerJours');
+    btn.disabled = true;
+    btn.textContent = 'Envoi en cours...';
+    const resetBtn = () => { btn.disabled = false; btn.textContent = 'Envoyer la proposition de jours →'; };
+
+    // Éviter les doublons avec des jours déjà proposés/acceptés pour ce contrat
+    const { data: existants } = await sb.from('declarations_heures')
+      .select('date_prestation').eq('candidature_id', cand.id).neq('statut', 'refusee');
+    const datesExistantes = (existants || []).map(d => d.date_prestation);
+    const doublons = joursProposes.filter(j => datesExistantes.includes(j.date));
+    if (doublons.length > 0) {
+      alert(`Ces jours ont déjà été proposés : ${doublons.map(j => new Date(j.date).toLocaleDateString('fr-BE')).join(', ')}`);
+      resetBtn();
+      return;
+    }
+
+    const rows = joursProposes.map(j => ({
+      candidature_id: cand.id,
+      mission_id: mission.id,
+      worker_email: ficheWorker.email,
+      worker_nom: `${ficheWorker.prenom || ''} ${ficheWorker.nom || ''}`.trim(),
+      employer_email: currentUser.email,
+      date_prestation: j.date,
+      heure_debut_prevue: j.deb,
+      heure_fin_prevue: j.fin,
+      heures_prevues: hDiff(j.deb, j.fin),
+      taux_horaire: mission.taux_horaire || null,
+      statut: 'proposee'
+    }));
+
+    const { error } = await sb.from('declarations_heures').insert(rows);
+    if (error) {
+      console.log('Insert jours', error);
+      alert("⚠️ Les jours n'ont pas pu être enregistrés. Réessayez.");
+      resetBtn();
+      return;
+    }
+
+    // Notifier le travailleur par email
+    try {
+      const joursTxt = joursProposes.map(j => `${new Date(j.date).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' })} de ${j.deb} à ${j.fin}`).join(' · ');
+      await emailjs.send(EJS_SERVICE_ID, EJS_TPL_PROPOSITION, {
+        to_email: ficheWorker.email,
+        to_name: `${ficheWorker.prenom || ''} ${ficheWorker.nom || ''}`,
+        entreprise: employerProfile?.nom_entreprise || 'Votre employeur',
+        mission_titre: `${mission.titre || 'Contrat trimestriel'} — nouveaux jours de travail proposés`,
+        description: joursTxt,
+        taux_horaire: mission.taux_horaire ? `${mission.taux_horaire} €/h` : '—',
+        lieu_prestation: mission.lieu === 'remote' ? 'Télétravail' : (mission.adresse_lieu || 'À convenir'),
+        date_proposee: joursTxt,
+        heure_debut: '—',
+        heure_fin: '—',
+        lien_confirmation: `${window.location.origin}/dashboard-travailleur.html`,
+        reply_to: currentUser.email
+      });
+    } catch(e) { console.log('Email non bloquant', e); }
+
+    resetBtn();
+    alert(`✅ ${rows.length} jour(s) proposé(s) à ${ficheWorker.prenom || 'ce travailleur'}. Ils apparaîtront dans « Valider les heures » dès acceptation.`);
+    closeFiche();
   }
 
   init();

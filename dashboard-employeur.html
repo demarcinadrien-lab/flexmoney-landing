@@ -1007,9 +1007,14 @@ Type : FLX`;
     const pending = decls.filter(d => d.statut === 'en_attente');
     document.getElementById('declCount').textContent = pending.length;
 
-    if (decls.length > 0) {
+    // Jours visibles : acceptés par l'ouvrier (en attente), heures envoyées, confirmées, contestées — triés par date
+    const visibles = decls
+      .filter(d => !['proposee', 'refusee'].includes(d.statut))
+      .sort((a, b) => String(a.date_prestation || '9999-12-31').localeCompare(String(b.date_prestation || '9999-12-31')));
+
+    if (visibles.length > 0) {
       document.getElementById('declarationsSection').style.display = 'block';
-      renderDeclarations(decls);
+      renderDeclarations(visibles);
       if (window.location.hash === '#declarationsSection') {
         document.getElementById('declarationsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
@@ -1021,6 +1026,7 @@ Type : FLX`;
     el.innerHTML = decls.map(d => {
       const mission = myMissionsList.find(m => m.id === d.mission_id);
       const isPending = d.statut === 'en_attente';
+      const isJourAccepte = d.statut === 'acceptee'; // jour accepté par l'ouvrier, heures pas encore envoyées
 
       // Calcul diff
       let diffHtml = '';
@@ -1036,16 +1042,18 @@ Type : FLX`;
       }
 
       const statusBadge = d.statut === 'validee'
-        ? '<span class="cand-type-badge badge-acceptee">✅ Validée</span>'
+        ? '<span class="cand-type-badge badge-acceptee">✅ Heures confirmées</span>'
         : d.statut === 'contestee'
         ? '<span class="cand-type-badge badge-refusee">❌ Contestée</span>'
-        : '<span class="cand-type-badge badge-test">⏳ En attente</span>';
+        : isJourAccepte
+        ? '<span class="cand-type-badge badge-trim">⏳ En attente</span>'
+        : "<span class=\"cand-type-badge badge-test\">📨 Heures envoyées par l'ouvrier</span>";
 
       const dateLabel = d.date_prestation
         ? new Date(d.date_prestation).toLocaleDateString('fr-BE', { weekday:'long', day:'numeric', month:'long' })
         : '—';
 
-      const brut = (d.heures_reelles || 0) * (d.taux_horaire || 0);
+      const brut = ((d.heures_reelles != null ? d.heures_reelles : d.heures_prevues) || 0) * (d.taux_horaire || 0);
 
       return `
         <div class="decl-card ${d.statut}" id="decl-${d.id}">
@@ -1066,23 +1074,28 @@ Type : FLX`;
             </div>
             <div class="heure-box reel">
               <div class="hb-label">Déclaré par le travailleur ${diffHtml}</div>
-              <div class="hb-val">${fmtH(d.heures_reelles || 0)}</div>
+              <div class="hb-val">${d.heures_reelles != null ? fmtH(d.heures_reelles) : '—'}</div>
               <div class="hb-sub">${d.heure_debut_reelle ? d.heure_debut_reelle.slice(0,5) : '—'} → ${d.heure_fin_reelle ? d.heure_fin_reelle.slice(0,5) : '—'}</div>
             </div>
           </div>
 
           <div style="font-size:13px;color:#64748b;margin-bottom:12px;">
-            💰 Salaire brut : <strong style="color:#1e293b;">${fmtMoney(brut)} €</strong>
+            💰 Salaire brut${isJourAccepte ? ' (estimé)' : ''} : <strong style="color:#1e293b;">${fmtMoney(brut)} €</strong>
             ${d.taux_horaire ? `<span style="margin-left:8px;">· ${fmtMoney(d.taux_horaire)} €/h</span>` : ''}
           </div>
 
           ${d.commentaire_travailleur ? `<div class="decl-comment">💬 "${d.commentaire_travailleur}"</div>` : ''}
 
+          ${isJourAccepte ? `
+          <div style="font-size:12px;color:#4338ca;margin-bottom:10px;padding:8px 12px;background:#f0f0ff;border-radius:8px;border:1px solid #c7d2fe;">
+            📅 Jour accepté par le travailleur — il enverra ses heures réelles après la journée.
+          </div>` : ''}
           ${isPending ? `
           <div style="font-size:12px;color:#64748b;margin-bottom:10px;padding:8px 12px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;">
-            ✅ Ces heures seront <strong>acceptées automatiquement</strong> sous 48h — agissez uniquement si vous contestez.
+            ✅ Ces heures seront <strong>acceptées automatiquement</strong> sous 48h — confirmez-les ou contestez-les.
           </div>
           <div class="decl-actions">
+            <button class="btn-copy" style="background:#16a34a;" onclick="validerHeures('${d.id}')">✅ Confirmer les heures</button>
             <button class="btn-contester" onclick="toggleContest('${d.id}')">❌ Contester ces heures</button>
           </div>
           <div class="contestation-form" id="contest-${d.id}">
@@ -1098,6 +1111,16 @@ Type : FLX`;
           </div>` : ''}
         </div>`;
     }).join('');
+  }
+
+  async function validerHeures(id) {
+    const { data: d } = await sb.from('declarations_heures').select('*').eq('id', id).single();
+    await sb.from('declarations_heures').update({
+      statut: 'validee',
+      heures_validees: d?.heures_reelles ?? null,
+      updated_at: new Date().toISOString()
+    }).eq('id', id);
+    await loadDeclarations();
   }
 
   function toggleContest(id) {
