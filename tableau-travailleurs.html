@@ -143,9 +143,8 @@
     </div>
 
     <div class="filter-group">
-      <label>Compétences</label>
-      <div class="secteur-tabs-filter" id="secteur-tabs-filter"></div>
-      <div class="comp-chips" id="filterChips"></div>
+      <label>Domaine de compétences</label>
+      <select id="secteurFilter" onchange="applyFilters()"></select>
     </div>
 
     <button class="btn-reset" onclick="resetFilters()">↺ Réinitialiser</button>
@@ -247,66 +246,16 @@
   })();
 
   let allWorkers = [];
-  let filterComps = [];
   let selectedWorker = null;
-  let currentFilterSecteur = FLEXMONEY_SECTEURS[0].id;
 
-  function initFilterTabs() {
-    const tabsWrap = document.getElementById('secteur-tabs-filter');
-    tabsWrap.innerHTML = FLEXMONEY_SECTEURS.map((s, i) => `
-      <button class="s-tab${i === 0 ? ' active' : ''}"
-        style="${i === 0 ? `background:${s.couleur};color:#fff;border-color:${s.couleur}` : ''}"
-        onclick="switchFilterSecteur('${s.id}', this, '${s.couleur}')">
-        ${s.label}${s.featured ? ' <span class="new-badge">NEW</span>' : ''}
-      </button>
-    `).join('');
-    renderFilterChips(FLEXMONEY_SECTEURS[0]);
+  // Liste déroulante des domaines de compétences (génériques, pas le détail)
+  function initSecteurFilter() {
+    const sel = document.getElementById('secteurFilter');
+    sel.innerHTML = `<option value="">Tous les domaines</option>` +
+      FLEXMONEY_SECTEURS.map(s => `<option value="${s.id}">${s.label}</option>`).join('');
   }
 
-  function switchFilterSecteur(secteurId, btn, couleur) {
-    currentFilterSecteur = secteurId;
-    document.querySelectorAll('#secteur-tabs-filter .s-tab').forEach(t => {
-      t.classList.remove('active');
-      t.style.background = '#fff';
-      t.style.color = '#64748b';
-      t.style.borderColor = '#e2e8f0';
-    });
-    btn.classList.add('active');
-    btn.style.background = couleur;
-    btn.style.color = '#fff';
-    btn.style.borderColor = couleur;
-    renderFilterChips(FLEXMONEY_SECTEURS.find(s => s.id === secteurId));
-  }
-
-  function renderFilterChips(secteur) {
-    const chipsContainer = document.getElementById('filterChips');
-    chipsContainer.innerHTML = secteur.competences.map(c => {
-      const on = filterComps.includes(c);
-      return `<div class="f-chip${on ? ' on' : ''}"
-        style="${on ? `background:${secteur.couleur};border-color:${secteur.couleur}` : ''}"
-        data-comp="${c}" data-couleur="${secteur.couleur}"
-        onclick="toggleFilterChip(this)">${c}</div>`;
-    }).join('');
-  }
-
-  function toggleFilterChip(chip) {
-    const c = chip.dataset.comp;
-    const couleur = chip.dataset.couleur;
-    if (filterComps.includes(c)) {
-      filterComps = filterComps.filter(x => x !== c);
-      chip.classList.remove('on');
-      chip.style.background = '#fff';
-      chip.style.borderColor = '#e2e8f0';
-    } else {
-      filterComps.push(c);
-      chip.classList.add('on');
-      chip.style.background = couleur;
-      chip.style.borderColor = couleur;
-    }
-    applyFilters();
-  }
-
-  document.addEventListener('DOMContentLoaded', initFilterTabs);
+  document.addEventListener('DOMContentLoaded', initSecteurFilter);
 
   document.getElementById('contactDate').min = new Date().toISOString().split('T')[0];
 
@@ -342,14 +291,16 @@
     const search = document.getElementById('searchInput').value.toLowerCase();
     const ville = document.getElementById('villeFilter').value.toLowerCase();
     const teletravail = document.getElementById('teletravailFilter').value;
+    const secteurId = document.getElementById('secteurFilter').value;
+    const secteur = secteurId ? FLEXMONEY_SECTEURS.find(s => s.id === secteurId) : null;
 
     let filtered = allWorkers.filter(w => {
       const comps = (w.competences || []).join(' ').toLowerCase();
       const matchSearch = !search || comps.includes(search) || (w.prenom + ' ' + w.nom).toLowerCase().includes(search);
       const matchVille = !ville || (w.ville || '').toLowerCase().includes(ville);
       const matchTele = !teletravail || w.teletravail_preference === teletravail || (teletravail === 'oui' && w.teletravail_preference === 'uniquement');
-      const matchComps = filterComps.length === 0 || filterComps.some(fc => (w.competences || []).includes(fc));
-      return matchSearch && matchVille && matchTele && matchComps;
+      const matchSecteur = !secteur || (w.competences || []).some(c => secteur.competences.includes(c));
+      return matchSearch && matchVille && matchTele && matchSecteur;
     });
 
     document.getElementById('countLabel').textContent = `${filtered.length} profil${filtered.length !== 1 ? 's' : ''}`;
@@ -526,12 +477,7 @@
     document.getElementById('searchInput').value = '';
     document.getElementById('villeFilter').value = '';
     document.getElementById('teletravailFilter').value = '';
-    document.querySelectorAll('.f-chip.on').forEach(el => {
-      el.classList.remove('on');
-      el.style.background = '#fff';
-      el.style.borderColor = '#e2e8f0';
-    });
-    filterComps = [];
+    document.getElementById('secteurFilter').value = '';
     applyFilters();
   }
 
