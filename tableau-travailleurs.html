@@ -181,15 +181,13 @@
       <input type="text" id="contactEntreprise" placeholder="Nom de votre société">
     </div>
     <div class="form-group">
-      <label>Date souhaitée *</label>
-      <input type="date" id="contactDate">
+      <label>Date de début du contrat *</label>
+      <input type="date" id="contactDate" onchange="majContactFin()">
     </div>
     <div class="form-group">
-      <label>Nombre d'heures</label>
-      <select id="contactHeures">
-        <option value="2">2h</option><option value="4">4h</option><option value="6">6h</option>
-        <option value="8" selected>8h (journée)</option><option value="10">10h</option>
-      </select>
+      <label>Date de fin du contrat (max 3 mois) *</label>
+      <input type="date" id="contactDateFin">
+      <small style="display:block;margin-top:4px;color:#94a3b8;font-size:11px;">Préremplie à début + 3 mois — modifiable, de 1 jour à 3 mois. Les journées de travail seront proposées à l'intérieur de cette période.</small>
     </div>
     <div class="form-group">
       <label>Taux horaire (€/h) *</label>
@@ -359,16 +357,34 @@
     selectedWorker = null;
   }
 
+  // Date de fin préremplie = début + 3 mois (modifiable, 1 jour à 3 mois max)
+  function plus3Mois(dateStr) {
+    const d = new Date(dateStr);
+    d.setMonth(d.getMonth() + 3);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  function majContactFin() {
+    const d = document.getElementById('contactDate').value;
+    if (!d) return;
+    const fin = document.getElementById('contactDateFin');
+    fin.min = d;
+    fin.max = plus3Mois(d);
+    fin.value = plus3Mois(d);
+  }
+
   async function submitContact() {
     const email = document.getElementById('contactEmail').value.trim();
     const ent = document.getElementById('contactEntreprise').value.trim();
     const date = document.getElementById('contactDate').value;
-    const heures = parseFloat(document.getElementById('contactHeures').value) || 8;
+    const dateFin = document.getElementById('contactDateFin').value;
     const desc = document.getElementById('contactDesc').value.trim();
     const taux = parseFloat(document.getElementById('contactTaux').value);
     const lieuChoix = document.getElementById('contactLieu').value;
     const lieuAutre = document.getElementById('contactLieuAutre').value.trim();
-    if (!email || !ent || !date || !desc || !taux) { alert('Veuillez remplir tous les champs obligatoires (description et taux horaire compris).'); return; }
+    if (!email || !ent || !date || !dateFin || !desc || !taux) { alert('Veuillez remplir tous les champs obligatoires (dates, description et taux horaire compris).'); return; }
+    if (dateFin < date) { alert('La date de fin doit être après la date de début.'); return; }
+    if (dateFin > plus3Mois(date)) { alert('La durée du contrat ne peut pas dépasser 3 mois.'); return; }
     if (lieuChoix === 'autre' && !lieuAutre) { alert("Veuillez indiquer l'adresse de la prestation."); return; }
     const siegeAdr = employerProfile ? [employerProfile.adresse, employerProfile.code_postal, employerProfile.ville].filter(Boolean).join(', ') : '';
     const adresseLieu = lieuChoix === 'remote' ? null : (lieuChoix === 'siege' ? siegeAdr : lieuAutre);
@@ -383,14 +399,9 @@
     sendBtn.disabled = true;
     sendBtn.textContent = 'Envoi en cours...';
 
-    const heureDebut = '09:00';
-    const [hh, mm] = heureDebut.split(':').map(Number);
-    const finTotal = hh * 60 + mm + heures * 60;
-    const heureFin = String(Math.floor(finTotal / 60) % 24).padStart(2, '0') + ':' + String(Math.round(finTotal % 60)).padStart(2, '0');
-
     const comps = worker.competences || [];
     const secteurObj = typeof getSecteurDeCompetence === 'function' ? getSecteurDeCompetence(comps[0]) : null;
-    const titre = desc ? desc.slice(0, 60) : `Journée de test — ${worker.prenom} ${worker.nom}`;
+    const titre = desc ? desc.slice(0, 60) : `Contrat flexi-job — ${worker.prenom} ${worker.nom}`;
 
     const missionPayload = {
       email_employeur: email,
@@ -403,15 +414,12 @@
       adresse_lieu: adresseLieu || null,
       ville: worker.ville || null,
       date_debut: date,
-      date_fin: date,
-      heure_debut: heureDebut,
-      heure_fin: heureFin,
-      heures_prestees: heures,
+      date_fin: dateFin,
+      heure_debut: null,
+      heure_fin: null,
+      heures_prestees: null,
       taux_horaire: taux,
-      salaire_brut: heures * taux,
       commission_taux: 5,
-      commission_montant: heures * taux * 0.05,
-      cout_total_employeur: heures * taux * 1.30,
       statut: 'acceptee', // proposition directe à ce travailleur, pas de listing public
       origine: 'directe'
     };
@@ -428,11 +436,11 @@
       worker_nom: worker.nom,
       worker_prenom: worker.prenom,
       message: desc || null,
-      type_contrat: 'test_jour',
+      type_contrat: 'trimestriel',
       statut: 'date_proposee',
       date_test: date,
-      heure_debut: heureDebut,
-      heure_fin: heureFin
+      heure_debut: null,
+      heure_fin: null
     };
 
     let candId = null;
@@ -443,19 +451,20 @@
 
     if (candId) {
       const confirmUrl = `${window.location.origin}/confirmation-creneau.html?cid=${candId}`;
-      const dateLabel = new Date(date).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' });
+      const debLabel = new Date(date).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' });
+      const finLabel = new Date(dateFin).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' });
       try {
         await emailjs.send(EJS_SERVICE_ID, EJS_TPL_PROPOSITION, {
           to_email: worker.email,
           to_name: `${worker.prenom || ''} ${worker.nom || ''}`,
           entreprise: ent,
-          mission_titre: titre,
+          mission_titre: `${titre} — contrat flexi-job`,
           description: desc,
           taux_horaire: `${taux} €/h`,
           lieu_prestation: lieuChoix === 'remote' ? 'Télétravail' : adresseLieu,
-          date_proposee: dateLabel,
-          heure_debut: heureDebut,
-          heure_fin: heureFin,
+          date_proposee: `du ${debLabel} au ${finLabel} — les journées de travail vous seront proposées dans cette période`,
+          heure_debut: '—',
+          heure_fin: '—',
           lien_confirmation: confirmUrl,
           reply_to: email
         });
@@ -466,7 +475,7 @@
     sendBtn.textContent = 'Envoyer la proposition →';
 
     if (candId) {
-      alert(`✅ Proposition envoyée à ${worker.prenom} ! Un email lui a été envoyé pour confirmer le créneau du ${new Date(date).toLocaleDateString('fr-BE')}.`);
+      alert(`✅ Proposition de contrat envoyée à ${worker.prenom} ! Un email lui a été envoyé pour accepter le contrat du ${new Date(date).toLocaleDateString('fr-BE')} au ${new Date(dateFin).toLocaleDateString('fr-BE')}.`);
     } else {
       alert("⚠️ La proposition n'a pas pu être enregistrée. Réessayez, ou postez une mission complète.");
     }

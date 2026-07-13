@@ -223,29 +223,12 @@
       <h2>✉️ Postuler à cette mission</h2>
       <div class="modal-mission-name" id="modalMissionTitle">—</div>
 
-      <!-- Choix type de mission -->
-      <div class="form-group">
-        <label>Type de mission *</label>
-        <div class="type-contrat-choice">
-          <div class="type-card selected" id="cardTest" onclick="selectTypeContrat('test_jour')">
-            <div class="type-icon">🧪</div>
-            <div class="type-label">Journée de test</div>
-            <div class="type-desc">1 jour pour tester la collaboration (contrat oral)</div>
-          </div>
-          <div class="type-card" id="cardTrim" onclick="selectTypeContrat('trimestriel')">
-            <div class="type-icon">📋</div>
-            <div class="type-label">Mission récurrente</div>
-            <div class="type-desc">Plusieurs jours sur un trimestre (contrat écrit)</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Info journée de test -->
+      <!-- Info contrat -->
       <div class="info-box" id="infoTest">
-        ℹ️ Postulez avec un message et, si vous le souhaitez, vos disponibilités. Si l'employeur accepte votre candidature, il vous proposera une date et un horaire précis pour la journée de test.
+        ℹ️ Postulez avec un message et, si vous le souhaitez, vos disponibilités. Si l'employeur accepte votre candidature, vous recevrez un contrat flexi-job (de 1 jour à 3 mois maximum) et les journées de travail vous seront ensuite proposées à l'intérieur de cette période.
       </div>
 
-      <!-- Disponibilités (optionnel, test seulement) -->
+      <!-- Disponibilités (optionnel) -->
       <div id="champsTest">
         <div class="form-group">
           <label>Vos disponibilités (optionnel)</label>
@@ -316,7 +299,7 @@
   let allMissions = [];
   let selectedMission = null;
   let selectedMissionData = null;
-  let selectedTypeContrat = 'test_jour';
+  const selectedTypeContrat = 'trimestriel'; // modèle unique : contrat de 1 jour à 3 mois
   let selectedDispos = [];
 
   // ── EMAILJS CONFIG ──────────────────────────────────────
@@ -473,14 +456,6 @@
     return pool.filter(c => text.includes(c.toLowerCase())).slice(0, 4);
   }
 
-  function selectTypeContrat(type) {
-    selectedTypeContrat = type;
-    document.getElementById('cardTest').classList.toggle('selected', type === 'test_jour');
-    document.getElementById('cardTrim').classList.toggle('selected', type === 'trimestriel');
-    document.getElementById('champsTest').style.display = type === 'test_jour' ? 'block' : 'none';
-    document.getElementById('infoTest').style.display = type === 'test_jour' ? 'block' : 'none';
-  }
-
   function openModal(id, titre) {
     selectedMission = id;
     selectedMissionData = allMissions.find(m => String(m.id) === String(id)) || null;
@@ -488,7 +463,6 @@
     document.getElementById('modalForm').classList.remove('hidden');
     document.getElementById('modalSuccess').classList.add('hidden');
     // Reset
-    selectTypeContrat('test_jour');
     selectedDispos = [];
     renderDispoChips();
     document.getElementById('postulantPrenom').value = '';
@@ -527,7 +501,7 @@
       message:       msg || null,
       type_contrat:  selectedTypeContrat,
       statut:        'en_attente',
-      disponibilites: selectedTypeContrat === 'test_jour' ? selectedDispos : null
+      disponibilites: selectedDispos.length ? selectedDispos : null
     };
 
     try {
@@ -580,9 +554,7 @@
     // Afficher succès
     document.getElementById('modalForm').classList.add('hidden');
     const missionTitre = selectedMissionData?.titre || 'cette mission';
-    const msgSucces = selectedTypeContrat === 'test_jour'
-      ? `Votre candidature pour <strong>${missionTitre}</strong> a bien été reçue et l'employeur a été notifié.<br><br>S'il accepte votre profil, il vous proposera une date et un horaire précis pour la journée de test — vous recevrez un email pour confirmer.`
-      : `Votre candidature pour <strong>${missionTitre}</strong> a bien été reçue.<br><br>L'employeur va examiner votre profil. En cas d'acceptation, FlexMoney vous guidera pour compléter votre dossier de conformité.`;
+    const msgSucces = `Votre candidature pour <strong>${missionTitre}</strong> a bien été reçue.<br><br>Si l'employeur accepte votre profil, vous recevrez un contrat flexi-job (de 1 jour à 3 mois maximum) à confirmer, puis les journées de travail vous seront proposées à l'intérieur de cette période.`;
     document.getElementById('successMsg').innerHTML = msgSucces;
     document.getElementById('modalSuccess').classList.remove('hidden');
   }
