@@ -112,11 +112,15 @@
     <div class="form-row">
       <div class="form-group">
         <label id="f-date-label">Date du jour de test *</label>
-        <input type="date" id="f-date">
+        <input type="date" id="f-date" onchange="majDateFin()">
       </div>
       <div class="form-group" id="heuresGroup">
         <label>Nombre d'heures *</label>
         <input type="number" id="f-heures" value="8" min="1" max="12">
+      </div>
+      <div class="form-group hidden" id="finGroup">
+        <label>Date de fin du contrat (début + 3 mois)</label>
+        <input type="date" id="f-fin">
       </div>
     </div>
     <div class="form-group">
@@ -311,16 +315,23 @@
     selectedContrat = type;
     document.getElementById('btnTypeTest').classList.toggle('active', type === 'test_jour');
     document.getElementById('btnTypeTrim').classList.toggle('active', type === 'trimestriel');
-    document.getElementById('f-date-label').textContent = type === 'test_jour' ? 'Date du jour de test *' : 'Date de début souhaitée *';
+    document.getElementById('f-date-label').textContent = type === 'test_jour' ? 'Date du jour de test *' : 'Date de début du contrat *';
     document.getElementById('heuresGroup').classList.toggle('hidden', type === 'trimestriel');
+    document.getElementById('finGroup').classList.toggle('hidden', type !== 'trimestriel');
+    majDateFin();
   }
 
-  // Dernier jour du trimestre de la date donnée (contrat écrit trimestriel)
-  function finTrimestre(dateStr) {
+  // Date de fin préenregistrée = date de début + 3 mois (modifiable)
+  function plus3Mois(dateStr) {
     const d = new Date(dateStr);
-    const q = Math.floor(d.getMonth() / 3);
-    const fin = new Date(d.getFullYear(), q * 3 + 3, 0);
-    return `${fin.getFullYear()}-${String(fin.getMonth() + 1).padStart(2, '0')}-${String(fin.getDate()).padStart(2, '0')}`;
+    d.setMonth(d.getMonth() + 3);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  function majDateFin() {
+    if (selectedContrat !== 'trimestriel') return;
+    const d = document.getElementById('f-date').value;
+    if (d) document.getElementById('f-fin').value = plus3Mois(d);
   }
 
   async function submitNouveauContrat() {
@@ -352,7 +363,7 @@
       description: desc || null,
       lieu: 'onsite',
       date_debut: date,
-      date_fin: selectedContrat === 'trimestriel' ? finTrimestre(date) : date,
+      date_fin: selectedContrat === 'trimestriel' ? (document.getElementById('f-fin').value || plus3Mois(date)) : date,
       heure_debut: selectedContrat === 'test_jour' ? heureDebut : null,
       heure_fin: selectedContrat === 'test_jour' ? heureFin : null,
       heures_prestees: selectedContrat === 'test_jour' ? heures : null,
@@ -465,7 +476,7 @@
       html += trims.map(c => {
         const m = allMyMissions.find(x => x.id === c.mission_id);
         const deb = m?.date_debut, fin = m?.date_fin;
-        const valide = !!(deb && fin && today >= deb && today <= fin);
+        const valide = !!(deb && fin && today <= fin); // valable tant que la date de fin n'est pas dépassée
         if (valide && !ficheContratActif) ficheContratActif = { cand: c, mission: m };
         return `
           <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px;border:1.5px solid ${valide ? '#bbf7d0' : '#e2e8f0'};background:${valide ? '#f0fdf4' : '#fff'};border-radius:10px;margin-bottom:8px;flex-wrap:wrap;">
