@@ -59,6 +59,19 @@
     .lieu-btn { flex: 1; padding: 10px; text-align: center; font-size: 14px; font-weight: 600; cursor: pointer; background: #fff; color: #64748b; border: none; transition: all 0.2s; }
     .lieu-btn.active { background: #6366f1; color: #fff; }
 
+    .jours-recur { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+    .jour-chip {
+      padding: 8px 12px; border-radius: 10px; font-size: 13px; font-weight: 600;
+      border: 1.5px solid #e2e8f0; cursor: pointer; transition: all 0.15s;
+      background: #fff; color: #64748b; user-select: none;
+    }
+    .jour-chip:hover { border-color: #6366f1; color: #6366f1; }
+    .jour-chip.selected { background: #6366f1; color: #fff; border-color: #6366f1; }
+    .jour-all-btn {
+      padding: 8px 12px; border-radius: 10px; font-size: 13px; font-weight: 700;
+      border: 1.5px dashed #6366f1; cursor: pointer; background: #f0f0ff; color: #6366f1;
+    }
+
     .salary-preview {
       background: #f0f0ff; border: 1px solid #c7d2fe; border-radius: 12px;
       padding: 20px; margin-top: 16px;
@@ -149,10 +162,22 @@
 
     <div class="card">
       <h2>📅 Quand et où ?</h2>
+      <div class="form-group">
+        <label>Planning *</label>
+        <div class="lieu-toggle">
+          <button type="button" class="lieu-btn active" id="btnDateUnique" onclick="setDateMode('unique')">📅 Date unique</button>
+          <button type="button" class="lieu-btn" id="btnDateRecurrence" onclick="setDateMode('recurrence')">🔁 Récurrence</button>
+        </div>
+      </div>
       <div class="form-row">
-        <div class="form-group">
+        <div class="form-group" id="dateUniqueGroup">
           <label>Date de la mission *</label>
           <input type="date" id="dateMission" oninput="updatePreview()">
+        </div>
+        <div class="form-group hidden" id="dateRecurrenceGroup">
+          <label>Jours récurrents *</label>
+          <div class="jours-recur" id="joursRecurWrap"></div>
+          <small>Chaque semaine sur les jours choisis, sans date de fin. Ex : tous les mercredis.</small>
         </div>
         <div class="form-group">
           <label>Nombre d'heures *</label>
@@ -281,6 +306,9 @@
   const EJS_TPL_MISSION  = 'template_jsgv5au';   // alerte aux travailleurs matchés
   let lieuMode = 'remote';
   let currentSecteurPm = FLEXMONEY_SECTEURS[0].id; // secteur sélectionné (choix unique)
+  let dateMode = 'unique';          // 'unique' | 'recurrence'
+  let joursRecur = [];              // jours cochés en mode récurrence
+  const JOURS_SEMAINE = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
 
   // Init secteur tabs (les 6 secteurs, choix unique)
   function initSecteurTabsPm() {
@@ -335,6 +363,56 @@
     document.getElementById('adresseGroup').classList.toggle('hidden', mode === 'remote');
   }
 
+  // ── Date unique / Récurrence ─────────────────────────────
+  function setDateMode(mode) {
+    dateMode = mode;
+    document.getElementById('btnDateUnique').classList.toggle('active', mode === 'unique');
+    document.getElementById('btnDateRecurrence').classList.toggle('active', mode === 'recurrence');
+    document.getElementById('dateUniqueGroup').classList.toggle('hidden', mode !== 'unique');
+    document.getElementById('dateRecurrenceGroup').classList.toggle('hidden', mode !== 'recurrence');
+  }
+
+  function initJoursRecur() {
+    const wrap = document.getElementById('joursRecurWrap');
+    if (!wrap) return;
+    wrap.innerHTML =
+      `<div class="jour-all-btn" id="btnTousJours" onclick="toggleTousLesJours()">Tous les jours</div>` +
+      JOURS_SEMAINE.map(j => `<div class="jour-chip" data-jour="${j}" onclick="toggleJourRecur('${j}')">${j}</div>`).join('');
+    renderJoursRecur();
+  }
+
+  function renderJoursRecur() {
+    document.querySelectorAll('#joursRecurWrap .jour-chip').forEach(el => {
+      el.classList.toggle('selected', joursRecur.includes(el.dataset.jour));
+    });
+    const btn = document.getElementById('btnTousJours');
+    if (btn) btn.textContent = joursRecur.length === JOURS_SEMAINE.length ? 'Tout décocher' : 'Tous les jours';
+  }
+
+  function toggleJourRecur(j) {
+    joursRecur = joursRecur.includes(j) ? joursRecur.filter(x => x !== j) : [...joursRecur, j];
+    // conserver l'ordre des jours de la semaine
+    joursRecur = JOURS_SEMAINE.filter(x => joursRecur.includes(x));
+    renderJoursRecur();
+  }
+
+  function toggleTousLesJours() {
+    joursRecur = joursRecur.length === JOURS_SEMAINE.length ? [] : [...JOURS_SEMAINE];
+    renderJoursRecur();
+  }
+
+  document.addEventListener('DOMContentLoaded', initJoursRecur);
+
+  // Libellé lisible de la récurrence, ex: "Tous les mercredis", "Tous les mardis et mercredis"
+  function recurLabel(jours) {
+    if (!jours || jours.length === 0) return '—';
+    if (jours.length === 7) return 'Tous les jours';
+    const map = { Lun:'lundis', Mar:'mardis', Mer:'mercredis', Jeu:'jeudis', Ven:'vendredis', Sam:'samedis', Dim:'dimanches' };
+    const noms = jours.map(j => map[j] || j);
+    if (noms.length === 1) return 'Tous les ' + noms[0];
+    return 'Tous les ' + noms.slice(0, -1).join(', ') + ' et ' + noms[noms.length - 1];
+  }
+
   const TAUX_MIN_LEGAL  = 11.87;           // €/h depuis 01/03/2026
   const TAUX_MAX_BASE   = 11.87 * 1.5;    // 150% du RMMMG = 17,81 €/h (cap sur salaire de BASE)
 
@@ -378,7 +456,8 @@
     if (!email) manquants.push('Email de contact');
     if (!nom)   manquants.push("Nom de l'entreprise");
     if (!titre) manquants.push('Titre de la mission');
-    if (!date)  manquants.push('Date de la mission');
+    if (dateMode === 'unique' && !date) manquants.push('Date de la mission');
+    if (dateMode === 'recurrence' && joursRecur.length === 0) manquants.push('Au moins un jour récurrent');
     if (!heures) manquants.push("Nombre d'heures");
     if (!taux)  manquants.push('Taux horaire');
     if (!currentSecteurPm) manquants.push('Un domaine de compétences');
@@ -394,6 +473,12 @@
     const brut = heures * taux;
     const ref = 'FM-' + new Date().getFullYear() + '-' + Math.floor(Math.random() * 9000 + 1000);
 
+    // Mode récurrence : pas de date de fin, on stocke les jours; sinon date unique
+    const isRecur = dateMode === 'recurrence';
+    const todayStr = new Date().toISOString().split('T')[0];
+    const dateDebut = isRecur ? todayStr : date;
+    const dateFin   = isRecur ? null : date;
+
     // Sauvegarder dans Supabase
     const secteurObj = FLEXMONEY_SECTEURS.find(s => s.id === currentSecteurPm);
     const body = {
@@ -406,8 +491,9 @@
       lieu: lieuMode,
       ville: lieuMode === 'onsite' ? (document.getElementById('villeMission').value || null) : null,
       adresse_lieu: document.getElementById('adresse').value,
-      date_debut: date,
-      date_fin: date,
+      date_debut: dateDebut,
+      date_fin: dateFin,
+      jours_recurrents: isRecur ? joursRecur : null,
       heure_debut: document.getElementById('heureDebut').value,
       heure_fin: document.getElementById('heureFin').value,
       heures_prestees: heures,
@@ -439,7 +525,7 @@
         prenom:         nom,
         titre_mission:  titre,
         lieu:           lieuMode === 'remote' ? 'Télétravail' : (document.getElementById('adresse').value || 'Sur place'),
-        date_mission:   date,
+        date_mission:   isRecur ? recurLabel(joursRecur) : date,
         taux_horaire:   taux + '€/h',
         heures:         heures + 'h',
         ref_mission:    ref,

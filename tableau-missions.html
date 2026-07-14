@@ -422,7 +422,10 @@
 
     container.innerHTML = missions.map(m => {
       const brut = (m.heures_prestees || 0) * (m.taux_horaire || 0);
-      const dateStr = m.date_debut ? new Date(m.date_debut).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' }) : 'À définir';
+      const recur = Array.isArray(m.jours_recurrents) && m.jours_recurrents.length ? m.jours_recurrents : null;
+      const dateStr = recur
+        ? '🔁 ' + recurLabelMission(recur)
+        : (m.date_debut ? new Date(m.date_debut).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' }) : 'À définir');
       const comps = getCompetences(m);
       const secteurObj = FLEXMONEY_SECTEURS.find(s => s.id === m.secteur);
       const lieuLabel = m.lieu === 'remote' ? '🏠 Télétravail' : `📍 ${m.ville || 'Sur place'}`;
@@ -460,6 +463,16 @@
     const text = (m.titre + ' ' + (m.fonction || '') + ' ' + (m.description || '')).toLowerCase();
     const pool = typeof TOUTES_COMPETENCES !== 'undefined' ? TOUTES_COMPETENCES : [];
     return pool.filter(c => text.includes(c.toLowerCase())).slice(0, 4);
+  }
+
+  // Libellé lisible d'une mission récurrente
+  function recurLabelMission(jours) {
+    if (!jours || jours.length === 0) return 'récurrent';
+    if (jours.length === 7) return 'Tous les jours';
+    const map = { Lun:'lundis', Mar:'mardis', Mer:'mercredis', Jeu:'jeudis', Ven:'vendredis', Sam:'samedis', Dim:'dimanches' };
+    const noms = jours.map(j => map[j] || j);
+    if (noms.length === 1) return 'Tous les ' + noms[0];
+    return 'Tous les ' + noms.slice(0, -1).join(', ') + ' et ' + noms[noms.length - 1];
   }
 
   function openModal(id, titre) {
