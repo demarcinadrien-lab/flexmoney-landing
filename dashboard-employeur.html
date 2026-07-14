@@ -269,22 +269,6 @@
       <div id="posteesList"><div class="loading">⏳ Chargement...</div></div>
     </div>
 
-    <!-- 2. PROPOSITIONS DIRECTES -->
-    <div class="candidatures-section">
-      <div class="section-header">
-        <h2>🎯 Propositions directes <span class="badge-count" id="directesCount">0</span></h2>
-      </div>
-      <div id="directesList"><div class="loading">⏳ Chargement...</div></div>
-    </div>
-
-    <!-- 3. MISSIONS EN COURS -->
-    <div class="candidatures-section">
-      <div class="section-header">
-        <h2>⚡ Missions en cours <span class="badge-count" id="encoursCount">0</span></h2>
-      </div>
-      <div id="encoursList"><div class="loading">⏳ Chargement...</div></div>
-    </div>
-
     <!-- Profils suggérés -->
     <div class="card">
       <h2>🎯 Profils suggérés pour vos missions</h2>
@@ -540,8 +524,6 @@
 
   function renderBoards() {
     const postees  = myMissionsList.filter(m => m.origine !== 'directe');
-    const directes = myMissionsList.filter(m => m.origine === 'directe');
-    const enCours  = allCandidatures.filter(c => c.statut === 'acceptee');
 
     // ── 1. Missions postées, avec le détail des candidatures par mission ──
     document.getElementById('posteesCount').textContent = postees.length;
@@ -577,80 +559,6 @@
             ${mc.length === 0
               ? '<div style="font-size:13px;color:#94a3b8;">Aucune candidature reçue pour cette mission.</div>'
               : mc.map(c => candCard(c, m)).join('')}
-          </div>
-        </div>`;
-      }).join('');
-    }
-
-    // ── 2. Propositions directes à un profil, avec statut ──
-    document.getElementById('directesCount').textContent = directes.length;
-    const dirEl = document.getElementById('directesList');
-    if (directes.length === 0) {
-      dirEl.innerHTML = `<div class="cand-card" style="text-align:center;color:#94a3b8;padding:32px;">
-        <div style="font-size:32px;margin-bottom:8px;">🎯</div>
-        Aucune proposition directe envoyée.<br>
-        <a href="tableau-travailleurs.html" style="color:#6366f1;font-weight:600;">Parcourez les profils pour proposer une mission →</a>
-      </div>`;
-    } else {
-      dirEl.innerHTML = directes.map(m => {
-        const c = allCandidatures.find(x => x.mission_id === m.id);
-        const st = c?.statut;
-        const badge = st === 'acceptee'
-          ? '<span class="cand-type-badge badge-acceptee">✅ Acceptée par le travailleur</span>'
-          : st === 'refusee'
-          ? '<span class="cand-type-badge badge-refusee">❌ Déclinée</span>'
-          : st === 'date_proposee'
-          ? '<span class="cand-type-badge badge-date-proposee">⏳ En attente de réponse</span>'
-          : '<span class="cand-type-badge badge-trim">—</span>';
-        const worker = c ? `${c.worker_prenom || ''} ${c.worker_nom || ''}`.trim() : (m.nom_travailleur || '—');
-        return `
-        <div class="cand-card">
-          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-            <div>
-              <div style="font-weight:700;font-size:15px;">👤 ${worker} <span style="font-weight:400;color:#64748b;">· ${m.titre || 'Mission'}</span></div>
-              <div style="font-size:12px;color:#64748b;margin-top:2px;">${missionMeta(m)}</div>
-            </div>
-            ${badge}
-          </div>
-        </div>`;
-      }).join('');
-    }
-
-    // ── 3. Missions acceptées en cours ──
-    document.getElementById('encoursCount').textContent = enCours.length;
-    const ecEl = document.getElementById('encoursList');
-    if (enCours.length === 0) {
-      ecEl.innerHTML = `<div class="cand-card" style="text-align:center;color:#94a3b8;padding:32px;">
-        <div style="font-size:32px;margin-bottom:8px;">⚡</div>
-        Aucune mission en cours. Les missions dont le créneau est confirmé par le travailleur apparaîtront ici.
-      </div>`;
-    } else {
-      // Liste des travailleurs (dédupliqués par email), cliquables pour voir leur historique
-      const byEmail = {};
-      enCours.forEach(c => {
-        if (!c.worker_email) return;
-        if (!byEmail[c.worker_email]) byEmail[c.worker_email] = { prenom: c.worker_prenom, nom: c.worker_nom, email: c.worker_email, cands: [] };
-        byEmail[c.worker_email].cands.push(c);
-      });
-      ecEl.innerHTML = Object.values(byEmail).map(w => {
-        const initials = ((w.prenom || '?')[0] + (w.nom || '?')[0]).toUpperCase();
-        const last = w.cands[0];
-        const mission = myMissionsList.find(m => m.id === last.mission_id);
-        const typeBadge = last.type_contrat === 'test_jour'
-          ? '<span class="cand-type-badge badge-test">🧪 Journée de test</span>'
-          : '<span class="cand-type-badge badge-trim">📋 Contrat trimestriel</span>';
-        return `
-        <div class="cand-card" style="cursor:pointer;" onclick="voirHistorique('${w.email}')">
-          <div style="display:flex;align-items:center;gap:14px;">
-            <div class="cand-avatar">${initials}</div>
-            <div style="flex:1;">
-              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                <span class="cand-name">${w.prenom || ''} ${w.nom || ''}</span>
-                ${typeBadge}
-              </div>
-              <div style="font-size:12px;color:#64748b;margin-top:3px;">📌 ${mission?.titre || '—'}${w.cands.length > 1 ? ` · ${w.cands.length} missions en cours` : ''}</div>
-            </div>
-            <span style="font-size:12px;color:#6366f1;font-weight:700;white-space:nowrap;">Voir l'historique →</span>
           </div>
         </div>`;
       }).join('');
