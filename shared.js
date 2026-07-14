@@ -40,10 +40,10 @@ const FLX_EMPLOYER_PAGES = [
 ];
 
 const FLX_QUICKBAR_LINKS = [
-  { href: 'poster-mission.html',       icon: '📢', label: 'Poster une mission', featured: true },
+  { href: 'dashboard-employeur.html',  icon: '🏠', label: 'Accueil' },
+  { href: 'poster-mission.html',       icon: '📢', label: 'Poster une mission' },
   { href: 'tableau-travailleurs.html', icon: '👥', label: 'Parcourir les profils' },
-  { href: 'mes-travailleurs.html',     icon: '🤝', label: 'Mes travailleurs' },
-  { href: 'dashboard-employeur.html#declarationsSection', icon: '✅', label: 'Valider les heures' }
+  { href: 'mes-travailleurs.html',     icon: '🤝', label: 'Mes travailleurs' }
 ];
 
 function mountEmployerQuickbar() {
@@ -58,17 +58,20 @@ function mountEmployerQuickbar() {
       font-size:13px;font-weight:600;text-decoration:none;color:#334155;background:#f8fafc;
       border:1px solid #e2e8f0;white-space:nowrap;transition:all .15s;cursor:pointer;}
     .flx-qbtn:hover{background:#eef2ff;color:#4f46e5;border-color:#c7d2fe;}
-    .flx-qbtn.featured{background:#6366f1;color:#fff;border-color:#6366f1;}
-    .flx-qbtn.featured:hover{background:#4f46e5;color:#fff;}
+    .flx-qbtn.active{background:#6366f1;color:#fff;border-color:#6366f1;cursor:default;box-shadow:0 2px 6px rgba(99,102,241,0.35);}
+    .flx-qbtn.active:hover{background:#6366f1;color:#fff;border-color:#6366f1;}
     @media(max-width:640px){.flx-qbtn{padding:8px 10px;font-size:12px;}}
   `;
   document.head.appendChild(style);
 
+  const current = (location.pathname.split('/').pop() || '').toLowerCase();
   const bar = document.createElement('div');
   bar.className = 'flx-quickbar';
-  bar.innerHTML = FLX_QUICKBAR_LINKS.map(l =>
-    `<a class="flx-qbtn${l.featured ? ' featured' : ''}" href="${l.href}">${l.icon} ${l.label}</a>`
-  ).join('');
+  bar.innerHTML = FLX_QUICKBAR_LINKS.map(l => {
+    const target = l.href.split('#')[0].toLowerCase();
+    const isActive = target === current; // met en évidence l'onglet de la page courante
+    return `<a class="flx-qbtn${isActive ? ' active' : ''}" href="${l.href}">${l.icon} ${l.label}</a>`;
+  }).join('');
   document.body.insertBefore(bar, document.body.firstChild);
 }
 
