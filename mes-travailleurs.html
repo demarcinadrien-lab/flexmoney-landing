@@ -440,22 +440,43 @@
       html += trims.map(c => {
         const m = allMyMissions.find(x => x.id === c.mission_id);
         const deb = m?.date_debut, fin = m?.date_fin;
-        const valide = !!(deb && fin && today <= fin); // valable tant que la date de fin n'est pas dépassée
-        if (valide && !ficheContratActif) ficheContratActif = { cand: c, mission: m };
+        const dansPeriode = !!(deb && fin && today <= fin); // dans la période de validité du contrat
+        const signe = !!c.contrat_signe_le;                 // l'employeur a confirmé avoir reçu le contrat signé
+        const actif = dansPeriode && signe;                 // on ne peut proposer des jours QUE si signé + en période
+        if (actif && !ficheContratActif) ficheContratActif = { cand: c, mission: m };
+
+        const dateSigne = c.contrat_signe_le ? new Date(c.contrat_signe_le).toLocaleDateString('fr-BE') : '';
+        const signeControl = signe
+          ? `<div style="font-size:12px;margin-top:6px;color:#16a34a;font-weight:600;">✅ Contrat signé reçu${dateSigne ? ` le ${dateSigne}` : ''}${c.contrat_signe_url ? ` · <a href="${c.contrat_signe_url}" target="_blank" style="color:#6366f1;font-weight:700;">ouvrir</a>` : ''}
+               <button onclick="marquerContratSigne('${c.id}', false)" style="margin-left:8px;background:none;border:none;color:#ef4444;font-size:12px;font-weight:700;cursor:pointer;text-decoration:underline;">Annuler</button>
+             </div>`
+          : `<div style="margin-top:8px;">
+               <span style="font-size:12px;color:#f59e0b;font-weight:600;display:block;margin-bottom:6px;">⏳ Contrat signé pas encore reçu du travailleur</span>
+               <button onclick="marquerContratSigne('${c.id}', true)" style="padding:7px 14px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">✅ J'ai reçu le contrat signé</button>
+             </div>`;
+
+        const statutLabel = !dansPeriode ? '⏱️ Hors période' : (signe ? '✅ Signé — prêt' : '📝 En attente de signature');
+        const statutColor = !dansPeriode ? '#94a3b8' : (signe ? '#16a34a' : '#f59e0b');
+        const borderColor = actif ? '#bbf7d0' : (dansPeriode ? '#fde68a' : '#e2e8f0');
+        const bgColor     = actif ? '#f0fdf4' : (dansPeriode ? '#fffbeb' : '#fff');
         return `
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px;border:1.5px solid ${valide ? '#bbf7d0' : '#e2e8f0'};background:${valide ? '#f0fdf4' : '#fff'};border-radius:10px;margin-bottom:8px;flex-wrap:wrap;">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px;border:1.5px solid ${borderColor};background:${bgColor};border-radius:10px;margin-bottom:8px;flex-wrap:wrap;">
             <div>
               <div style="font-size:13px;font-weight:700;">${m?.titre || 'Contrat trimestriel'}</div>
               <div style="font-size:12px;color:#64748b;margin-top:2px;">Période : ${fmtD(deb)} → ${fmtD(fin)} · 💶 ${m?.taux_horaire || '—'} €/h</div>
-              <div style="font-size:12px;margin-top:4px;">${c.contrat_signe_url
-                ? `📎 <a href="${c.contrat_signe_url}" target="_blank" style="color:#6366f1;font-weight:700;">Contrat signé reçu — ouvrir</a>${c.contrat_signe_le ? ` <span style="color:#94a3b8;">(reçu le ${new Date(c.contrat_signe_le).toLocaleDateString('fr-BE')})</span>` : ''}`
-                : '<span style="color:#f59e0b;font-weight:600;">⏳ Contrat signé pas encore reçu du travailleur</span>'}</div>
+              ${signeControl}
             </div>
-            <span style="font-size:12px;font-weight:700;color:${valide ? '#16a34a' : '#94a3b8'};">${valide ? '✅ En cours de validité' : '⏱️ Hors période'}</span>
+            <span style="font-size:12px;font-weight:700;color:${statutColor};">${statutLabel}</span>
           </div>`;
       }).join('');
       if (!ficheContratActif) {
-        html += `<div style="font-size:12px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;margin-top:4px;">⚠️ Aucun contrat dans sa période de validité — impossible de proposer des jours. Proposez un nouveau contrat trimestriel.</div>`;
+        const enPeriodeNonSigne = trims.some(c => {
+          const m = allMyMissions.find(x => x.id === c.mission_id);
+          return m?.date_debut && m?.date_fin && today <= m.date_fin && !c.contrat_signe_le;
+        });
+        html += enPeriodeNonSigne
+          ? `<div style="font-size:12px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;margin-top:4px;">📝 Marquez le contrat comme <strong>signé reçu</strong> ci-dessus pour pouvoir proposer une date officielle de prestation.</div>`
+          : `<div style="font-size:12px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;margin-top:4px;">⚠️ Aucun contrat dans sa période de validité — impossible de proposer des jours. Proposez un nouveau contrat trimestriel.</div>`;
       }
     }
     // Documents signés reçus (tous contrats confondus)
@@ -491,6 +512,19 @@
   }
 
   function closeFiche() { document.getElementById('ficheOverlay').classList.add('hidden'); }
+
+  // ── Marquer / annuler la réception du contrat signé ──
+  async function marquerContratSigne(candId, signe) {
+    if (signe && !confirm('Confirmez-vous avoir reçu le contrat signé du travailleur ?')) return;
+    if (!signe && !confirm('Annuler la réception du contrat signé ? Vous ne pourrez plus proposer de jours tant qu\'il n\'est pas marqué signé.')) return;
+    const { error } = await sb.from('candidatures')
+      .update({ contrat_signe_le: signe ? new Date().toISOString() : null, updated_at: new Date().toISOString() })
+      .eq('id', candId);
+    if (error) { console.log('maj contrat signé', error); alert('⚠️ Impossible de mettre à jour le statut du contrat. Réessayez.'); return; }
+    const email = ficheWorker?.email;
+    await loadPastWorkers();
+    if (email) ouvrirFicheTravailleur(email); // rouvrir la fiche à jour
+  }
 
   function hDiff(deb, fin) {
     const [h1, m1] = deb.split(':').map(Number);
