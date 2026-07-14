@@ -33,11 +33,13 @@
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .form-group small { font-size: 12px; color: #94a3b8; margin-top: 4px; display: block; }
 
-    .secteur-tabs-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+    .secteur-tabs-wrap { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+    @media (max-width: 520px) { .secteur-tabs-wrap { grid-template-columns: repeat(2, 1fr); } }
     .secteur-tab {
-      padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+      padding: 11px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;
       border: 1.5px solid #e2e8f0; cursor: pointer; transition: all 0.15s;
-      background: #fff; color: #64748b; white-space: nowrap;
+      background: #fff; color: #64748b; text-align: center;
+      display: flex; align-items: center; justify-content: center; gap: 4px;
     }
     .secteur-tab:hover { border-color: #6366f1; color: #6366f1; }
     .secteur-tab.active { color: #fff !important; }
@@ -141,8 +143,7 @@
         <label>Compétences recherchées *</label>
         <div class="secteur-tabs-wrap" id="secteur-tabs-pm"></div>
         <div class="secteur-desc-pm" id="secteur-desc-pm"></div>
-        <div class="competences-grid" id="competencesGrid"></div>
-        <small>Sélectionnez au moins une compétence pour activer le matching</small>
+        <small>Choisissez le domaine. Précisez les compétences ou tâches attendues dans la description de la mission.</small>
       </div>
     </div>
 
@@ -278,11 +279,10 @@
   // ── EMAILJS CONFIG ──────────────────────────────────────
   const EJS_TPL_EMPLOYER = 'template_tp6702f';   // "Mission postee - confirmation employeur" (vérifié dans EmailJS)
   const EJS_TPL_MISSION  = 'template_jsgv5au';   // alerte aux travailleurs matchés
-  let selectedCompetences = [];
   let lieuMode = 'remote';
-  let currentSecteurPm = FLEXMONEY_SECTEURS[0].id;
+  let currentSecteurPm = FLEXMONEY_SECTEURS[0].id; // secteur sélectionné (choix unique)
 
-  // Init secteur tabs
+  // Init secteur tabs (les 6 secteurs, choix unique)
   function initSecteurTabsPm() {
     const tabsWrap = document.getElementById('secteur-tabs-pm');
     tabsWrap.innerHTML = FLEXMONEY_SECTEURS.map((s, i) => `
@@ -292,7 +292,7 @@
         ${s.label}${s.featured ? ' <span class="new-badge">NOUVEAU</span>' : ''}
       </button>
     `).join('');
-    renderChipsPm(FLEXMONEY_SECTEURS[0]);
+    setDescPm(FLEXMONEY_SECTEURS[0]);
   }
 
   function switchSecteurPm(secteurId, btn, couleur) {
@@ -307,19 +307,11 @@
     btn.style.background = couleur;
     btn.style.color = '#fff';
     btn.style.borderColor = couleur;
-    const secteur = FLEXMONEY_SECTEURS.find(s => s.id === secteurId);
-    renderChipsPm(secteur);
+    setDescPm(FLEXMONEY_SECTEURS.find(s => s.id === secteurId));
   }
 
-  function renderChipsPm(secteur) {
-    document.getElementById('secteur-desc-pm').textContent = secteur.desc;
-    const grid = document.getElementById('competencesGrid');
-    grid.innerHTML = secteur.competences.map(c => {
-      const sel = selectedCompetences.includes(c);
-      return `<div class="comp-chip${sel ? ' selected' : ''}"
-        style="${sel ? `background:${secteur.couleur};border-color:${secteur.couleur}` : ''}"
-        onclick="toggleComp('${c.replace(/'/g, "\\'")}', this, '${secteur.couleur}')">${c}</div>`;
-    }).join('');
+  function setDescPm(secteur) {
+    document.getElementById('secteur-desc-pm').textContent = secteur ? secteur.desc : '';
   }
 
   document.addEventListener('DOMContentLoaded', initSecteurTabsPm);
@@ -335,20 +327,6 @@
     sel.innerHTML = `<option value="" disabled selected>Sélectionnez une ville...</option>` +
       TOUTES_VILLES.map(v => `<option value="${v}">${v}</option>`).join('');
   });
-
-  function toggleComp(c, chip, couleur) {
-    if (selectedCompetences.includes(c)) {
-      selectedCompetences = selectedCompetences.filter(x => x !== c);
-      chip.classList.remove('selected');
-      chip.style.background = '#fff';
-      chip.style.borderColor = '#e2e8f0';
-    } else {
-      selectedCompetences.push(c);
-      chip.classList.add('selected');
-      chip.style.background = couleur;
-      chip.style.borderColor = couleur;
-    }
-  }
 
   function setLieu(mode) {
     lieuMode = mode;
@@ -403,7 +381,7 @@
     if (!date)  manquants.push('Date de la mission');
     if (!heures) manquants.push("Nombre d'heures");
     if (!taux)  manquants.push('Taux horaire');
-    if (selectedCompetences.length === 0) manquants.push('Au moins une compétence');
+    if (!currentSecteurPm) manquants.push('Un domaine de compétences');
     if (manquants.length > 0) {
       alert('Champs manquants :\n— ' + manquants.join('\n— '));
       return;
@@ -417,14 +395,14 @@
     const ref = 'FM-' + new Date().getFullYear() + '-' + Math.floor(Math.random() * 9000 + 1000);
 
     // Sauvegarder dans Supabase
-    const secteurObj = getSecteurDeCompetence(selectedCompetences[0]);
+    const secteurObj = FLEXMONEY_SECTEURS.find(s => s.id === currentSecteurPm);
     const body = {
       email_employeur: email,
       nom_entreprise: nom,
       titre,
       description: document.getElementById('description').value,
-      fonction: selectedCompetences[0],
-      secteur: secteurObj ? secteurObj.id : currentSecteurPm,
+      fonction: secteurObj ? secteurObj.label : (currentSecteurPm || null),
+      secteur: currentSecteurPm,
       lieu: lieuMode,
       ville: lieuMode === 'onsite' ? (document.getElementById('villeMission').value || null) : null,
       adresse_lieu: document.getElementById('adresse').value,
@@ -494,10 +472,12 @@
     const container = document.getElementById('matchResults');
     container.innerHTML = '';
 
-    // Scoring : intersection des compétences
+    // Scoring : intersection avec les compétences du secteur choisi
+    const secteurObj = FLEXMONEY_SECTEURS.find(s => s.id === currentSecteurPm);
+    const secteurComps = (secteurObj && secteurObj.competences) || [];
     const scored = workers.map(w => {
       const wComps = w.competences || [];
-      const common = selectedCompetences.filter(c => wComps.includes(c));
+      const common = secteurComps.filter(c => wComps.includes(c));
       return { ...w, score: common.length, common };
     }).filter(w => w.score > 0).sort((a, b) => b.score - a.score);
 
@@ -525,7 +505,7 @@
 
     scored.slice(0, 8).forEach(w => {
       const initials = ((w.prenom || '?')[0] + (w.nom || '?')[0]).toUpperCase();
-      const pct = Math.round((w.score / selectedCompetences.length) * 100);
+      const pct = secteurComps.length ? Math.round((w.score / secteurComps.length) * 100) : 0;
       const div = document.createElement('div');
       div.className = 'worker-card';
       div.innerHTML = `
