@@ -195,6 +195,7 @@
 
   let allMyMissions = [];
   let allCandsAcceptees = [];
+  let allDeclarations = []; // tous les jours de travail (declarations_heures) de mes missions
 
   async function loadPastWorkers() {
     const { data: missions } = await sb.from('missions').select('*').eq('email_employeur', currentUser.email);
@@ -234,15 +235,16 @@
 
     pastWorkers = Object.values(byEmail);
 
-    // Déclarations d'heures en attente de validation, par travailleur
+    // Tous les jours de travail (déclarations d'heures) de mes missions
     let decls = [];
     if (missionIds.length > 0) {
       const { data } = await sb.from('declarations_heures')
-        .select('*').in('mission_id', missionIds).eq('statut', 'en_attente');
+        .select('*').in('mission_id', missionIds).order('date_prestation', { ascending: true });
       decls = data || [];
     }
+    allDeclarations = decls;
     const pendingByEmail = {};
-    decls.forEach(d => { pendingByEmail[d.worker_email] = (pendingByEmail[d.worker_email] || 0) + 1; });
+    decls.filter(d => d.statut === 'en_attente').forEach(d => { pendingByEmail[d.worker_email] = (pendingByEmail[d.worker_email] || 0) + 1; });
     pastWorkers.forEach(w => { w.heures_a_valider = pendingByEmail[w.email] || 0; });
 
     renderWorkers();
@@ -495,6 +497,39 @@
       }).join('');
     }
 
+    // ── Jours de travail : liste simple des dates de prestation + validation des heures ──
+    const joursTrav = allDeclarations.filter(c => c.worker_email === email)
+      .sort((a, b) => String(a.date_prestation || '').localeCompare(String(b.date_prestation || '')));
+    html += '<div style="font-size:12px;font-weight:800;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin:18px 0 10px;">📅 Jours de travail</div>';
+    if (joursTrav.length === 0) {
+      html += `<div style="font-size:13px;color:#94a3b8;padding:12px;border:1px dashed #e2e8f0;border-radius:10px;">Aucun jour de travail proposé pour le moment. Proposez une date ci-dessous.</div>`;
+    } else {
+      const statutMap = {
+        proposee:   { label: '⏳ Proposé — en attente du travailleur', color: '#f59e0b' },
+        acceptee:   { label: '📅 Accepté — heures à venir',            color: '#4338ca' },
+        en_attente: { label: '📨 Heures reçues — à valider',          color: '#0891b2' },
+        validee:    { label: '✅ Heures validées',                     color: '#16a34a' },
+        contestee:  { label: '❌ Contestée',                           color: '#ef4444' },
+        refusee:    { label: '🚫 Refusé par le travailleur',           color: '#94a3b8' }
+      };
+      html += joursTrav.map(d => {
+        const info = statutMap[d.statut] || { label: d.statut || '—', color: '#64748b' };
+        const dLabel = d.date_prestation ? new Date(d.date_prestation).toLocaleDateString('fr-BE', { weekday: 'short', day: 'numeric', month: 'short' }) : '—';
+        const hPrev = d.heure_debut_prevue && d.heure_fin_prevue ? `${d.heure_debut_prevue.slice(0,5)}–${d.heure_fin_prevue.slice(0,5)}` : '';
+        const hReel = d.heures_reelles != null && d.heure_debut_reelle && d.heure_fin_reelle
+          ? ` · déclaré ${d.heure_debut_reelle.slice(0,5)}–${d.heure_fin_reelle.slice(0,5)}` : '';
+        const recu = d.statut === 'en_attente'; // heures reçues du travailleur → à valider
+        return `
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid ${recu ? '#a5f3fc' : '#e2e8f0'};background:${recu ? '#ecfeff' : '#fff'};border-radius:10px;margin-bottom:6px;flex-wrap:wrap;">
+            <div>
+              <div style="font-size:13px;font-weight:700;">📅 ${dLabel}${hPrev ? ` · 🕐 ${hPrev}` : ''}</div>
+              <div style="font-size:12px;font-weight:600;color:${info.color};margin-top:2px;">${info.label}${hReel}</div>
+            </div>
+            ${recu ? `<button onclick="validerHeuresFiche('${d.id}')" style="padding:8px 14px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">✅ Valider les heures</button>` : ''}
+          </div>`;
+      }).join('');
+    }
+
     document.getElementById('ficheContrat').innerHTML = html;
 
     const joursSection = document.getElementById('ficheJoursSection');
@@ -521,6 +556,23 @@
       .update({ contrat_signe_le: signe ? new Date().toISOString() : null, updated_at: new Date().toISOString() })
       .eq('id', candId);
     if (error) { console.log('maj contrat signé', error); alert('⚠️ Impossible de mettre à jour le statut du contrat. Réessayez.'); return; }
+    const email = ficheWorker?.email;
+    await loadPastWorkers();
+    if (email) ouvrirFicheTravailleur(email); // rouvrir la fiche à jour
+  }
+
+  // ── Valider les heures reçues du travailleur pour un jour de prestation ──
+  async function validerHeuresFiche(id) {
+    if (!confirm('Confirmer les heures déclarées par le travailleur pour ce jour ?')) return;
+    const { data: d } = await sb.from('declarations_heures').select('*').eq('id', id).single();
+    const heures = d?.heures_reelles ?? d?.heures_prevues ?? null;
+    const { error } = await sb.from('declarations_heures').update({
+      statut: 'validee',
+      heures_validees: heures,
+      salaire_brut: (heures != null && d?.taux_horaire != null) ? heures * d.taux_horaire : null,
+      updated_at: new Date().toISOString()
+    }).eq('id', id);
+    if (error) { console.log('validation heures', error); alert('⚠️ Validation impossible. Réessayez.'); return; }
     const email = ficheWorker?.email;
     await loadPastWorkers();
     if (email) ouvrirFicheTravailleur(email); // rouvrir la fiche à jour
