@@ -215,7 +215,7 @@
   <div class="hero-stats">
     <div class="h-stat"><div class="val" id="statMissions">0</div><div class="lab">Missions postées</div></div>
     <div class="h-stat"><div class="val" id="statActives">0</div><div class="lab">En cours</div></div>
-    <div class="h-stat"><div class="val" id="statCommission">0 €</div><div class="lab">Commission totale</div></div>
+    <div class="h-stat"><div class="val" id="statCommission">0 €</div><div class="lab">Coût total missions</div></div>
   </div>
 </div>
 
@@ -439,8 +439,8 @@
     document.getElementById('statMissions').textContent = myMissionsList.length;
     const actives = myMissionsList.filter(m => ['proposee','acceptee','en_cours'].includes(m.statut));
     document.getElementById('statActives').textContent = actives.length;
-    const totalComm = myMissionsList.reduce((s, m) => s + (m.commission_montant || 0), 0);
-    document.getElementById('statCommission').textContent = fmt(totalComm) + ' €';
+    const totalCout = myMissionsList.reduce((s, m) => s + (m.cout_total_employeur || 0), 0);
+    document.getElementById('statCommission').textContent = fmt(totalCout) + ' €';
 
     // Profils suggérés
     const { data: workers } = await sb.from('workers_inscription')

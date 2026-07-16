@@ -301,15 +301,14 @@
     if (!salaire || !heures) return null;
     const brut = salaire * heures;
     const onss = brut * 0.25;
-    const commission = brut * 0.10;
-    return { brut, onss, commission, total: brut + onss + commission };
+    return { brut, onss, total: brut + onss };
   }
 
   function updatePreview() {
     const cout = calcCout();
     const coutEl = document.getElementById('cout-val');
     if (cout) {
-      coutEl.innerHTML = `Salaire brut : <strong>${cout.brut.toFixed(2)}€</strong> + ONSS (25%) : <strong>${cout.onss.toFixed(2)}€</strong> + Commission FlexMoney (10%) : <strong>${cout.commission.toFixed(2)}€</strong> = <strong style="color:var(--accent)">${cout.total.toFixed(2)}€ total</strong>`;
+      coutEl.innerHTML = `Salaire brut : <strong>${cout.brut.toFixed(2)}€</strong> + ONSS (25%) : <strong>${cout.onss.toFixed(2)}€</strong> = <strong style="color:var(--accent)">${cout.total.toFixed(2)}€ total</strong> <span style="color:var(--muted);">· sans commission FlexMoney</span>`;
     }
 
     const preview = document.getElementById('contrat-preview');

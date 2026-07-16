@@ -141,21 +141,19 @@
 
 <!-- HERO -->
 <section class="hero">
-  <div class="badge">🎁 Offre de lancement · Dimona offerte</div>
-  <h1>Simple. Sans abonnement.<br/><span style="color:var(--accent)">Garanti rentable.</span></h1>
-  <p class="hero-sub">Une commission réduite pour commencer, un tarif normal ensuite. Travailleurs toujours gratuits. Dimona toujours offerte.</p>
+  <div class="badge">🎁 100% gratuit · Sans commission · Dimona offerte</div>
+  <h1>Simple. Sans abonnement.<br/><span style="color:var(--accent)">Sans commission.</span></h1>
+  <p class="hero-sub">FlexMoney est gratuit : aucune commission, aucun abonnement. Vous ne payez que le salaire et les cotisations. Travailleurs gratuits, Dimona offerte.</p>
 </section>
 
 <!-- JOURNEY -->
 <div class="journey">
-  <div class="journey-steps">
-
-    <!-- INTRO -->
+  <div style="max-width:520px;margin:0 auto;">
     <div class="journey-card intro">
-      <div class="journey-label">🚀 Missions 1 → 3</div>
-      <div class="journey-rate">5<span style="font-size:2.5rem">%</span></div>
+      <div class="journey-label">🎁 Notre tarif</div>
+      <div class="journey-rate">0<span style="font-size:2.5rem">€</span></div>
       <div class="journey-rate-label">de commission</div>
-      <p class="journey-desc">Pour démarrer sans risque. Testez la plateforme avec une commission ultra-réduite.</p>
+      <p class="journey-desc">FlexMoney est actuellement <strong>100% gratuit</strong> pour les employeurs comme pour les travailleurs. Aucune commission n'est prélevée sur vos missions.</p>
       <div class="journey-included">
         <div class="journey-item"><span class="ic">✓</span> Matching IA inclus</div>
         <div class="journey-item"><span class="ic">✓</span> Contrat flexi automatique</div>
@@ -163,24 +161,6 @@
         <div class="journey-item"><span class="ic">✓</span> Validation éligibilité incluse</div>
       </div>
     </div>
-
-    <!-- ARROW -->
-    <div class="journey-arrow">→</div>
-
-    <!-- NORMAL -->
-    <div class="journey-card normal">
-      <div class="journey-label">⚡ Dès la mission 4</div>
-      <div class="journey-rate">10<span style="font-size:2.5rem">%</span></div>
-      <div class="journey-rate-label">de commission</div>
-      <p class="journey-desc">Le tarif standard. Toujours sans abonnement, toujours 3× moins cher qu'une agence.</p>
-      <div class="journey-included">
-        <div class="journey-item"><span class="ic">✓</span> Matching IA inclus</div>
-        <div class="journey-item"><span class="ic">✓</span> Contrat flexi automatique</div>
-        <div class="journey-item"><span class="ic" style="color:var(--accent)">🎁</span> Guide Dimona offert</div>
-        <div class="journey-item"><span class="ic">✓</span> Validation éligibilité incluse</div>
-      </div>
-    </div>
-
   </div>
 </div>
 
@@ -248,11 +228,8 @@
         <input type="number" id="calc-missions" value="4" min="1" max="100" oninput="calculate()" />
       </div>
       <div class="calc-field">
-        <label>Taux commission</label>
-        <select id="calc-rate-sel" onchange="calculate()">
-          <option value="0.05">5% — Missions 1 à 3 (lancement)</option>
-          <option value="0.10" selected>10% — Dès la mission 4 (normal)</option>
-        </select>
+        <label>Commission FlexMoney</label>
+        <input type="text" value="0 € — Gratuit" disabled style="color:var(--accent);font-weight:700;" />
       </div>
     </div>
     <div class="calc-results">
@@ -277,18 +254,13 @@
   <h2 style="font-size:2rem;font-weight:900;text-align:center;margin-bottom:48px;letter-spacing:-1px;">Questions fréquentes</h2>
 
   <div class="faq-item">
-    <button class="faq-q" onclick="toggleFaq(this)">Comment le comptage des 3 missions fonctionne-t-il ? <span class="arrow">▼</span></button>
-    <div class="faq-a">Le compteur est par entreprise. Vos 3 premières missions réalisées (quelle que soit leur durée) bénéficient du taux à 5%. Dès la 4e mission, le taux de 10% s'applique automatiquement.</div>
+    <button class="faq-q" onclick="toggleFaq(this)">FlexMoney est-il vraiment gratuit ? <span class="arrow">▼</span></button>
+    <div class="faq-a">Oui. Pour l'instant, FlexMoney ne prélève <strong>aucune commission</strong> et n'impose aucun abonnement, ni aux employeurs ni aux travailleurs. Vous ne payez que le salaire du travailleur et les cotisations ONSS légales.</div>
   </div>
 
   <div class="faq-item">
-    <button class="faq-q" onclick="toggleFaq(this)">Sur quoi est calculée la commission ? <span class="arrow">▼</span></button>
-    <div class="faq-a">La commission est calculée sur le <strong>salaire brut flexi</strong> versé au travailleur, hors cotisations ONSS employeur. Exemple : 8h @ 20€ = 160€ brut → commission à 10% = 16€.</div>
-  </div>
-
-  <div class="faq-item">
-    <button class="faq-q" onclick="toggleFaq(this)">Quand suis-je facturé ? <span class="arrow">▼</span></button>
-    <div class="faq-a">La commission est prélevée uniquement <strong>après la réalisation de la mission</strong>, confirmée par les deux parties. Aucun frais si la mission est annulée avant son début.</div>
+    <button class="faq-q" onclick="toggleFaq(this)">Que paie exactement l'employeur ? <span class="arrow">▼</span></button>
+    <div class="faq-a">Uniquement le <strong>salaire brut flexi</strong> versé au travailleur et les <strong>cotisations ONSS employeur</strong>. Exemple : 8h @ 20€ = 160€ brut + 40€ ONSS = 200€, sans aucun frais FlexMoney.</div>
   </div>
 
   <div class="faq-item">
@@ -297,15 +269,15 @@
   </div>
 
   <div class="faq-item">
-    <button class="faq-q" onclick="toggleFaq(this)">Y aura-t-il des abonnements à l'avenir ? <span class="arrow">▼</span></button>
-    <div class="faq-a">Le modèle à la commission sans abonnement restera toujours disponible. Des options optionnelles (matching prioritaire, support dédié) pourront être proposées aux gros volumes, mais rien d'obligatoire.</div>
+    <button class="faq-q" onclick="toggleFaq(this)">Le service restera-t-il gratuit ? <span class="arrow">▼</span></button>
+    <div class="faq-a">FlexMoney est gratuit à ce stade. Si un modèle tarifaire est introduit à l'avenir, il vous sera communiqué clairement et à l'avance. Aucun frais caché ne vous sera jamais appliqué sans votre accord.</div>
   </div>
 </section>
 
 <!-- CTA FINAL -->
 <section class="cta-final">
-  <h2>Commencez à 5% de commission.</h2>
-  <p>3 premières missions à taux réduit · Dimona offerte · Travailleurs toujours gratuits</p>
+  <h2>Commencez gratuitement.</h2>
+  <p>Sans commission · Sans abonnement · Dimona offerte · Travailleurs toujours gratuits</p>
   <div class="cta-buttons">
     <a href="inscription-employeur.html" class="btn btn-primary">Je recrute en flexi →</a>
     <a href="inscription-travailleur.html" class="btn btn-outline">Je cherche des missions</a>
@@ -322,12 +294,10 @@
     const h = parseFloat(document.getElementById('calc-hours').value) || 0;
     const r = parseFloat(document.getElementById('calc-rate').value) || 0;
     const m = parseFloat(document.getElementById('calc-missions').value) || 0;
-    const rate = parseFloat(document.getElementById('calc-rate-sel').value);
-
     const gross = h * r;
     const onss = gross * 0.25;
-    const commission = gross * rate;
-    const flexTotal = (gross + onss + commission) * m;
+    // FlexMoney : aucune commission → coût = brut + ONSS
+    const flexTotal = (gross + onss) * m;
     const interimTotal = (gross + onss + gross * 0.35) * m;
     const saving = interimTotal - flexTotal;
 

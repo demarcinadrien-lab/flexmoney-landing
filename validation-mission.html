@@ -365,12 +365,12 @@
           <span class="value" id="calcONSS">44,00 €</span>
         </div>
         <div class="recap-row commission">
-          <span class="label">Commission FlexMoney (5%)</span>
-          <span class="value" id="calcCommission">8,80 €</span>
+          <span class="label">Commission FlexMoney</span>
+          <span class="value" id="calcCommission" style="color:#16a34a;">Gratuit</span>
         </div>
         <div class="recap-row total">
           <span class="label">Coût total employeur</span>
-          <span class="value" id="calcTotal">228,80 €</span>
+          <span class="value" id="calcTotal">220,00 €</span>
         </div>
         <div style="margin-top:12px;padding:10px;background:#f0fdf4;border-radius:8px;font-size:13px;color:#166534;">
           ✅ <strong>Travailleur reçoit : <span id="calcNet">176,00 €</span> net</strong> (pas d'impôt ni cotisation personnelle sur le flexi)
@@ -535,33 +535,10 @@
       </div>
     </div>
 
-    <!-- Facture commission -->
+    <!-- FlexMoney gratuit : aucune commission à payer -->
     <div class="card">
-      <h2>💳 Paiement de la commission FlexMoney</h2>
-      <p class="sub">Commission de <strong id="commissionDisplay">5%</strong> sur le salaire brut, conformément à nos conditions.</p>
-
-      <div class="mission-recap">
-        <div class="recap-row">
-          <span class="label">Salaire brut flexi</span>
-          <span class="value" id="payBrut">—</span>
-        </div>
-        <div class="recap-row commission">
-          <span class="label">Commission FlexMoney (5%)</span>
-          <span class="value" id="payCommission">—</span>
-        </div>
-        <div class="recap-row total">
-          <span class="label">À payer à FlexMoney</span>
-          <span class="value" id="payTotal">—</span>
-        </div>
-      </div>
-
-      <div class="alert alert-info">
-        💡 <span>Le paiement par carte ou virement SEPA sera disponible après intégration Stripe. Pour l'instant, nous vous enverrons une facture par email.</span>
-      </div>
-
-      <button class="btn btn-primary" style="background:#16a34a;" onclick="alert('Facture envoyée à votre email. Paiement Stripe disponible prochainement.')">
-        📧 Recevoir la facture par email
-      </button>
+      <h2>✅ Aucune commission à payer</h2>
+      <p class="sub">FlexMoney est <strong style="color:#16a34a;">gratuit</strong> : aucune commission n'est prélevée sur cette mission. Vous ne payez que le salaire et les cotisations ONSS.</p>
     </div>
   </div>
 
@@ -611,7 +588,7 @@
       <h2>Mission clôturée !</h2>
       <p>Tout est en ordre. La mission est officiellement terminée et enregistrée sur FlexMoney.</p>
       <div class="alert alert-success" style="text-align:left;margin-bottom:20px;">
-        ✅ <span>Récapitulatif secrétariat généré · Commission facturée · Évaluation enregistrée</span>
+        ✅ <span>Récapitulatif secrétariat généré · Évaluation enregistrée</span>
       </div>
       <a href="index.html"><button class="btn btn-primary">Retour à l'accueil</button></a>
     </div>
@@ -625,7 +602,6 @@
   let currentRole = null;
   let currentNote = 0;
   const tauxHoraire = 22;
-  const commissionTaux = 0.05;
 
   // Données mission simulées (en prod: chargées depuis Supabase via code mission)
   const missionData = {
@@ -686,12 +662,11 @@
     const h = parseFloat(document.getElementById('heuresReelles').value) || 0;
     const brut = h * missionData.taux;
     const onss = brut * 0.25;
-    const comm = brut * commissionTaux;
-    const total = brut + onss + comm;
+    const total = brut + onss;
 
     document.getElementById('calcBrut').textContent = fmt(brut) + ' €';
     document.getElementById('calcONSS').textContent = fmt(onss) + ' €';
-    document.getElementById('calcCommission').textContent = fmt(comm) + ' €';
+    document.getElementById('calcCommission').textContent = 'Gratuit';
     document.getElementById('calcTotal').textContent = fmt(total) + ' €';
     document.getElementById('calcNet').textContent = fmt(brut) + ' €';
   }
@@ -707,7 +682,6 @@
     const h = parseFloat(document.getElementById('heuresReelles').value) || 0;
     const brut = h * missionData.taux;
     const onss = brut * 0.25;
-    const comm = brut * commissionTaux;
 
     if (currentRole === 'travailleur') {
       document.getElementById('netTravailleur').textContent = fmt(brut) + ' €';
@@ -737,11 +711,6 @@
     document.getElementById('docBrutDoc').textContent = fmt(brut) + ' €';
     document.getElementById('docONSSDoc').textContent = fmt(onss) + ' €';
     document.getElementById('docNetDoc').textContent = fmt(brut) + ' € (Net = Brut)';
-
-    // Paiement commission
-    document.getElementById('payBrut').textContent = fmt(brut) + ' €';
-    document.getElementById('payCommission').textContent = fmt(comm) + ' €';
-    document.getElementById('payTotal').textContent = fmt(comm) + ' €';
 
     setStep(3);
   }

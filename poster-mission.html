@@ -217,10 +217,6 @@
           <input type="number" id="taux" value="22" min="12" max="50" step="0.5" oninput="updateCalc()">
           <small>Minimum légal : <strong>11,87 €/h</strong> (depuis 01/03/2026). Le <em>salaire de base</em> ne peut dépasser 150% du barème sectoriel (voir votre CP).</small>
         </div>
-        <div class="form-group">
-          <label>Commission FlexMoney</label>
-          <input type="text" value="5% (3 premières missions) puis 10%" disabled style="background:#f8fafc;color:#64748b;">
-        </div>
       </div>
 
       <div class="salary-preview" id="salaryPreview">
@@ -228,8 +224,8 @@
         <div class="salary-row"><span>+ Pécule de vacances (7,67%)</span><span id="prevPecule">—</span></div>
         <div class="salary-row" style="font-weight:600;border-top:1px solid #e2e8f0;padding-top:6px;margin-top:2px;"><span>= Dû au travailleur (brut = net)</span><span id="prevWorker">—</span></div>
         <div class="salary-row"><span>+ Cotisation ONSS employeur (28%)</span><span id="prevONSS">—</span></div>
-        <div class="salary-row"><span>+ Commission FlexMoney (5%)</span><span id="prevComm">—</span></div>
         <div class="salary-row" style="font-weight:700;border-top:1px solid #cbd5e1;padding-top:6px;margin-top:2px;"><span>💡 Coût total pour vous</span><span id="prevTotal">—</span></div>
+        <div class="salary-row" style="color:#16a34a;font-weight:600;"><span>✅ Commission FlexMoney</span><span>Gratuit</span></div>
       </div>
       <div id="tauxMaxAlert" style="display:none;margin-top:8px;padding:8px 12px;background:#fefce8;border:1px solid #fbbf24;border-radius:8px;font-size:12px;color:#92400e;"></div>
 
@@ -423,13 +419,11 @@
     const pecule     = salaire * 0.0767;
     const totalWorker = salaire + pecule;
     const onss       = totalWorker * 0.28;
-    const comm       = salaire * 0.05;
-    const total      = totalWorker + onss + comm;
+    const total      = totalWorker + onss;
     document.getElementById('prevBrut').textContent   = fmt(salaire) + ' €';
     document.getElementById('prevPecule').textContent = fmt(pecule) + ' €';
     document.getElementById('prevWorker').textContent = fmt(totalWorker) + ' €';
     document.getElementById('prevONSS').textContent   = fmt(onss) + ' €';
-    document.getElementById('prevComm').textContent   = fmt(comm) + ' €';
     document.getElementById('prevTotal').textContent  = fmt(total) + ' €';
 
     // Avertissement si taux dépasse 150% du RMMMG (plafond salaire de base loi 12/05/2026)
@@ -500,9 +494,9 @@
       taux_horaire: taux,
       salaire_brut: brut,
       onss_employeur: brut * 0.25,
-      commission_taux: 5,
-      commission_montant: brut * 0.05,
-      cout_total_employeur: brut * 1.30,
+      commission_taux: 0,
+      commission_montant: 0,
+      cout_total_employeur: brut * 1.25,
       statut: 'proposee'
     };
 
