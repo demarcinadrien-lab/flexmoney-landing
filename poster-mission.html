@@ -501,15 +501,9 @@
     };
 
     try {
-      await fetch(`${SUPABASE_URL}/rest/v1/missions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_KEY,
-          'Authorization': `Bearer ${SUPABASE_KEY}`
-        },
-        body: JSON.stringify(body)
-      });
+      // Client authentifié (session employeur) requis par la RLS
+      const { error } = await sb.from('missions').insert(body);
+      if (error) console.log('Supabase error', error);
     } catch(e) { console.log('Supabase error', e); }
 
     // ── Email confirmation à l'employeur ────────────────────
@@ -538,11 +532,9 @@
 
   async function findMatches() {
     try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/workers_inscription?select=*&eligible=eq.true`, {
-        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-      });
-      const workers = await res.json();
-      renderMatches(workers);
+      // Client authentifié (session employeur) : la RLS réserve la lecture des profils aux employeurs
+      const { data: workers, error } = await sb.from('workers_inscription').select('*').eq('eligible', true);
+      renderMatches(error ? [] : (workers || []));
     } catch(e) {
       renderMatches([]);
     }

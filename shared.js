@@ -5,8 +5,8 @@
 // ═══════════════════════════════════════════════════════════
 
 // ── Supabase ─────────────────────────────────────────────
-const SUPABASE_URL = 'https://nresngetymtpxusrhlfj.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_j8Yk8yjUMQv0AGlqHqn19Q_NJ34mcvT';
+const SUPABASE_URL = 'https://rvvybwflrntmdpjrumov.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_d8nE75u5UJ3HqsO5HDXKXQ_um8cvYX9';
 
 // Client Supabase (uniquement si le CDN supabase est chargé sur la page)
 const sb = window.supabase ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;

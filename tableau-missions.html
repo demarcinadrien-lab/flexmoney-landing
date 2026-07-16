@@ -363,17 +363,19 @@
   document.addEventListener('DOMContentLoaded', initVilleFilter);
 
   async function loadMissions() {
-    // Récupérer le rôle AVANT le rendu (un employeur ne peut pas postuler)
-    try {
-      const { data: { session } } = await sb.auth.getSession();
-      currentUserRole = session?.user?.user_metadata?.role || null;
-    } catch(e) { currentUserRole = null; }
+    // Connexion requise (les offres ne sont visibles que pour les utilisateurs connectés)
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) {
+      const next = encodeURIComponent('tableau-missions.html' + window.location.search);
+      window.location.replace('auth.html?next=' + next);
+      return;
+    }
+    currentUserRole = session?.user?.user_metadata?.role || null;
 
     try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/missions?select=*&statut=eq.proposee&order=created_at.desc`, {
-        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-      });
-      allMissions = await res.json();
+      // Client authentifié : la RLS autorise la lecture des missions ouvertes (statut 'proposee')
+      const { data, error } = await sb.from('missions').select('*').eq('statut', 'proposee').order('created_at', { ascending: false });
+      allMissions = error ? [] : (data || []);
     } catch(e) {
       allMissions = [];
     }
@@ -526,20 +528,11 @@
     };
 
     try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/candidatures`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_KEY,
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
-          'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (!res.ok) throw new Error('Erreur Supabase');
+      // Client authentifié (session travailleur) requis par la RLS
+      const { error } = await sb.from('candidatures').insert(payload);
+      if (error) throw error;
     } catch(e) {
-      console.warn('Supabase non disponible (mode démo)', e);
+      console.warn('Candidature non enregistrée', e);
     }
 
     // ── Email à l'employeur avec le profil du candidat ───────
@@ -548,10 +541,7 @@
       if (employeurEmail) {
         let competences = 'Non renseigné';
         try {
-          const wRes = await fetch(`${SUPABASE_URL}/rest/v1/workers_inscription?select=competences&email=eq.${encodeURIComponent(email)}&limit=1`, {
-            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-          });
-          const wData = await wRes.json();
+          const { data: wData } = await sb.from('workers_inscription').select('competences').eq('email', email).limit(1);
           if (Array.isArray(wData) && wData[0]?.competences?.length) {
             competences = wData[0].competences.join(', ');
           }
