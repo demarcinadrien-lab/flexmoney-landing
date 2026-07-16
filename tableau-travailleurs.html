@@ -268,6 +268,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="competences.js"></script>
 <script src="villes.js"></script>
+<script src="codes-postaux.js"></script>
 <script src="shared.js"></script>
 <script>
   const EJS_TPL_PROPOSITION = 'template_lk3kj9n'; // proposition de créneau au travailleur
@@ -347,6 +348,35 @@
     return found ? found.nom : null;
   }
 
+  // Coordonnées {lat,lng} d'une ville wallonne de référence (choisie par l'employeur)
+  function coordVilleRef(nom) {
+    if (typeof VILLES_BELGIQUE === 'undefined') return null;
+    const v = VILLES_BELGIQUE.find(x => x.nom === nom);
+    return v ? { lat: v.lat, lng: v.lng } : null;
+  }
+
+  // Coordonnées {lat,lng} d'un profil : code postal en priorité, puis ville
+  function coordProfil(w) {
+    if (typeof coordDepuisCP === 'function') {
+      const c = coordDepuisCP(w.code_postal);
+      if (c) return c;
+    }
+    const ref = villeReference(w.ville);
+    if (ref && typeof VILLES_BELGIQUE !== 'undefined') {
+      const v = VILLES_BELGIQUE.find(x => x.nom === ref);
+      if (v) return { lat: v.lat, lng: v.lng };
+    }
+    return null;
+  }
+
+  // Distance (km) entre le point de recherche (ville employeur) et un profil
+  function distanceProfil(villeRefNom, w) {
+    const a = coordVilleRef(villeRefNom);
+    const b = coordProfil(w);
+    if (!a || !b || typeof distanceKm !== 'function') return Infinity;
+    return distanceKm(a.lat, a.lng, b.lat, b.lng);
+  }
+
   // Normalise la préférence de lieu (valeurs d'inscription + valeurs héritées)
   // vers : 'teletravail' | 'mixte' | 'presentiel'
   function normTele(pref) {
@@ -410,13 +440,10 @@
     });
 
     // 2) Tri : si une ville est choisie, du profil le plus proche au plus éloigné
-    if (ville && typeof distanceVilles === 'function') {
+    //    (localisation par code postal, avec repli sur la ville)
+    if (ville) {
       filtered = filtered
-        .map(w => {
-          const ref = villeReference(w.ville);
-          const dist = ref ? distanceVilles(ville, ref) : Infinity;
-          return { w, dist };
-        })
+        .map(w => ({ w, dist: distanceProfil(ville, w) }))
         .sort((a, b) => a.dist - b.dist)
         .map(x => x.w);
     }
@@ -442,10 +469,9 @@
 
       // Distance au point de recherche (si une ville est sélectionnée)
       let distLabel = '';
-      if (villeRef && typeof distanceVilles === 'function') {
-        const ref = villeReference(w.ville);
-        const d = ref ? distanceVilles(villeRef, ref) : Infinity;
-        if (isFinite(d)) distLabel = ref === villeRef ? ' · <strong>même ville</strong>' : ` · ~${Math.round(d)} km de ${villeRef}`;
+      if (villeRef) {
+        const d = distanceProfil(villeRef, w);
+        if (isFinite(d)) distLabel = d < 1 ? ' · <strong>sur place</strong>' : ` · ~${Math.round(d)} km de ${villeRef}`;
       }
 
       return `

@@ -307,14 +307,15 @@
       </div>
       <div class="field">
         <label>Code postal <span class="required">*</span></label>
-        <input type="text" id="cp" placeholder="1000" maxlength="4" />
-        <div class="field-error" id="err-cp">Code postal belge (4 chiffres)</div>
+        <input type="text" id="cp" placeholder="1000" maxlength="4" inputmode="numeric" oninput="autoVilleFromCP()" />
+        <div class="field-error" id="err-cp">Code postal belge invalide ou inconnu</div>
+        <small id="cp-hint" style="display:none;margin-top:4px;color:#16a34a;font-size:0.75rem;font-weight:600;"></small>
       </div>
     </div>
 
     <div class="field">
       <label>Ville <span class="required">*</span></label>
-      <input type="text" id="ville" placeholder="Bruxelles" />
+      <input type="text" id="ville" placeholder="Bruxelles" oninput="this.dataset.auto=''" />
     </div>
 
     <div class="btn-row">
@@ -570,6 +571,7 @@
 
 </div>
 
+<script src="codes-postaux.js"></script>
 <script src="shared.js"></script>
 <script>
   const EMAILJS_TEMPLATE_ID = 'template_y3zn6ll'; // "Bienvenu Nouveau Flexi_jobeur" (vérifié dans EmailJS)
@@ -602,6 +604,33 @@
   }
 
   // ── STEP 1 VALIDATION ───────────────────────────────────
+  // Contrôle du code postal en direct : valide le code et pré-remplit la ville
+  function autoVilleFromCP() {
+    const cpEl = document.getElementById('cp');
+    const hint = document.getElementById('cp-hint');
+    const errEl = document.getElementById('err-cp');
+    const villeEl = document.getElementById('ville');
+    const cp = cpEl.value.trim();
+    if (!/^\d{4}$/.test(cp)) { hint.style.display = 'none'; return; }
+
+    const info = (typeof infoCP === 'function') ? infoCP(cp) : null;
+    if (info) {
+      cpEl.classList.remove('error');
+      errEl.classList.remove('show');
+      hint.textContent = `📍 ${info.nom} (${info.prov})`;
+      hint.style.display = 'block';
+      // Pré-remplit la ville si vide ou issue d'un précédent code
+      if (!villeEl.value.trim() || villeEl.dataset.auto === '1') {
+        villeEl.value = info.nom;
+        villeEl.dataset.auto = '1';
+      }
+    } else {
+      hint.style.display = 'none';
+      cpEl.classList.add('error');
+      errEl.classList.add('show');
+    }
+  }
+
   function validateStep1() {
     let valid = true;
     const fields = [
@@ -610,7 +639,7 @@
       { id: 'email',  err: 'err-email',  check: v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) },
       { id: 'tel',    err: 'err-tel',    check: v => v.trim().length >= 9 },
       { id: 'ddn',    err: 'err-ddn',    check: v => v.length > 0 },
-      { id: 'cp',     err: 'err-cp',     check: v => /^\d{4}$/.test(v) },
+      { id: 'cp',     err: 'err-cp',     check: v => /^\d{4}$/.test(v) && (typeof cpValide !== 'function' || cpValide(v)) },
     ];
     fields.forEach(f => {
       const el = document.getElementById(f.id);
