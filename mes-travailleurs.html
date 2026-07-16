@@ -193,6 +193,7 @@
   let allMyMissions = [];
   let allCandsAcceptees = [];
   let allDeclarations = []; // tous les jours de travail (declarations_heures) de mes missions
+  let workerProfiles = {}; // profil complet du travailleur, indexé par email
 
   async function loadPastWorkers() {
     const { data: missions } = await sb.from('missions').select('*').eq('email_employeur', currentUser.email);
@@ -231,6 +232,15 @@
     });
 
     pastWorkers = Object.values(byEmail);
+
+    // Profils complets des travailleurs (compétences, disponibilités, présentation, ville...)
+    workerProfiles = {};
+    const emails = pastWorkers.map(w => w.email).filter(Boolean);
+    if (emails.length) {
+      const { data: profs } = await sb.from('workers_inscription')
+        .select('*').in('email', emails).order('created_at', { ascending: false });
+      (profs || []).forEach(p => { if (p.email && !workerProfiles[p.email]) workerProfiles[p.email] = p; });
+    }
 
     // Tous les jours de travail (déclarations d'heures) de mes missions
     let decls = [];
@@ -275,7 +285,7 @@
               <span class="type-badge ${badgeClass}">${badgeLabel}</span>
               <span class="missions-count">📌 ${w.derniere_mission} · ${dateLabel}</span>
               ${w.nb_missions > 1 ? `<span class="missions-count">· ${w.nb_missions} missions ensemble</span>` : ''}
-              <span class="missions-count" style="color:#6366f1;font-weight:700;">· Voir contrat & proposer des jours →</span>
+              <span class="missions-count" style="color:#6366f1;font-weight:700;">· Voir le profil, les contrats signés & proposer des jours →</span>
             </div>
           </div>
           <div style="display:flex;flex-direction:column;gap:6px;align-items:stretch;">
@@ -413,6 +423,65 @@
     }
   }
 
+  // ── Helpers profil travailleur ─────────────────────────────
+  function teleLabel(pref) {
+    if (['teletravail', 'oui', 'uniquement'].includes(pref)) return '🏠 Télétravail';
+    if (['presentiel', 'non', 'sur place'].includes(pref)) return '🏢 Présentiel';
+    return '🔄 Mixte';
+  }
+  function domainesDuProfil(prof) {
+    if (typeof getSecteurDeCompetence !== 'function') return [];
+    const seen = new Set(); const out = [];
+    (prof.competences || []).forEach(c => {
+      const s = getSecteurDeCompetence(c);
+      if (s && !seen.has(s.id)) { seen.add(s.id); out.push(s); }
+    });
+    return out;
+  }
+  function dispoParJour(dispos) {
+    if (!dispos) return [];
+    const liste = Array.isArray(dispos) ? dispos : Object.keys(dispos).filter(k => dispos[k]);
+    const oj = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'], os = ['Matin','Après-midi','Soir'], map = {};
+    liste.forEach(k => { const [j, ...r] = k.split('-'); (map[j] = map[j] || []).push(r.join('-')); });
+    return oj.filter(j => map[j]).map(j => ({ jour: j, slots: os.filter(s => map[j].includes(s)) }));
+  }
+
+  // Construit le bloc "détails du profil" du travailleur pour la fiche
+  function buildProfilSection(email) {
+    const prof = workerProfiles[email];
+    if (!prof) return '';
+    const domaines = domainesDuProfil(prof);
+    const domHtml = domaines.length ? domaines.map(d => {
+      const sous = (prof.competences || []).filter(c => d.competences.includes(c));
+      return `<div style="margin-bottom:8px;">
+        <div style="font-size:12px;font-weight:700;color:${d.couleur};margin-bottom:4px;">${d.label}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;">${sous.map(c => `<span style="font-size:11px;font-weight:600;padding:3px 8px;border-radius:8px;background:${d.bg};color:${d.couleur};">${c}</span>`).join('')}</div>
+      </div>`;
+    }).join('') : '<span style="font-size:13px;color:#94a3b8;font-style:italic;">Aucun domaine renseigné.</span>';
+
+    const jours = dispoParJour(prof.disponibilites);
+    const dispoHtml = jours.length ? jours.map(j =>
+      `<div style="display:flex;gap:8px;align-items:center;margin-bottom:4px;"><span style="font-size:12px;font-weight:700;width:36px;">${j.jour}</span><span style="font-size:11px;font-weight:600;color:#16a34a;">${j.slots.join(' · ')}</span></div>`
+    ).join('') : '<span style="font-size:13px;color:#94a3b8;font-style:italic;">Aucune disponibilité renseignée.</span>';
+
+    const presHtml = prof.presentation
+      ? `<div style="font-size:13px;line-height:1.5;color:#374151;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;white-space:pre-wrap;">${prof.presentation.replace(/</g,'&lt;')}</div>`
+      : '<span style="font-size:13px;color:#94a3b8;font-style:italic;">Aucune présentation renseignée.</span>';
+
+    const lieu = [prof.ville, prof.code_postal].filter(Boolean).join(' · ');
+    return `
+      <div style="font-size:12px;font-weight:800;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">📇 Profil du travailleur</div>
+      <div style="border:1px solid #e2e8f0;border-radius:12px;padding:14px;margin-bottom:18px;">
+        <div style="font-size:13px;color:#64748b;margin-bottom:12px;">📍 ${lieu || '—'} · ${teleLabel(prof.teletravail_preference)}</div>
+        <div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:6px;">Domaines & sous-domaines</div>
+        ${domHtml}
+        <div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;margin:14px 0 6px;">Disponibilités récurrentes</div>
+        ${dispoHtml}
+        <div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;margin:14px 0 6px;">Présentation</div>
+        ${presHtml}
+      </div>`;
+  }
+
   // ── Fiche travailleur : contrat en cours + proposition de jours de travail ──
   let ficheWorker = null;
   let ficheContratActif = null; // { cand, mission }
@@ -431,7 +500,9 @@
     const today = new Date().toISOString().split('T')[0];
     const trims = allCandsAcceptees.filter(c => c.worker_email === email && c.type_contrat === 'trimestriel');
 
-    let html = '<div style="font-size:12px;font-weight:800;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">📋 Contrat trimestriel</div>';
+    // Détails du profil du travailleur (compétences, disponibilités, présentation)
+    let html = buildProfilSection(email);
+    html += '<div style="font-size:12px;font-weight:800;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">📋 Contrat trimestriel</div>';
     if (trims.length === 0) {
       html += `<div style="font-size:13px;color:#94a3b8;padding:12px;border:1px dashed #e2e8f0;border-radius:10px;">Aucun contrat trimestriel accepté avec ce travailleur.<br>Utilisez « Proposer un nouveau contrat » pour en créer un.</div>`;
     } else {

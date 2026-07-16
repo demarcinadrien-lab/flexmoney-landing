@@ -148,16 +148,6 @@
     </div>
 
     <div class="filter-group">
-      <label>Disponibilité télétravail</label>
-      <select id="teletravailFilter" onchange="applyFilters()">
-        <option value="">Tous</option>
-        <option value="teletravail">🏠 Télétravail uniquement</option>
-        <option value="mixte">🔄 Mixte</option>
-        <option value="presentiel">🏢 Présentiel</option>
-      </select>
-    </div>
-
-    <div class="filter-group">
       <label>Domaine de compétences</label>
       <select id="secteurFilter" onchange="applyFilters()"></select>
     </div>
@@ -426,17 +416,16 @@
   function applyFilters() {
     const search = document.getElementById('searchInput').value.toLowerCase();
     const ville = document.getElementById('villeFilter').value; // ville wallonne de référence (tri par proximité)
-    const teletravail = document.getElementById('teletravailFilter').value;
     const secteurId = document.getElementById('secteurFilter').value;
     const secteur = secteurId ? FLEXMONEY_SECTEURS.find(s => s.id === secteurId) : null;
 
-    // 1) Filtrage : recherche libre, disponibilité télétravail et domaine de compétences
+    // 1) Filtrage : recherche libre et domaine de compétences
+    //    (la préférence télétravail est affichée sur le profil mais n'est plus un critère de tri/filtre)
     let filtered = allWorkers.filter(w => {
       const comps = (w.competences || []).join(' ').toLowerCase();
       const matchSearch = !search || comps.includes(search) || (w.prenom + ' ' + w.nom).toLowerCase().includes(search);
-      const matchTele = !teletravail || normTele(w.teletravail_preference) === teletravail;
       const matchSecteur = !secteur || (w.competences || []).some(c => secteur.competences.includes(c));
-      return matchSearch && matchTele && matchSecteur;
+      return matchSearch && matchSecteur;
     });
 
     // 2) Tri : si une ville est choisie, du profil le plus proche au plus éloigné
@@ -694,7 +683,6 @@
   function resetFilters() {
     document.getElementById('searchInput').value = '';
     document.getElementById('villeFilter').value = '';
-    document.getElementById('teletravailFilter').value = '';
     document.getElementById('secteurFilter').value = '';
     applyFilters();
   }
