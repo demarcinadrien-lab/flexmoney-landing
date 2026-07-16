@@ -29,6 +29,27 @@ function fmt(n) {
   return (n || 0).toLocaleString('fr-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+// ── Bandeau d'information cookies (stockage strictement nécessaire) ──
+function mountCookieNotice() {
+  try { if (localStorage.getItem('flx_cookie_ack') === '1') return; } catch(e) { return; }
+  // Ne pas afficher sur les pages légales elles-mêmes
+  const page = (location.pathname.split('/').pop() || '').toLowerCase();
+  if (['politique-cookies.html','politique-confidentialite.html','conditions-generales.html','mentions-legales.html'].includes(page)) return;
+
+  const bar = document.createElement('div');
+  bar.setAttribute('role', 'dialog');
+  bar.style.cssText = 'position:fixed;left:16px;right:16px;bottom:16px;z-index:2000;max-width:720px;margin:0 auto;background:#0f172a;color:#f1f5f9;border-radius:14px;padding:16px 18px;box-shadow:0 10px 30px rgba(0,0,0,0.25);display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-family:inherit;';
+  bar.innerHTML = '<span style="font-size:13px;line-height:1.5;flex:1;min-width:220px;">🍪 FlexMoney n\'utilise que du stockage <strong>strictement nécessaire</strong> (connexion), sans cookie publicitaire ni de suivi. <a href="politique-cookies.html" style="color:#a5b4fc;font-weight:600;">En savoir plus</a></span>'
+    + '<button id="flxCookieOk" style="background:#6366f1;color:#fff;border:none;border-radius:9px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">J\'ai compris</button>';
+  document.body.appendChild(bar);
+  document.getElementById('flxCookieOk').onclick = () => {
+    try { localStorage.setItem('flx_cookie_ack', '1'); } catch(e) {}
+    bar.remove();
+  };
+}
+if (document.body) mountCookieNotice();
+else document.addEventListener('DOMContentLoaded', mountCookieNotice);
+
 // ── Barre d'actions rapides employeur (sticky, sur toutes les pages employeur) ──
 const FLX_EMPLOYER_PAGES = [
   'dashboard-employeur.html',
