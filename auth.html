@@ -350,6 +350,12 @@
   }
 
   async function redirectByRole(user) {
+    // Redirection prioritaire vers la page demandée (?next=...), ex. signature de contrat
+    const next = new URLSearchParams(window.location.search).get('next');
+    if (next && /^[a-zA-Z0-9_\-]+\.html(\?[^#]*)?$/.test(next)) {
+      window.location.href = next;
+      return;
+    }
     const role = user.user_metadata?.role || currentRole;
     if (role === 'employeur') {
       window.location.href = 'dashboard-employeur.html';

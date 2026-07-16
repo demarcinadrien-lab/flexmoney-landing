@@ -117,6 +117,7 @@
   const params = new URLSearchParams(window.location.search);
   const candidatureId = params.get('cid');
   let candidatureData = null;
+  let isContratSignable = false;
 
   function showState(id) {
     ['formState','successState','declineState','errorState'].forEach(s => {
@@ -182,15 +183,16 @@
       ? `🕐 ${cand.heure_debut.slice(0,5)} → ${cand.heure_fin.slice(0,5)}`
       : '';
 
-    // Contrat trimestriel : adapter le wording et proposer le projet de contrat
+    // Contrat trimestriel : adapter le wording et proposer la signature en ligne
     if (cand.type_contrat && cand.type_contrat !== 'test_jour') {
+      isContratSignable = true;
       document.getElementById('pageTitle').textContent = 'Proposition de contrat trimestriel';
-      document.getElementById('subText').textContent = `${mission?.nom_entreprise || "L'employeur"} vous propose un contrat récurrent (missions régulières). Consultez le projet de contrat et acceptez si cela vous convient.`;
+      document.getElementById('subText').textContent = `${mission?.nom_entreprise || "L'employeur"} vous propose un contrat récurrent. Consultez le contrat et signez-le en ligne — l'employeur sera notifié et recevra le contrat signé.`;
       document.getElementById('creneauDate').textContent = cand.date_test
         ? 'Début souhaité : ' + new Date(cand.date_test).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' })
         : 'Dates à convenir';
       document.getElementById('creneauHeure').textContent = '🗓️ Horaires à convenir avec l\'employeur';
-      document.getElementById('btnConfirm').textContent = '✅ Accepter ce contrat';
+      document.getElementById('btnConfirm').textContent = '✍️ Consulter et signer le contrat en ligne';
       document.getElementById('btnDecline').textContent = 'Décliner cette proposition';
       const dl = document.getElementById('draftLink');
       dl.href = `dossier-jour-j.html?cid=${cand.id}`;
@@ -201,6 +203,12 @@
   }
 
   async function confirmerCreneau() {
+    // Contrat trimestriel : passer par la signature en ligne (accès au contrat + signature)
+    if (isContratSignable) {
+      window.location.href = `signer-contrat.html?cid=${candidatureId}`;
+      return;
+    }
+
     const btn = document.getElementById('btnConfirm');
     btn.disabled = true;
     btn.textContent = 'Confirmation en cours...';

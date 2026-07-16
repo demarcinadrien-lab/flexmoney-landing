@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Signer mon contrat — FlexMoney</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; color: #1e293b; }
+    header { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 16px 32px; display: flex; align-items: center; gap: 12px; }
+    header .logo { font-weight: 800; font-size: 20px; color: #6366f1; }
+    header .logo span { color: #1e293b; }
+    header nav { margin-left: auto; }
+    header button { background: #f1f5f9; color: #64748b; padding: 8px 16px; border-radius: 8px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+
+    .wrap { max-width: 820px; margin: 28px auto; padding: 0 20px; }
+    .state { display: none; }
+    .state.active { display: block; }
+
+    .banner { background: linear-gradient(135deg, #0f172a, #1e3a5f); color: #fff; border-radius: 16px; padding: 24px 28px; margin-bottom: 20px; }
+    .banner h1 { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+    .banner p { font-size: 14px; opacity: 0.85; }
+
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 28px; margin-bottom: 20px; }
+
+    /* Contrat à l'écran */
+    .contract { font-size: 13px; line-height: 1.6; color: #334155; }
+    .contract h2 { font-size: 15px; font-weight: 800; margin: 18px 0 6px; color: #1e293b; }
+    .contract .c-title { text-align: center; font-size: 18px; font-weight: 900; margin-bottom: 4px; }
+    .contract .c-sub { text-align: center; font-size: 12px; color: #64748b; margin-bottom: 18px; }
+    .contract .kv { margin: 3px 0; }
+    .contract .kv strong { color: #0f172a; }
+    .contract .party { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+
+    .sign-box { border: 2px dashed #c7d2fe; background: #f5f3ff; border-radius: 14px; padding: 22px; }
+    .sign-box h3 { font-size: 15px; font-weight: 800; margin-bottom: 14px; color: #4f46e5; }
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; color: #374151; }
+    .field input[type=text] { width: 100%; padding: 12px 14px; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 15px; font-family: inherit; }
+    .field input[type=text]:focus { outline: none; border-color: #6366f1; }
+    .consent { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: #374151; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; cursor: pointer; }
+    .consent input { margin-top: 3px; width: 18px; height: 18px; flex-shrink: 0; cursor: pointer; }
+    .sig-preview { font-family: 'Segoe Script', 'Brush Script MT', cursive; font-size: 26px; color: #4338ca; min-height: 40px; padding: 8px 4px; border-bottom: 2px solid #cbd5e1; margin-bottom: 4px; }
+    .sig-meta { font-size: 11px; color: #94a3b8; margin-bottom: 16px; }
+
+    .btn-sign { width: 100%; padding: 14px; background: #16a34a; color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 800; cursor: pointer; transition: background .2s; }
+    .btn-sign:disabled { background: #cbd5e1; cursor: not-allowed; }
+    .btn-sign:not(:disabled):hover { background: #15803d; }
+
+    .info { font-size: 12px; color: #64748b; margin-top: 12px; text-align: center; }
+    .loading, .msg { text-align: center; padding: 60px 20px; color: #64748b; }
+    .msg .big { font-size: 44px; margin-bottom: 14px; }
+    .success-icon { font-size: 56px; text-align: center; margin-bottom: 12px; }
+    .btn-primary { display: inline-block; padding: 12px 22px; background: #6366f1; color: #fff; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 14px; }
+    .btn-outline { display:inline-block; padding: 12px 22px; background:#fff; color:#4f46e5; border:1.5px solid #c7d2fe; border-radius:10px; text-decoration:none; font-weight:700; font-size:14px; }
+    .center { text-align: center; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Flex<span>Money</span></div>
+  <nav><button onclick="signOut()">Déconnexion</button></nav>
+</header>
+
+<div class="wrap">
+  <!-- Chargement -->
+  <div class="state active" id="stLoading">
+    <div class="loading">⏳ Chargement de votre contrat...</div>
+  </div>
+
+  <!-- Erreur -->
+  <div class="state" id="stError">
+    <div class="msg"><div class="big">🚫</div><p id="errorMsg">Contrat introuvable.</p></div>
+  </div>
+
+  <!-- Déjà signé -->
+  <div class="state" id="stAlready">
+    <div class="card center">
+      <div class="success-icon">✅</div>
+      <h2 style="font-size:20px;font-weight:800;margin-bottom:8px;">Contrat déjà signé</h2>
+      <p style="color:#64748b;margin-bottom:20px;" id="alreadyMsg">Vous avez déjà signé ce contrat.</p>
+      <a class="btn-primary" id="alreadyLink" href="#" target="_blank">📄 Ouvrir mon contrat signé</a>
+    </div>
+  </div>
+
+  <!-- Signature -->
+  <div class="state" id="stSign">
+    <div class="banner">
+      <h1>✍️ Signature de votre contrat flexi-job</h1>
+      <p id="bannerSub">Relisez votre contrat puis signez-le en ligne.</p>
+    </div>
+
+    <div class="card">
+      <div class="contract" id="contractView"></div>
+    </div>
+
+    <div class="card">
+      <div class="sign-box">
+        <h3>✍️ Signature électronique</h3>
+        <div class="field">
+          <label>Votre nom et prénom (signature) *</label>
+          <input type="text" id="signName" placeholder="Prénom Nom" oninput="onSignInput()">
+        </div>
+        <label class="consent">
+          <input type="checkbox" id="consent" onchange="onSignInput()">
+          <span>Je soussigné(e), certifie mon identité, avoir lu et compris l'intégralité du contrat ci-dessus, et je l'accepte et le signe électroniquement. Cette signature électronique a valeur légale (eIDAS — signature électronique simple).</span>
+        </label>
+
+        <div class="sig-preview" id="sigPreview"></div>
+        <div class="sig-meta" id="sigMeta">Signature — date et heure ajoutées automatiquement.</div>
+
+        <button class="btn-sign" id="btnSign" disabled onclick="signerContrat()">🔒 Signer et transmettre le contrat</button>
+        <div class="info">Une fois signé, votre employeur reçoit une notification et le contrat signé (PDF) dans votre dossier.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Succès -->
+  <div class="state" id="stSuccess">
+    <div class="card center">
+      <div class="success-icon">🎉</div>
+      <h2 style="font-size:22px;font-weight:800;margin-bottom:8px;">Contrat signé !</h2>
+      <p style="color:#64748b;margin-bottom:8px;">Votre contrat a été signé et transmis à l'employeur.</p>
+      <p style="color:#64748b;margin-bottom:24px;font-size:14px;">Un email de notification lui a été envoyé, et le contrat signé est disponible dans votre dossier.</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <a class="btn-primary" id="successPdf" href="#" target="_blank">📄 Télécharger mon contrat signé</a>
+        <a class="btn-outline" href="dashboard-travailleur.html">Aller à mon espace →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="shared.js"></script>
+<script>
+  const EJS_TPL_EMPLOYEUR = 'template_0hbqgjd'; // template employeur (générique) — vérifié dans EmailJS
+  const BUCKET = 'contrats-signes';
+
+  const params = new URLSearchParams(window.location.search);
+  const cid = params.get('cid');
+
+  let cand = null, mission = null, employer = null, worker = null, C = null;
+
+  function show(id) {
+    document.querySelectorAll('.state').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+  function erreur(msg) { document.getElementById('errorMsg').textContent = msg; show('stError'); }
+  const esc = s => (s == null ? '' : String(s)).replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
+  const fmtDate = d => d ? new Date(d).toLocaleDateString('fr-BE', { day: '2-digit', month: 'long', year: 'numeric' }) : '________________';
+
+  async function init() {
+    if (!cid) { erreur("Lien invalide : aucun contrat spécifié."); return; }
+
+    // Authentification obligatoire pour signer
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) {
+      const next = encodeURIComponent('signer-contrat.html?cid=' + cid);
+      window.location.replace('auth.html?next=' + next);
+      return;
+    }
+
+    // Charger la candidature (le contrat proposé)
+    const { data: c } = await sb.from('candidatures').select('*').eq('id', cid).single();
+    if (!c) { erreur("Ce contrat est introuvable ou a été supprimé."); return; }
+    cand = c;
+
+    // Sécurité : seul le travailleur destinataire peut signer
+    const userEmail = (session.user.email || '').toLowerCase();
+    if (cand.worker_email && cand.worker_email.toLowerCase() !== userEmail) {
+      erreur("Ce contrat ne vous est pas destiné. Connectez-vous avec le compte du travailleur concerné (" + cand.worker_email + ").");
+      return;
+    }
+
+    // Déjà signé ?
+    if (cand.contrat_signe_le) {
+      document.getElementById('alreadyMsg').textContent =
+        `Vous avez signé ce contrat le ${new Date(cand.contrat_signe_le).toLocaleDateString('fr-BE')}.`;
+      const link = document.getElementById('alreadyLink');
+      if (cand.contrat_signe_url) link.href = cand.contrat_signe_url; else link.style.display = 'none';
+      show('stAlready');
+      return;
+    }
+
+    // Charger mission, employeur, profil travailleur
+    if (cand.mission_id) {
+      const { data: m } = await sb.from('missions').select('*').eq('id', cand.mission_id).single();
+      mission = m || null;
+    }
+    if (mission?.email_employeur) {
+      const { data: e } = await sb.from('employers_inscription').select('*').eq('email_contact', mission.email_employeur).limit(1);
+      employer = (e && e[0]) || null;
+    }
+    const { data: w } = await sb.from('workers_inscription').select('*').eq('email', cand.worker_email).order('created_at', { ascending: false }).limit(1);
+    worker = (w && w[0]) || null;
+
+    C = buildContractData();
+    document.getElementById('contractView').innerHTML = renderContractHTML(C);
+    document.getElementById('bannerSub').textContent =
+      `${C.entreprise} vous propose un contrat flexi-job « ${C.fonction} ». Relisez-le puis signez-le ci-dessous.`;
+    document.getElementById('signName').value = `${cand.worker_prenom || worker?.prenom || ''} ${cand.worker_nom || worker?.nom || ''}`.trim();
+    onSignInput();
+    show('stSign');
+  }
+
+  function buildContractData() {
+    const villeW = [worker?.code_postal, worker?.ville].filter(Boolean).join(' ');
+    const siege = [employer?.adresse, employer?.code_postal, employer?.ville].filter(Boolean).join(', ');
+    const rep = employer ? `${employer.prenom_contact || ''} ${employer.nom_contact || ''}`.trim() : '';
+    return {
+      entreprise: employer?.nom_entreprise || mission?.nom_entreprise || '________________',
+      bce: employer?.numero_bce || '________________',
+      siege: siege || '________________',
+      representant: rep || '________________',
+      cp: employer?.commission_paritaire || '________________',
+      wNom: `${cand.worker_prenom || worker?.prenom || ''} ${cand.worker_nom || worker?.nom || ''}`.trim() || '________________',
+      wDdn: worker?.date_naissance ? fmtDate(worker.date_naissance) : '________________',
+      wAdresse: villeW || '________________',
+      wStatut: worker?.statut_eligibilite || worker?.regime_travail || '4/5e minimum',
+      fonction: mission?.fonction || mission?.titre || 'Mission flexi-job',
+      description: mission?.description || cand.message || '',
+      lieu: mission?.lieu === 'remote' ? 'Télétravail (domicile du travailleur)' : (mission?.adresse_lieu || 'Au siège de l\'employeur'),
+      dateDebut: fmtDate(mission?.date_debut),
+      dateFin: fmtDate(mission?.date_fin),
+      taux: mission?.taux_horaire != null ? `${mission.taux_horaire} €/h` : '________________'
+    };
+  }
+
+  function renderContractHTML(C) {
+    return `
+      <div class="c-title">CONTRAT DE TRAVAIL FLEXI-JOB</div>
+      <div class="c-sub">Conforme à la loi du 24 décembre 2016 relative au flexi-job, modifiée par la loi du 12 mai 2026</div>
+
+      <h2>Article 1 — Parties</h2>
+      <div class="party">
+        <div class="kv"><strong>L'EMPLOYEUR</strong></div>
+        <div class="kv">Dénomination : ${esc(C.entreprise)}</div>
+        <div class="kv">BCE : ${esc(C.bce)}</div>
+        <div class="kv">Siège social : ${esc(C.siege)}</div>
+        <div class="kv">Représenté par : ${esc(C.representant)}</div>
+        <div class="kv">Commission paritaire : ${esc(C.cp)}</div>
+      </div>
+      <div class="party">
+        <div class="kv"><strong>LE TRAVAILLEUR FLEXI</strong></div>
+        <div class="kv">Nom et prénom : ${esc(C.wNom)}</div>
+        <div class="kv">Date de naissance : ${esc(C.wDdn)}</div>
+        <div class="kv">Adresse : ${esc(C.wAdresse)}</div>
+        <div class="kv">Statut principal : ${esc(C.wStatut)}</div>
+      </div>
+
+      <h2>Article 2 — Objet et nature</h2>
+      <p>Le présent contrat est un <strong>contrat de travail flexi-job</strong> à durée déterminée. Le travailleur déclare remplir les conditions légales d'éligibilité au régime flexi-job et être occupé à ${esc(C.wStatut)} chez son employeur principal.</p>
+
+      <h2>Article 3 — Mission et lieu</h2>
+      <p class="kv">Fonction : <strong>${esc(C.fonction)}</strong></p>
+      ${C.description ? `<p class="kv">Description : ${esc(C.description)}</p>` : ''}
+      <p class="kv">Lieu de travail : ${esc(C.lieu)}</p>
+
+      <h2>Article 4 — Durée</h2>
+      <p>Le contrat est conclu du <strong>${esc(C.dateDebut)}</strong> au <strong>${esc(C.dateFin)}</strong>. Les journées de travail sont proposées à l'intérieur de cette période.</p>
+
+      <h2>Article 5 — Rémunération</h2>
+      <p>Le taux horaire brut flexi est de <strong>${esc(C.taux)}</strong>, incluant le pécule de vacances flexi (7,67 %), conformément à la législation. Aucune commission n'est prélevée par FlexMoney.</p>
+
+      <h2>Article 6 — Dispositions légales</h2>
+      <p>Une déclaration Dimona FLX est effectuée par l'employeur avant chaque prestation. Le contrat est régi par la loi belge relative au travail flexi-job. Pour tout litige, les tribunaux du travail compétents sont ceux du lieu de travail.</p>
+    `;
+  }
+
+  function onSignInput() {
+    const name = document.getElementById('signName').value.trim();
+    const consent = document.getElementById('consent').checked;
+    document.getElementById('sigPreview').textContent = name;
+    document.getElementById('sigMeta').textContent = name
+      ? `Signé électroniquement par ${name} — ${new Date().toLocaleString('fr-BE')}`
+      : 'Signature — date et heure ajoutées automatiquement.';
+    document.getElementById('btnSign').disabled = !(name.length > 2 && consent);
+  }
+
+  function genererPDF(signName, signedAt) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const M = 56, W = 595 - M * 2; let y = M;
+    const line = (txt, opts = {}) => {
+      const size = opts.size || 10, style = opts.style || 'normal', gap = opts.gap != null ? opts.gap : 4;
+      doc.setFont('helvetica', style); doc.setFontSize(size);
+      if (opts.color) doc.setTextColor(...opts.color); else doc.setTextColor(30, 41, 59);
+      const lines = doc.splitTextToSize(txt, W);
+      lines.forEach(l => {
+        if (y > 780) { doc.addPage(); y = M; }
+        const x = opts.center ? 297.5 : M;
+        doc.text(l, x, y, opts.center ? { align: 'center' } : undefined);
+        y += size + gap;
+      });
+    };
+    const h = (t) => { y += 6; line(t, { size: 11, style: 'bold' }); y += 1; };
+
+    line('CONTRAT DE TRAVAIL FLEXI-JOB', { size: 15, style: 'bold', center: true, gap: 3 });
+    line('Conforme à la loi du 24 décembre 2016, modifiée par la loi du 12 mai 2026', { size: 8, center: true, color: [100, 116, 139] });
+    y += 8;
+
+    h('Article 1 — Parties');
+    line('L\'EMPLOYEUR', { style: 'bold', size: 10 });
+    line(`Dénomination : ${C.entreprise}`); line(`BCE : ${C.bce}`); line(`Siège social : ${C.siege}`);
+    line(`Représenté par : ${C.representant}`); line(`Commission paritaire : ${C.cp}`);
+    y += 4;
+    line('LE TRAVAILLEUR FLEXI', { style: 'bold', size: 10 });
+    line(`Nom et prénom : ${C.wNom}`); line(`Date de naissance : ${C.wDdn}`);
+    line(`Adresse : ${C.wAdresse}`); line(`Statut principal : ${C.wStatut}`);
+
+    h('Article 2 — Objet et nature');
+    line(`Contrat de travail flexi-job à durée déterminée. Le travailleur déclare remplir les conditions d'éligibilité au régime flexi-job et être occupé à ${C.wStatut} chez son employeur principal.`);
+    h('Article 3 — Mission et lieu');
+    line(`Fonction : ${C.fonction}`);
+    if (C.description) line(`Description : ${C.description}`);
+    line(`Lieu de travail : ${C.lieu}`);
+    h('Article 4 — Durée');
+    line(`Du ${C.dateDebut} au ${C.dateFin}. Les journées de travail sont proposées à l'intérieur de cette période.`);
+    h('Article 5 — Rémunération');
+    line(`Taux horaire brut flexi : ${C.taux}, incluant le pécule de vacances flexi (7,67 %). Aucune commission FlexMoney n'est prélevée.`);
+    h('Article 6 — Dispositions légales');
+    line('Déclaration Dimona FLX effectuée par l\'employeur avant chaque prestation. Contrat régi par la loi belge flexi-job.');
+
+    y += 14;
+    doc.setDrawColor(203, 213, 225); doc.line(M, y, M + W, y); y += 16;
+    line('SIGNATURE ÉLECTRONIQUE DU TRAVAILLEUR', { style: 'bold', size: 10, color: [79, 70, 229] });
+    line(`Signé par : ${signName}`, { size: 10 });
+    line(`Date et heure : ${signedAt.toLocaleString('fr-BE')}`, { size: 10 });
+    line('Signature électronique simple (eIDAS) apposée en ligne via FlexMoney, avec consentement explicite du travailleur.', { size: 8, color: [100, 116, 139] });
+    line(`Référence : ${cid}`, { size: 8, color: [148, 163, 184] });
+
+    return doc.output('blob');
+  }
+
+  async function signerContrat() {
+    const btn = document.getElementById('btnSign');
+    const name = document.getElementById('signName').value.trim();
+    if (name.length < 3 || !document.getElementById('consent').checked) return;
+    btn.disabled = true; btn.textContent = '⏳ Signature en cours...';
+
+    try {
+      const signedAt = new Date();
+      const blob = genererPDF(name, signedAt);
+      const path = `${cid}.pdf`;
+
+      // Upload du PDF signé dans le bucket
+      const { error: upErr } = await sb.storage.from(BUCKET).upload(path, blob, { contentType: 'application/pdf', upsert: true });
+      if (upErr) throw upErr;
+      const publicUrl = sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+
+      // Mise à jour de la candidature
+      const { error: updErr } = await sb.from('candidatures').update({
+        contrat_signe_le: signedAt.toISOString(),
+        contrat_signe_url: publicUrl,
+        contrat_signataire_nom: name,
+        statut: 'acceptee',
+        updated_at: signedAt.toISOString()
+      }).eq('id', cid);
+      if (updErr) throw updErr;
+
+      // Notification email à l'employeur (non bloquant)
+      if (mission?.email_employeur && window.emailjs) {
+        const corps =
+          `✍️ CONTRAT FLEXI-JOB SIGNÉ EN LIGNE\n` +
+          `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+          `Le travailleur ${name} a signé électroniquement le contrat.\n\n` +
+          `Fonction : ${C.fonction}\n` +
+          `Période  : ${C.dateDebut} → ${C.dateFin}\n` +
+          `Taux     : ${C.taux}\n` +
+          `Signé le : ${signedAt.toLocaleString('fr-BE')}\n\n` +
+          `📄 Contrat signé (PDF) : ${publicUrl}\n\n` +
+          `Vous le retrouvez aussi dans « Mes travailleurs » › fiche du travailleur › Documents signés reçus.`;
+        try {
+          await emailjs.send(EJS_SERVICE_ID, EJS_TPL_EMPLOYEUR, {
+            to_email: mission.email_employeur,
+            to_name: C.entreprise,
+            prenom: C.representant || C.entreprise,
+            entreprise: C.entreprise,
+            bce: 'Contrat signé',
+            secteur: corps
+          });
+        } catch (e) { console.log('Email employeur non bloquant', e); }
+      }
+
+      document.getElementById('successPdf').href = publicUrl;
+      show('stSuccess');
+    } catch (e) {
+      console.error(e);
+      alert("La signature n'a pas pu être enregistrée : " + (e.message || e) + "\nRéessayez dans un instant.");
+      btn.disabled = false; btn.textContent = '🔒 Signer et transmettre le contrat';
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>
