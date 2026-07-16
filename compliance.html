@@ -341,6 +341,13 @@
 
   /* ===== INIT ===== */
   async function init() {
+    // Connexion obligatoire (données sensibles : NISS, IBAN)
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) {
+      const next = encodeURIComponent('compliance.html' + window.location.search);
+      window.location.replace('auth.html?next=' + next);
+      return;
+    }
     if (candidatureId) {
       const { data: cand } = await sb.from('candidatures').select('*').eq('id', candidatureId).single();
       if (cand) {

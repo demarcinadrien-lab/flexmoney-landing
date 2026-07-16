@@ -177,6 +177,14 @@
   async function init() {
     if (!candidatureId) { loadDemo(); return; }
 
+    // Connexion obligatoire (dossier contenant des données personnelles)
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) {
+      const next = encodeURIComponent('dossier-jour-j.html' + window.location.search);
+      window.location.replace('auth.html?next=' + next);
+      return;
+    }
+
     // Charger candidature
     const { data: cand } = await sb.from('candidatures').select('*').eq('id', candidatureId).single();
     D.cand = cand;

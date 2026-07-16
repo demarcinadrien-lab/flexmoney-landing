@@ -218,6 +218,14 @@
       return;
     }
 
+    // Connexion obligatoire (déclaration d'heures liée à une prestation réelle)
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) {
+      const next = encodeURIComponent('declaration-heures.html' + window.location.search);
+      window.location.replace('auth.html?next=' + next);
+      return;
+    }
+
     const { data: cand } = await sb.from('candidatures').select('*').eq('id', candidatureId).single();
     candidatureData = cand;
 

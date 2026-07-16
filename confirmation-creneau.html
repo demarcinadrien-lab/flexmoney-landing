@@ -133,6 +133,14 @@
       return;
     }
 
+    // Connexion obligatoire (accès réservé au travailleur destinataire)
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) {
+      const next = encodeURIComponent('confirmation-creneau.html' + window.location.search);
+      window.location.replace('auth.html?next=' + next);
+      return;
+    }
+
     const { data: cand } = await sb.from('candidatures').select('*').eq('id', candidatureId).single();
     if (!cand) {
       showState('errorState');
