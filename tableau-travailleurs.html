@@ -57,8 +57,26 @@
 
     .worker-location { font-size: 13px; color: #64748b; margin-bottom: 10px; }
 
+    .domaine-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+    .domaine-tag { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 8px; }
     .chips-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 14px; }
     .w-chip { font-size: 11px; padding: 3px 8px; background: #f0f0ff; color: #6366f1; border-radius: 8px; font-weight: 600; }
+
+    /* Fiche profil détaillée */
+    .profile-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+    .profile-header .avatar { width: 60px; height: 60px; font-size: 22px; }
+    .profile-name { font-size: 20px; font-weight: 800; }
+    .profile-meta { font-size: 13px; color: #64748b; margin-top: 2px; }
+    .profile-section { margin-bottom: 20px; }
+    .profile-section h4 { font-size: 12px; font-weight: 700; color: #6366f1; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+    .profile-presentation { font-size: 14px; line-height: 1.5; color: #374151; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; white-space: pre-wrap; }
+    .dispo-day { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .dispo-day-name { font-size: 13px; font-weight: 700; color: #1e293b; width: 42px; flex-shrink: 0; }
+    .dispo-slots { display: flex; flex-wrap: wrap; gap: 5px; }
+    .dispo-slot-tag { font-size: 11px; font-weight: 600; background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; border-radius: 8px; padding: 2px 9px; }
+    .sub-domaine-block { margin-bottom: 12px; }
+    .sub-domaine-title { font-size: 12px; font-weight: 700; margin-bottom: 6px; }
+    .empty-info { font-size: 13px; color: #94a3b8; font-style: italic; }
 
     .dispo-row { font-size: 12px; color: #64748b; margin-bottom: 14px; }
     .dispo-tag { display: inline-block; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 2px 7px; margin: 2px; font-size: 11px; }
@@ -125,17 +143,17 @@
     </div>
 
     <div class="filter-group">
-      <label>Ville / Région</label>
-      <input type="text" id="villeFilter" placeholder="Bruxelles, Liège..." oninput="applyFilters()">
+      <label>Ville — tri par proximité</label>
+      <select id="villeFilter" onchange="applyFilters()"></select>
     </div>
 
     <div class="filter-group">
       <label>Disponibilité télétravail</label>
       <select id="teletravailFilter" onchange="applyFilters()">
         <option value="">Tous</option>
-        <option value="oui">🏠 Télétravail uniquement</option>
-        <option value="hybride">🔄 Hybride</option>
-        <option value="non">🏢 Sur place</option>
+        <option value="teletravail">🏠 Télétravail uniquement</option>
+        <option value="mixte">🔄 Mixte</option>
+        <option value="presentiel">🏢 Présentiel</option>
       </select>
     </div>
 
@@ -155,6 +173,39 @@
     </div>
     <div class="workers-grid" id="workersList">
       <div class="loading" style="grid-column:1/-1;">⏳ Chargement des profils...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal fiche profil -->
+<div class="modal-overlay hidden" id="profileOverlay">
+  <div class="modal">
+    <div class="profile-header">
+      <div class="avatar" id="profileAvatar">?</div>
+      <div>
+        <div class="profile-name" id="profileName">—</div>
+        <div class="profile-meta" id="profileMeta">—</div>
+      </div>
+    </div>
+
+    <div class="profile-section">
+      <h4>🎯 Domaines & sous-domaines</h4>
+      <div id="profileDomaines"></div>
+    </div>
+
+    <div class="profile-section">
+      <h4>📅 Disponibilités récurrentes</h4>
+      <div id="profileDispos"></div>
+    </div>
+
+    <div class="profile-section">
+      <h4>💬 Présentation</h4>
+      <div id="profilePresentation"></div>
+    </div>
+
+    <div class="modal-buttons">
+      <button class="btn-cancel" onclick="closeProfile()">Fermer</button>
+      <button class="btn-send" id="profileContactBtn">Contacter ce profil →</button>
     </div>
   </div>
 </div>
@@ -216,6 +267,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="competences.js"></script>
+<script src="villes.js"></script>
 <script src="shared.js"></script>
 <script>
   const EJS_TPL_PROPOSITION = 'template_lk3kj9n'; // proposition de créneau au travailleur
@@ -250,7 +302,15 @@
       FLEXMONEY_SECTEURS.map(s => `<option value="${s.id}">${s.label}</option>`).join('');
   }
 
-  document.addEventListener('DOMContentLoaded', initSecteurFilter);
+  // Liste déroulante des villes — Wallonie uniquement
+  function initVilleFilter() {
+    const sel = document.getElementById('villeFilter');
+    if (!sel || typeof TOUTES_VILLES_WALLONIE === 'undefined') return;
+    sel.innerHTML = `<option value="">Sans tri géographique</option>` +
+      TOUTES_VILLES_WALLONIE.map(v => `<option value="${v}">${v}</option>`).join('');
+  }
+
+  document.addEventListener('DOMContentLoaded', () => { initSecteurFilter(); initVilleFilter(); });
 
   document.getElementById('contactDate').min = new Date().toISOString().split('T')[0];
 
@@ -272,27 +332,94 @@
       return true;
     });
 
-    const remoteCount = allWorkers.filter(w => w.teletravail_preference === 'oui' || w.teletravail_preference === 'uniquement').length;
+    const remoteCount = allWorkers.filter(w => normTele(w.teletravail_preference) === 'teletravail').length;
     document.getElementById('statWorkers').textContent = allWorkers.length;
     document.getElementById('statRemote').textContent = remoteCount;
     applyFilters();
   }
 
+  // Retrouve le nom de ville de référence correspondant à la ville d'un profil
+  // (gère les variantes du type "Liège (4000)" ou "liège").
+  function villeReference(villeProfil) {
+    if (!villeProfil || typeof VILLES_BELGIQUE === 'undefined') return null;
+    const v = villeProfil.toLowerCase();
+    const found = VILLES_BELGIQUE.find(x => v.includes(x.nom.toLowerCase()));
+    return found ? found.nom : null;
+  }
+
+  // Normalise la préférence de lieu (valeurs d'inscription + valeurs héritées)
+  // vers : 'teletravail' | 'mixte' | 'presentiel'
+  function normTele(pref) {
+    if (['teletravail', 'oui', 'uniquement'].includes(pref)) return 'teletravail';
+    if (['presentiel', 'non', 'sur place'].includes(pref)) return 'presentiel';
+    return 'mixte'; // mixte, hybride, ou non renseigné
+  }
+  function teleLabel(pref) {
+    const n = normTele(pref);
+    return n === 'teletravail' ? '🏠 Télétravail' : (n === 'presentiel' ? '🏢 Présentiel' : '🔄 Mixte');
+  }
+
+  // Domaines (secteurs) distincts couverts par les compétences d'un profil
+  function domainesDuProfil(w) {
+    if (typeof getSecteurDeCompetence !== 'function') return [];
+    const seen = new Set(); const out = [];
+    (w.competences || []).forEach(c => {
+      const s = getSecteurDeCompetence(c);
+      if (s && !seen.has(s.id)) { seen.add(s.id); out.push(s); }
+    });
+    return out;
+  }
+
+  // Normalise les disponibilités (array ["Lun-Matin", ...] ou objet {"Lun-Matin":true})
+  // en un tableau de créneaux sélectionnés.
+  function dispoListe(dispos) {
+    if (!dispos) return [];
+    if (Array.isArray(dispos)) return dispos;
+    return Object.keys(dispos).filter(k => dispos[k]);
+  }
+
+  // Regroupe les créneaux "Jour-Slot" par jour, dans l'ordre de la semaine.
+  function dispoParJour(dispos) {
+    const ordreJours = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+    const ordreSlots = ['Matin','Après-midi','Soir'];
+    const map = {};
+    dispoListe(dispos).forEach(k => {
+      const [j, ...rest] = k.split('-');
+      const slot = rest.join('-');
+      (map[j] = map[j] || []).push(slot);
+    });
+    return ordreJours
+      .filter(j => map[j])
+      .map(j => ({ jour: j, slots: ordreSlots.filter(s => map[j].includes(s)) }));
+  }
+
   function applyFilters() {
     const search = document.getElementById('searchInput').value.toLowerCase();
-    const ville = document.getElementById('villeFilter').value.toLowerCase();
+    const ville = document.getElementById('villeFilter').value; // ville wallonne de référence (tri par proximité)
     const teletravail = document.getElementById('teletravailFilter').value;
     const secteurId = document.getElementById('secteurFilter').value;
     const secteur = secteurId ? FLEXMONEY_SECTEURS.find(s => s.id === secteurId) : null;
 
+    // 1) Filtrage : recherche libre, disponibilité télétravail et domaine de compétences
     let filtered = allWorkers.filter(w => {
       const comps = (w.competences || []).join(' ').toLowerCase();
       const matchSearch = !search || comps.includes(search) || (w.prenom + ' ' + w.nom).toLowerCase().includes(search);
-      const matchVille = !ville || (w.ville || '').toLowerCase().includes(ville);
-      const matchTele = !teletravail || w.teletravail_preference === teletravail || (teletravail === 'oui' && w.teletravail_preference === 'uniquement');
+      const matchTele = !teletravail || normTele(w.teletravail_preference) === teletravail;
       const matchSecteur = !secteur || (w.competences || []).some(c => secteur.competences.includes(c));
-      return matchSearch && matchVille && matchTele && matchSecteur;
+      return matchSearch && matchTele && matchSecteur;
     });
+
+    // 2) Tri : si une ville est choisie, du profil le plus proche au plus éloigné
+    if (ville && typeof distanceVilles === 'function') {
+      filtered = filtered
+        .map(w => {
+          const ref = villeReference(w.ville);
+          const dist = ref ? distanceVilles(ville, ref) : Infinity;
+          return { w, dist };
+        })
+        .sort((a, b) => a.dist - b.dist)
+        .map(x => x.w);
+    }
 
     document.getElementById('countLabel').textContent = `${filtered.length} profil${filtered.length !== 1 ? 's' : ''}`;
     renderWorkers(filtered);
@@ -305,14 +432,24 @@
       return;
     }
 
+    const villeRef = document.getElementById('villeFilter').value;
+
     container.innerHTML = workers.map(w => {
       const initials = ((w.prenom || '?')[0] + (w.nom || '?')[0]).toUpperCase();
       const comps = (w.competences || []).slice(0, 5);
-      const dispos = w.disponibilites ? Object.keys(w.disponibilites).filter(k => w.disponibilites[k]).slice(0, 3) : [];
-      const tauxMin = getTauxMin(comps);
+      const domaines = domainesDuProfil(w);
+      const tauxMin = getTauxMin(w.competences || []);
+
+      // Distance au point de recherche (si une ville est sélectionnée)
+      let distLabel = '';
+      if (villeRef && typeof distanceVilles === 'function') {
+        const ref = villeReference(w.ville);
+        const d = ref ? distanceVilles(villeRef, ref) : Infinity;
+        if (isFinite(d)) distLabel = ref === villeRef ? ' · <strong>même ville</strong>' : ` · ~${Math.round(d)} km de ${villeRef}`;
+      }
 
       return `
-        <div class="worker-card" onclick="openModal('${w.id}', '${(w.prenom + ' ' + w.nom).replace(/'/g,"\\'")}')">
+        <div class="worker-card" onclick="openProfile('${w.id}')">
           <div class="worker-top">
             <div class="avatar">${initials}</div>
             <div>
@@ -321,12 +458,12 @@
               ${w.eligible ? '<div class="badge-eligible">✅ Éligible flexi</div>' : ''}
             </div>
           </div>
-          <div class="worker-location">📍 ${w.ville || '—'} · ${w.teletravail_preference === 'oui' || w.teletravail_preference === 'uniquement' ? '🏠 Télétravail' : '🔄 Hybride'}</div>
+          ${domaines.length ? `<div class="domaine-row">${domaines.map(d => `<span class="domaine-tag" style="background:${d.bg};color:${d.couleur};">${d.label}</span>`).join('')}</div>` : ''}
+          <div class="worker-location">📍 ${w.ville || '—'} · ${teleLabel(w.teletravail_preference)}${distLabel}</div>
           ${comps.length ? `<div class="chips-row">${comps.map(c => `<span class="w-chip">${c}</span>`).join('')}</div>` : ''}
-          ${dispos.length ? `<div class="dispo-row">📅 Dispo : ${dispos.map(d => `<span class="dispo-tag">${d}</span>`).join('')}</div>` : ''}
           <div class="worker-footer">
             <span class="taux-range">~${tauxMin}–${tauxMin+8} €/h</span>
-            <button class="btn-contact" onclick="event.stopPropagation();openModal('${w.id}', '${(w.prenom + ' ' + w.nom).replace(/'/g,"\\'")}')">Contacter →</button>
+            <button class="btn-contact" onclick="event.stopPropagation();openProfile('${w.id}')">Voir le profil →</button>
           </div>
         </div>
       `;
@@ -337,6 +474,59 @@
     if (comps.some(c => ['Audit','Bilan annuel','Payroll'].includes(c))) return 25;
     if (comps.some(c => ['Comptabilité','TVA','IT / Développement'].includes(c))) return 20;
     return 17;
+  }
+
+  function openProfile(id) {
+    const w = allWorkers.find(x => String(x.id) === String(id));
+    if (!w) return;
+    const fullName = `${w.prenom || ''} ${w.nom || ''}`.trim();
+
+    document.getElementById('profileAvatar').textContent = ((w.prenom || '?')[0] + (w.nom || '?')[0]).toUpperCase();
+    document.getElementById('profileName').textContent = `${w.prenom || ''} ${(w.nom || '')[0] || ''}.`;
+    document.getElementById('profileMeta').textContent =
+      `${w.regime_travail || 'Salarié 4/5e'} · 📍 ${w.ville || '—'} · ${teleLabel(w.teletravail_preference)}`;
+
+    // Domaines + sous-domaines cochés
+    const domaines = domainesDuProfil(w);
+    const domEl = document.getElementById('profileDomaines');
+    if (!domaines.length) {
+      domEl.innerHTML = `<p class="empty-info">Aucun domaine renseigné.</p>`;
+    } else {
+      domEl.innerHTML = domaines.map(d => {
+        const sous = (w.competences || []).filter(c => d.competences.includes(c));
+        return `
+          <div class="sub-domaine-block">
+            <div class="sub-domaine-title" style="color:${d.couleur};">${d.label}</div>
+            <div class="chips-row">${sous.map(c => `<span class="w-chip" style="background:${d.bg};color:${d.couleur};">${c}</span>`).join('')}</div>
+          </div>`;
+      }).join('');
+    }
+
+    // Disponibilités récurrentes (jours de préférence encodés à l'inscription)
+    const jours = dispoParJour(w.disponibilites);
+    const dispoEl = document.getElementById('profileDispos');
+    dispoEl.innerHTML = jours.length
+      ? jours.map(j => `
+          <div class="dispo-day">
+            <span class="dispo-day-name">${j.jour}</span>
+            <div class="dispo-slots">${j.slots.map(s => `<span class="dispo-slot-tag">${s}</span>`).join('')}</div>
+          </div>`).join('')
+      : `<p class="empty-info">Aucune disponibilité renseignée.</p>`;
+
+    // Présentation
+    const presEl = document.getElementById('profilePresentation');
+    presEl.innerHTML = w.presentation
+      ? `<div class="profile-presentation">${w.presentation.replace(/</g, '&lt;')}</div>`
+      : `<p class="empty-info">Ce travailleur n'a pas encore rédigé de présentation.</p>`;
+
+    // Bouton contacter → ouvre le formulaire de proposition
+    document.getElementById('profileContactBtn').onclick = () => { closeProfile(); openModal(w.id, fullName); };
+
+    document.getElementById('profileOverlay').classList.remove('hidden');
+  }
+
+  function closeProfile() {
+    document.getElementById('profileOverlay').classList.add('hidden');
   }
 
   function openModal(id, name) {
