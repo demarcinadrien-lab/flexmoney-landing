@@ -134,6 +134,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="contrat-modele.js"></script>
 <script src="shared.js"></script>
 <script>
   const EJS_TPL_EMPLOYEUR = 'template_0hbqgjd'; // template employeur (générique) — vérifié dans EmailJS
@@ -142,7 +143,8 @@
   const params = new URLSearchParams(window.location.search);
   const cid = params.get('cid');
 
-  let cand = null, mission = null, employer = null, worker = null, C = null;
+  let cand = null, mission = null, employer = null, worker = null, cadre = null, C = null;
+  let trimTexte = '', cadreTexte = '', cadreASigner = false;
 
   function show(id) {
     document.querySelectorAll('.state').forEach(s => s.classList.remove('active'));
@@ -197,13 +199,37 @@
     const { data: w } = await sb.from('workers_inscription').select('*').eq('email', cand.worker_email).order('created_at', { ascending: false }).limit(1);
     worker = (w && w[0]) || null;
 
+    // Contrat-cadre lié (à signer une seule fois)
+    if (cand.cadre_id) {
+      const { data: k } = await sb.from('contrats_cadre').select('*').eq('id', cand.cadre_id).single();
+      cadre = k || null;
+    }
+    cadreASigner = !!(cadre && !cadre.signe_le);
+
     C = buildContractData();
-    document.getElementById('contractView').innerHTML = renderContractHTML(C);
-    document.getElementById('bannerSub').textContent =
-      `${C.entreprise} vous propose un contrat flexi-job « ${C.fonction} ». Relisez-le puis signez-le ci-dessous.`;
+    // Textes : priorité au texte validé par l'employeur, sinon auto-construction
+    trimTexte = cand.contrat_texte || (typeof construireContratTrimestrielTexte === 'function' ? construireContratTrimestrielTexte(C) : 'Contrat flexi-job');
+    cadreTexte = cadreASigner ? (cadre.texte || (typeof construireContratCadreTexte === 'function' ? construireContratCadreTexte(C) : '')) : '';
+
+    renderView();
+    document.getElementById('bannerSub').textContent = cadreASigner
+      ? `${C.entreprise} vous propose un contrat-cadre + un contrat trimestriel. Relisez-les puis signez ci-dessous.`
+      : `${C.entreprise} vous propose un contrat flexi-job. Relisez-le puis signez ci-dessous.`;
     document.getElementById('signName').value = `${cand.worker_prenom || worker?.prenom || ''} ${cand.worker_nom || worker?.nom || ''}`.trim();
     onSignInput();
     show('stSign');
+  }
+
+  function renderView() {
+    const block = (t) => `<pre style="white-space:pre-wrap;font-family:inherit;font-size:13px;line-height:1.6;margin:0;">${esc(t)}</pre>`;
+    let html = '';
+    if (cadreASigner) {
+      html += `<h2 style="margin-top:0;">📘 Contrat-cadre (signé une seule fois)</h2>` + block(cadreTexte);
+      html += `<hr style="border:none;border-top:1px solid #e2e8f0;margin:22px 0;">`;
+      html += `<h2>📗 Contrat trimestriel</h2>`;
+    }
+    html += block(trimTexte);
+    document.getElementById('contractView').innerHTML = html;
   }
 
   function buildContractData() {
@@ -225,7 +251,8 @@
       lieu: mission?.lieu === 'remote' ? 'Télétravail (domicile du travailleur)' : (mission?.adresse_lieu || 'Au siège de l\'employeur'),
       dateDebut: fmtDate(mission?.date_debut),
       dateFin: fmtDate(mission?.date_fin),
-      taux: mission?.taux_horaire != null ? `${mission.taux_horaire} €/h` : '________________'
+      taux: mission?.taux_horaire != null ? `${mission.taux_horaire} €/h` : '________________',
+      cadreSigneLe: cadre?.signe_le || null
     };
   }
 
@@ -284,53 +311,43 @@
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ unit: 'pt', format: 'a4' });
     const M = 56, W = 595 - M * 2; let y = M;
-    const line = (txt, opts = {}) => {
+    const emit = (txt, opts = {}) => {
       const size = opts.size || 10, style = opts.style || 'normal', gap = opts.gap != null ? opts.gap : 4;
       doc.setFont('helvetica', style); doc.setFontSize(size);
       if (opts.color) doc.setTextColor(...opts.color); else doc.setTextColor(30, 41, 59);
       const lines = doc.splitTextToSize(txt, W);
       lines.forEach(l => {
-        if (y > 780) { doc.addPage(); y = M; }
+        if (y > 790) { doc.addPage(); y = M; }
         const x = opts.center ? 297.5 : M;
         doc.text(l, x, y, opts.center ? { align: 'center' } : undefined);
         y += size + gap;
       });
     };
-    const h = (t) => { y += 6; line(t, { size: 11, style: 'bold' }); y += 1; };
+    // Rend un texte de contrat ligne par ligne, en gras pour les titres
+    const rendreTexte = (texte) => {
+      (texte || '').split('\n').forEach(l => {
+        const t = l.trimEnd();
+        if (t === '') { y += 5; return; }
+        const bold = /^(CONTRAT|ARTICLE\s|L'EMPLOYEUR|LE TRAVAILLEUR)/.test(t);
+        emit(t, { size: bold ? 10.5 : 9.5, style: bold ? 'bold' : 'normal', gap: 3 });
+      });
+    };
 
-    line('CONTRAT DE TRAVAIL FLEXI-JOB', { size: 15, style: 'bold', center: true, gap: 3 });
-    line('Conforme à la loi du 24 décembre 2016, modifiée par la loi du 12 mai 2026', { size: 8, center: true, color: [100, 116, 139] });
-    y += 8;
-
-    h('Article 1 — Parties');
-    line('L\'EMPLOYEUR', { style: 'bold', size: 10 });
-    line(`Dénomination : ${C.entreprise}`); line(`BCE : ${C.bce}`); line(`Siège social : ${C.siege}`);
-    line(`Représenté par : ${C.representant}`); line(`Commission paritaire : ${C.cp}`);
-    y += 4;
-    line('LE TRAVAILLEUR FLEXI', { style: 'bold', size: 10 });
-    line(`Nom et prénom : ${C.wNom}`); line(`Date de naissance : ${C.wDdn}`);
-    line(`Adresse : ${C.wAdresse}`); line(`Statut principal : ${C.wStatut}`);
-
-    h('Article 2 — Objet et nature');
-    line(`Contrat de travail flexi-job à durée déterminée. Le travailleur déclare remplir les conditions d'éligibilité au régime flexi-job et être occupé à ${C.wStatut} chez son employeur principal.`);
-    h('Article 3 — Mission et lieu');
-    line(`Fonction : ${C.fonction}`);
-    if (C.description) line(`Description : ${C.description}`);
-    line(`Lieu de travail : ${C.lieu}`);
-    h('Article 4 — Durée');
-    line(`Du ${C.dateDebut} au ${C.dateFin}. Les journées de travail sont proposées à l'intérieur de cette période.`);
-    h('Article 5 — Rémunération');
-    line(`Taux horaire brut flexi : ${C.taux}, incluant le pécule de vacances flexi (7,67 %). Aucune commission FlexMoney n'est prélevée.`);
-    h('Article 6 — Dispositions légales');
-    line('Déclaration Dimona FLX effectuée par l\'employeur avant chaque prestation. Contrat régi par la loi belge flexi-job.');
+    if (cadreASigner && cadreTexte) {
+      rendreTexte(cadreTexte);
+      doc.addPage(); y = M;
+    }
+    rendreTexte(trimTexte);
 
     y += 14;
+    if (y > 720) { doc.addPage(); y = M; }
     doc.setDrawColor(203, 213, 225); doc.line(M, y, M + W, y); y += 16;
-    line('SIGNATURE ÉLECTRONIQUE DU TRAVAILLEUR', { style: 'bold', size: 10, color: [79, 70, 229] });
-    line(`Signé par : ${signName}`, { size: 10 });
-    line(`Date et heure : ${signedAt.toLocaleString('fr-BE')}`, { size: 10 });
-    line('Signature électronique simple (eIDAS) apposée en ligne via FlexMoney, avec consentement explicite du travailleur.', { size: 8, color: [100, 116, 139] });
-    line(`Référence : ${cid}`, { size: 8, color: [148, 163, 184] });
+    emit('SIGNATURE ÉLECTRONIQUE DU TRAVAILLEUR', { style: 'bold', size: 10, color: [79, 70, 229] });
+    if (cadreASigner) emit('Signature valant pour le contrat-cadre ET le contrat trimestriel ci-dessus.', { size: 8, color: [100, 116, 139] });
+    emit(`Signé par : ${signName}`, { size: 10 });
+    emit(`Date et heure : ${signedAt.toLocaleString('fr-BE')}`, { size: 10 });
+    emit('Signature électronique simple (eIDAS) apposée en ligne via FlexMoney, avec consentement explicite du travailleur.', { size: 8, color: [100, 116, 139] });
+    emit(`Référence : ${cid}`, { size: 8, color: [148, 163, 184] });
 
     return doc.output('blob');
   }
@@ -351,7 +368,7 @@
       if (upErr) throw upErr;
       const publicUrl = sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
 
-      // Mise à jour de la candidature
+      // Mise à jour de la candidature (contrat trimestriel)
       const { error: updErr } = await sb.from('candidatures').update({
         contrat_signe_le: signedAt.toISOString(),
         contrat_signe_url: publicUrl,
@@ -361,12 +378,23 @@
       }).eq('id', cid);
       if (updErr) throw updErr;
 
+      // Signature du contrat-cadre (une seule fois) — même PDF
+      if (cadreASigner && cadre?.id) {
+        try {
+          await sb.from('contrats_cadre').update({
+            signe_le: signedAt.toISOString(),
+            signe_url: publicUrl,
+            signataire_nom: name
+          }).eq('id', cadre.id);
+        } catch (e) { console.log('MAJ cadre non bloquante', e); }
+      }
+
       // Notification email à l'employeur (non bloquant)
       if (mission?.email_employeur && window.emailjs) {
         const corps =
           `✍️ CONTRAT FLEXI-JOB SIGNÉ EN LIGNE\n` +
           `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-          `Le travailleur ${name} a signé électroniquement le contrat.\n\n` +
+          `Le travailleur ${name} a signé électroniquement ${cadreASigner ? 'le contrat-cadre ET le contrat trimestriel' : 'le contrat trimestriel'}.\n\n` +
           `Fonction : ${C.fonction}\n` +
           `Période  : ${C.dateDebut} → ${C.dateFin}\n` +
           `Taux     : ${C.taux}\n` +

@@ -249,7 +249,28 @@
     </div>
     <div class="modal-buttons">
       <button class="btn-cancel" onclick="closeModal()">Annuler</button>
-      <button class="btn-send" onclick="submitContact()">Envoyer la proposition →</button>
+      <button class="btn-send" id="btnContactSend" onclick="preparerContact()">Vérifier le contrat →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal aperçu & édition du contrat avant envoi -->
+<div class="modal-overlay hidden" id="previewOverlay">
+  <div class="modal" style="max-width:720px;">
+    <h2>📄 Vérifiez le contrat avant envoi</h2>
+    <p class="sub" id="previewSub">Le contrat est pré-rempli. Vous pouvez le modifier librement avant de l'envoyer à la signature du travailleur.</p>
+
+    <div id="cadreBlock">
+      <div style="font-size:12px;font-weight:800;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin:6px 0 8px;">📘 Contrat-cadre (signé une seule fois)</div>
+      <textarea id="cadreEditor" rows="12" style="width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.5;resize:vertical;"></textarea>
+    </div>
+
+    <div style="font-size:12px;font-weight:800;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin:16px 0 8px;">📗 Contrat trimestriel</div>
+    <textarea id="trimEditor" rows="12" style="width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.5;resize:vertical;"></textarea>
+
+    <div class="modal-buttons">
+      <button class="btn-cancel" onclick="retourFormulaireContact()">← Modifier les champs</button>
+      <button class="btn-send" id="btnConfirmContrat" onclick="confirmerEnvoiContact()">Confirmer et envoyer à la signature →</button>
     </div>
   </div>
 </div>
@@ -259,6 +280,7 @@
 <script src="competences.js"></script>
 <script src="villes.js"></script>
 <script src="codes-postaux.js"></script>
+<script src="contrat-modele.js"></script>
 <script src="shared.js"></script>
 <script>
   const EJS_TPL_PROPOSITION = 'template_lk3kj9n'; // proposition de créneau au travailleur
@@ -571,7 +593,17 @@
     fin.value = plus3Mois(d);
   }
 
-  async function submitContact() {
+  let pendingContact = null;
+
+  async function cadreSigneExistant(employerEmail, workerEmail) {
+    const { data } = await sb.from('contrats_cadre').select('*')
+      .eq('employer_email', employerEmail).eq('worker_email', workerEmail)
+      .not('signe_le', 'is', null).order('signe_le', { ascending: false }).limit(1);
+    return (data && data[0]) || null;
+  }
+
+  // Étape 1 : préparer et prévisualiser le(s) contrat(s)
+  async function preparerContact() {
     const email = document.getElementById('contactEmail').value.trim();
     const ent = document.getElementById('contactEntreprise').value.trim();
     const date = document.getElementById('contactDate').value;
@@ -593,54 +625,103 @@
       return;
     }
 
-    const sendBtn = document.querySelector('.btn-send');
-    sendBtn.disabled = true;
-    sendBtn.textContent = 'Envoi en cours...';
+    const btn = document.getElementById('btnContactSend');
+    btn.disabled = true; btn.textContent = 'Préparation...';
 
     const comps = worker.competences || [];
     const secteurObj = typeof getSecteurDeCompetence === 'function' ? getSecteurDeCompetence(comps[0]) : null;
     const titre = desc ? desc.slice(0, 60) : `Contrat flexi-job — ${worker.prenom} ${worker.nom}`;
 
+    const existingCadre = await cadreSigneExistant(email, worker.email);
+
+    const rep = employerProfile ? `${employerProfile.prenom_contact || ''} ${employerProfile.nom_contact || ''}`.trim() : '';
+    const D = {
+      entreprise: ent || employerProfile?.nom_entreprise || '—',
+      bce: employerProfile?.numero_bce || '',
+      siege: siegeAdr, representant: rep, cp: employerProfile?.commission_paritaire || '',
+      wNom: `${worker.prenom || ''} ${worker.nom || ''}`.trim(),
+      wDdn: worker.date_naissance || '',
+      wAdresse: [worker.code_postal, worker.ville].filter(Boolean).join(' '),
+      wStatut: worker.statut_eligibilite || worker.regime_travail || '4/5e minimum',
+      fonction: comps[0] || titre, description: desc,
+      lieu: lieuChoix === 'remote' ? 'Télétravail (domicile du travailleur)' : (adresseLieu || 'Au siège de l\'employeur'),
+      dateDebut: date, dateFin: dateFin, taux: `${taux} €/h`
+    };
+    if (existingCadre) D.cadreSigneLe = existingCadre.signe_le;
+
+    document.getElementById('trimEditor').value = construireContratTrimestrielTexte(D);
+    const cadreBlock = document.getElementById('cadreBlock');
+    if (existingCadre) {
+      cadreBlock.style.display = 'none';
+      document.getElementById('cadreEditor').value = '';
+      document.getElementById('previewSub').textContent =
+        `Contrat-cadre déjà signé le ${new Date(existingCadre.signe_le).toLocaleDateString('fr-BE')}. Seul le contrat trimestriel est à signer. Vous pouvez le modifier avant envoi.`;
+    } else {
+      cadreBlock.style.display = 'block';
+      document.getElementById('cadreEditor').value = construireContratCadreTexte(D);
+      document.getElementById('previewSub').textContent =
+        `Première proposition : le contrat-cadre ET le contrat trimestriel seront envoyés à la signature. Vous pouvez tout modifier avant envoi.`;
+    }
+
+    pendingContact = { worker, email, ent, date, dateFin, desc, taux, lieuChoix, adresseLieu, secteurObj, titre, comps, existingCadre };
+
+    btn.disabled = false; btn.textContent = 'Vérifier le contrat →';
+    document.getElementById('modalOverlay').classList.add('hidden');
+    document.getElementById('previewOverlay').classList.remove('hidden');
+  }
+
+  function retourFormulaireContact() {
+    document.getElementById('previewOverlay').classList.add('hidden');
+    document.getElementById('modalOverlay').classList.remove('hidden');
+  }
+
+  // Étape 2 : enregistrer et envoyer à la signature
+  async function confirmerEnvoiContact() {
+    if (!pendingContact) return;
+    const { worker, email, ent, date, dateFin, desc, taux, lieuChoix, adresseLieu, secteurObj, titre, comps, existingCadre } = pendingContact;
+    const cadreTexte = document.getElementById('cadreEditor').value;
+    const trimTexte = document.getElementById('trimEditor').value;
+
+    const btn = document.getElementById('btnConfirmContrat');
+    btn.disabled = true; btn.textContent = 'Envoi en cours...';
+
     const missionPayload = {
-      email_employeur: email,
-      nom_entreprise: ent,
-      titre,
-      description: desc || null,
-      fonction: comps[0] || null,
+      email_employeur: email, nom_entreprise: ent, titre,
+      description: desc || null, fonction: comps[0] || null,
       secteur: secteurObj ? secteurObj.id : null,
       lieu: lieuChoix === 'remote' ? 'remote' : 'onsite',
-      adresse_lieu: adresseLieu || null,
-      ville: worker.ville || null,
-      date_debut: date,
-      date_fin: dateFin,
-      heure_debut: null,
-      heure_fin: null,
-      heures_prestees: null,
-      taux_horaire: taux,
-      commission_taux: 0,
-      statut: 'acceptee', // proposition directe à ce travailleur, pas de listing public
-      origine: 'directe'
+      adresse_lieu: adresseLieu || null, ville: worker.ville || null,
+      date_debut: date, date_fin: dateFin,
+      heure_debut: null, heure_fin: null, heures_prestees: null,
+      taux_horaire: taux, commission_taux: 0,
+      statut: 'acceptee', origine: 'directe'
     };
-
     let missionId = null;
     try {
       const { data: mRows, error: mErr } = await sb.from('missions').insert(missionPayload).select().single();
       if (!mErr && mRows) missionId = mRows.id;
     } catch(e) { console.log('Mission non créée', e); }
 
+    let cadreId = existingCadre ? existingCadre.id : null;
+    if (!existingCadre) {
+      try {
+        const { data: kRows, error: kErr } = await sb.from('contrats_cadre').insert({
+          employer_email: email, employer_nom: ent,
+          worker_email: worker.email, worker_nom: worker.nom, worker_prenom: worker.prenom,
+          texte: cadreTexte
+        }).select().single();
+        if (!kErr && kRows) cadreId = kRows.id;
+      } catch(e) { console.log('Cadre non créé', e); }
+    }
+
     const candPayload = {
       mission_id: missionId,
-      worker_email: worker.email,
-      worker_nom: worker.nom,
-      worker_prenom: worker.prenom,
-      message: desc || null,
-      type_contrat: 'trimestriel',
-      statut: 'date_proposee',
-      date_test: date,
-      heure_debut: null,
-      heure_fin: null
+      worker_email: worker.email, worker_nom: worker.nom, worker_prenom: worker.prenom,
+      message: desc || null, type_contrat: 'trimestriel',
+      statut: 'date_proposee', date_test: date,
+      heure_debut: null, heure_fin: null,
+      contrat_texte: trimTexte, cadre_id: cadreId
     };
-
     let candId = null;
     try {
       const { data: cRows, error: cErr } = await sb.from('candidatures').insert(candPayload).select().single();
@@ -651,33 +732,34 @@
       const confirmUrl = `${window.location.origin}/confirmation-creneau.html?cid=${candId}`;
       const debLabel = new Date(date).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' });
       const finLabel = new Date(dateFin).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' });
+      const mentionCadre = existingCadre ? '' : ' (contrat-cadre + contrat trimestriel)';
       try {
         await emailjs.send(EJS_SERVICE_ID, EJS_TPL_PROPOSITION, {
           to_email: worker.email,
           to_name: `${worker.prenom || ''} ${worker.nom || ''}`,
           entreprise: ent,
-          mission_titre: `${titre} — contrat flexi-job`,
+          mission_titre: `${titre} — contrat flexi-job${mentionCadre}`,
           description: desc,
           taux_horaire: `${taux} €/h`,
           lieu_prestation: lieuChoix === 'remote' ? 'Télétravail' : adresseLieu,
-          date_proposee: `du ${debLabel} au ${finLabel} — les journées de travail vous seront proposées dans cette période`,
-          heure_debut: '—',
-          heure_fin: '—',
+          date_proposee: `du ${debLabel} au ${finLabel} — à signer en ligne`,
+          heure_debut: '—', heure_fin: '—',
           lien_confirmation: confirmUrl,
           reply_to: email
         });
       } catch(e) { console.log('Email non bloquant', e); }
     }
 
-    sendBtn.disabled = false;
-    sendBtn.textContent = 'Envoyer la proposition →';
+    btn.disabled = false; btn.textContent = 'Confirmer et envoyer à la signature →';
+    pendingContact = null;
 
     if (candId) {
-      alert(`✅ Proposition de contrat envoyée à ${worker.prenom} ! Un email lui a été envoyé pour accepter le contrat du ${new Date(date).toLocaleDateString('fr-BE')} au ${new Date(dateFin).toLocaleDateString('fr-BE')}.`);
+      alert(`✅ Contrat envoyé à ${worker.prenom} pour signature en ligne (du ${new Date(date).toLocaleDateString('fr-BE')} au ${new Date(dateFin).toLocaleDateString('fr-BE')}).`);
+      document.getElementById('previewOverlay').classList.add('hidden');
+      closeModal();
     } else {
       alert("⚠️ La proposition n'a pas pu être enregistrée. Réessayez, ou postez une mission complète.");
     }
-    closeModal();
   }
 
   function resetFilters() {
