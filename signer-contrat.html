@@ -132,12 +132,11 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="contrat-modele.js"></script>
 <script src="shared.js"></script>
 <script>
-  const EJS_TPL_EMPLOYEUR = 'template_0hbqgjd'; // template employeur (générique) — vérifié dans EmailJS
+  const TPL_EMPLOYEUR = FLX_TPL.EMPLOYER;
   const BUCKET = 'contrats-signes';
 
   const params = new URLSearchParams(window.location.search);
@@ -390,7 +389,7 @@
       }
 
       // Notification email à l'employeur (non bloquant)
-      if (mission?.email_employeur && window.emailjs) {
+      if (mission?.email_employeur && window.flxSendEmail) {
         const corps =
           `✍️ CONTRAT FLEXI-JOB SIGNÉ EN LIGNE\n` +
           `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
@@ -400,25 +399,33 @@
           `Taux     : ${C.taux}\n` +
           `Signé le : ${signedAt.toLocaleString('fr-BE')}\n\n` +
           `📄 Contrat signé (PDF) : ${publicUrl}\n\n` +
-          `Vous le retrouvez aussi dans « Mes travailleurs » › fiche du travailleur › Documents signés reçus.`;
+          `Vous le retrouvez aussi dans « Mes travailleurs » › fiche du travailleur › Documents signés reçus.\n\n` +
+          `⚠️ RAPPEL : la déclaration DIMONA FLX doit être introduite AVANT le début de la prestation.\n\n` +
+          `— FlexMoney`;
+
         try {
-          await emailjs.send(EJS_SERVICE_ID, EJS_TPL_EMPLOYEUR, {
-            to_email: mission.email_employeur,
-            to_name: C.entreprise,
-            prenom: C.representant || C.entreprise,
+          await flxSendEmail(TPL_EMPLOYEUR, {
+            to_email:   mission.email_employeur,
+            to_name:    C.entreprise,
+            prenom:     C.representant || C.entreprise,
             entreprise: C.entreprise,
-            bce: 'Contrat signé',
-            secteur: corps
+            subject:    `✍️ Contrat flexi-job signé par ${name}`,
+            message:    corps,
+            reply_to:   'contact@flexmoney.be'
           });
-        } catch (e) { console.log('Email employeur non bloquant', e); }
+        } catch (e) { console.warn('Email employeur non envoyé (non bloquant)', e); }
       }
 
-      document.getElementById('successPdf').href = publicUrl;
+      // Succès
+      const lien = document.getElementById('successPdf');
+      if (lien) lien.href = publicUrl;
       show('stSuccess');
+
     } catch (e) {
-      console.error(e);
-      alert("La signature n'a pas pu être enregistrée : " + (e.message || e) + "\nRéessayez dans un instant.");
-      btn.disabled = false; btn.textContent = '🔒 Signer et transmettre le contrat';
+      console.error('Signature échouée', e);
+      btn.disabled = false;
+      btn.textContent = '🔒 Signer et transmettre le contrat';
+      erreur("La signature n'a pas pu être enregistrée. Réessayez ou contactez le support.");
     }
   }
 

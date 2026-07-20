@@ -4,7 +4,6 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FlexMoney — Inscription Travailleur</title>
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="competences.js"></script>
   <style>
@@ -574,7 +573,7 @@
 <script src="codes-postaux.js"></script>
 <script src="shared.js"></script>
 <script>
-  const EMAILJS_TEMPLATE_ID = 'template_y3zn6ll'; // "Bienvenu Nouveau Flexi_jobeur" (vérifié dans EmailJS)
+  const TPL_WORKER = FLX_TPL.WORKER;
   let currentStep = 1;
   let formData = {};
   let selectedComps = [];
@@ -914,13 +913,14 @@
 
     // ── ENVOI EMAIL CONFIRMATION ─────────────────────────────
     try {
-      await emailjs.send(EJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      await flxSendEmail(TPL_WORKER, {
         to_email:    formData.email,
+        subject:     'Bienvenue sur FlexMoney — votre inscription est enregistrée',
         to_name:     formData.prenom + ' ' + formData.nom,
         prenom:      formData.prenom,
         competences: (formData.competences || []).join(', '),
         eligible:    formData.eligible ? 'Éligible ✅' : 'En cours de vérification ⏳',
-        reply_to:    'contact.flexmoney@gmail.com'
+        reply_to:    'contact@flexmoney.be'
       });
     } catch(e) { console.log('Email non envoyé (non-bloquant)', e); }
 

@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Poster une mission — FlexMoney</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; color: #1e293b; }
@@ -297,9 +296,9 @@
     }
   })();
 
-  // ── EMAILJS CONFIG ──────────────────────────────────────
-  const EJS_TPL_EMPLOYER = 'template_tp6702f';   // "Mission postee - confirmation employeur" (vérifié dans EmailJS)
-  const EJS_TPL_MISSION  = 'template_jsgv5au';   // alerte aux travailleurs matchés
+  // ── TEMPLATES E-MAIL (Brevo via Edge Function) ──────────
+  const TPL_MISSION_POSTED = FLX_TPL.MISSION_POSTED;
+  const TPL_MISSION_ALERT = FLX_TPL.MISSION_ALERT;
   let lieuMode = 'remote';
   let currentSecteurPm = FLEXMONEY_SECTEURS[0].id; // secteur sélectionné (choix unique)
   let dateMode = 'unique';          // 'unique' | 'recurrence'
@@ -508,7 +507,7 @@
 
     // ── Email confirmation à l'employeur ────────────────────
     try {
-      await emailjs.send(EJS_SERVICE_ID, EJS_TPL_EMPLOYER, {
+      await flxSendEmail(TPL_MISSION_POSTED, {
         to_email:       email,
         prenom:         nom,
         titre_mission:  titre,
@@ -517,7 +516,7 @@
         taux_horaire:   taux + '€/h',
         heures:         heures + 'h',
         ref_mission:    ref,
-        reply_to:       'contact.flexmoney@gmail.com'
+        reply_to:       'contact@flexmoney.be'
       });
     } catch(e) { console.log('Email employeur non envoyé', e); }
 
@@ -563,14 +562,14 @@
     // ── Notifier les travailleurs matchés par email (max 10) ──
     scored.slice(0, 10).forEach(w => {
       if (w.email) {
-        emailjs.send(EJS_SERVICE_ID, EJS_TPL_MISSION, {
+        flxSendEmail(TPL_MISSION_ALERT, {
           to_email:      w.email,
           prenom:        w.prenom || 'Travailleur',
           titre_mission: document.getElementById('titre').value,
           lieu:          lieuMode === 'remote' ? '🏠 Télétravail' : (document.getElementById('adresse').value || 'Sur place'),
           date_mission:  document.getElementById('dateMission').value,
           taux_horaire:  document.getElementById('taux').value,
-          reply_to:      'contact.flexmoney@gmail.com'
+          reply_to:      'contact@flexmoney.be'
         }).catch(() => {});
       }
     });

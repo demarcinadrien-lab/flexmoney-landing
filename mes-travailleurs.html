@@ -186,13 +186,12 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="competences.js"></script>
 <script src="contrat-modele.js"></script>
 <script src="shared.js"></script>
 <script>
-  const EJS_TPL_WORKER = 'template_y3zn6ll';       // email travailleur (vérifié dans EmailJS)
-  const EJS_TPL_PROPOSITION = 'template_lk3kj9n';  // proposition de créneau (jour test)
+  const TPL_WORKER = FLX_TPL.WORKER;
+  const TPL_PROPOSITION = FLX_TPL.PROPOSITION;
   let currentUser = null;
   let employerProfile = null;
   let pastWorkers = [];
@@ -489,7 +488,7 @@
         const debLabel = new Date(date).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' });
         const finLabel = new Date(dateFin).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' });
         const mentionCadre = existingCadre ? '' : ' (contrat-cadre + contrat trimestriel)';
-        await emailjs.send(EJS_SERVICE_ID, EJS_TPL_PROPOSITION, {
+        await flxSendEmail(TPL_PROPOSITION, {
           to_email: worker.email,
           to_name: `${worker.prenom || ''} ${worker.nom || ''}`,
           entreprise: employerProfile?.nom_entreprise || 'L\'employeur',
@@ -820,7 +819,7 @@
     // Notifier le travailleur par email
     try {
       const joursTxt = joursProposes.map(j => `${new Date(j.date).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' })} de ${j.deb} à ${j.fin}`).join(' · ');
-      await emailjs.send(EJS_SERVICE_ID, EJS_TPL_PROPOSITION, {
+      await flxSendEmail(TPL_PROPOSITION, {
         to_email: ficheWorker.email,
         to_name: `${ficheWorker.prenom || ''} ${ficheWorker.nom || ''}`,
         entreprise: employerProfile?.nom_entreprise || 'Votre employeur',

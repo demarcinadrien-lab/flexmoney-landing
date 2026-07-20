@@ -4,7 +4,6 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FlexMoney — Inscription Employeur</title>
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -496,7 +495,7 @@
 
 <script src="shared.js"></script>
 <script>
-  const EMAILJS_TEMPLATE_ID = 'template_0hbqgjd'; // "Bienvenu nouvel employeur" (vérifié dans EmailJS)
+  const TPL_EMPLOYER = FLX_TPL.EMPLOYER;
   let currentStep = 1;
   let formData = {};
   let bceValidated = false;
@@ -804,15 +803,16 @@
 
     // ── ENVOI EMAIL EMPLOYEUR + GUIDE DIMONA ─────────────────
     try {
-      await emailjs.send(EJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      await flxSendEmail(TPL_EMPLOYER, {
         to_email:       formData.contact_email,
+        subject:        'Bienvenue sur FlexMoney — vos prochaines étapes',
         to_name:        formData.contact_prenom + ' ' + formData.contact_nom,
         prenom:         formData.contact_prenom,
         entreprise:     formData.company_name,
         bce:            formData.bce || 'Non renseigné',
         secteur:        formData.secteur || 'Non renseigné',
         dimona_url:     'https://www.socialsecurity.be/site_fr/employer/applics/dimona/index.htm',
-        reply_to:       'contact.flexmoney@gmail.com'
+        reply_to:       'contact@flexmoney.be'
       });
     } catch(e) { console.log('Email non envoyé (non-bloquant)', e); }
 

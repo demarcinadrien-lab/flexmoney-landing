@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Espace employeur — FlexMoney</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; color: #1e293b; }
@@ -388,8 +387,8 @@
 
 <script src="shared.js"></script>
 <script>
-  const EJS_TPL_WORKER  = 'template_y3zn6ll'; // email travailleur (vérifié dans EmailJS)
-  const EJS_TPL_PROPOSITION = 'template_lk3kj9n'; // proposition de créneau au travailleur
+  const TPL_WORKER = FLX_TPL.WORKER;
+  const TPL_PROPOSITION = FLX_TPL.PROPOSITION;
   let currentUser = null;
   let employerProfile = null;
   let myMissionsList = [];
@@ -702,7 +701,7 @@
       const confirmUrl = `${window.location.origin}/confirmation-creneau.html?cid=${cand.id}`;
       const missionData = myMissionsList.find(m => m.id === cand.mission_id);
       try {
-        await emailjs.send(EJS_SERVICE_ID, EJS_TPL_PROPOSITION, {
+        await flxSendEmail(TPL_PROPOSITION, {
           to_email:        cand.worker_email,
           to_name:         `${cand.worker_prenom || ''} ${cand.worker_nom || ''}`,
           entreprise:      employerProfile?.nom_entreprise || 'L\'employeur',
@@ -714,7 +713,7 @@
           heure_debut:     '—',
           heure_fin:       '—',
           lien_confirmation: confirmUrl,
-          reply_to:        'contact.flexmoney@gmail.com'
+          reply_to:        'contact@flexmoney.be'
         });
       } catch(e) { console.log('Email non bloquant', e); }
     }
@@ -760,7 +759,7 @@
       const dateLabel = new Date(date).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' });
       try {
         const missionData = myMissionsList.find(m => m.id === cand.mission_id);
-        await emailjs.send(EJS_SERVICE_ID, EJS_TPL_PROPOSITION, {
+        await flxSendEmail(TPL_PROPOSITION, {
           to_email:        cand.worker_email,
           to_name:         `${cand.worker_prenom || ''} ${cand.worker_nom || ''}`,
           entreprise:      employerProfile?.nom_entreprise || 'L\'employeur',
@@ -772,7 +771,7 @@
           heure_debut:     hdeb,
           heure_fin:       hfin,
           lien_confirmation: confirmUrl,
-          reply_to:        'contact.flexmoney@gmail.com'
+          reply_to:        'contact@flexmoney.be'
         });
       } catch(e) { console.log('Email non bloquant', e); }
     }
@@ -1033,9 +1032,10 @@ Type : FLX`;
       const lienCorrection = `${BASE_URL}/declaration-heures.html?cid=${candidatureId || d?.candidature_id || ''}`;
       const workerPrenom = d?.worker_nom?.split(' ')[0] || 'Travailleur';
       try {
-        await emailjs.send(EJS_SERVICE_ID, EJS_TPL_WORKER, {
+        await flxSendEmail(TPL_WORKER, {
           to_email:    workerEmail,
           prenom:      workerPrenom,
+          subject:     'Vos heures déclarées ont été contestées',
           to_name:     d?.worker_nom || workerEmail,
           eligible:    `❌ Vos heures du ${d?.date_prestation ? new Date(d.date_prestation).toLocaleDateString('fr-BE') : '—'} ont été contestées.`,
           competences: `L'employeur conteste votre déclaration d'heures.\n\n` +
@@ -1046,7 +1046,7 @@ Type : FLX`;
             `Vos heures seront pré-remplies et vous pourrez les modifier avant de re-soumettre.\n\n` +
             `👉 Corriger ma déclaration :\n${lienCorrection}\n\n` +
             `En cas de désaccord, contactez directement l'employeur.\n— FlexMoney`,
-          reply_to:    'contact.flexmoney@gmail.com'
+          reply_to:    'contact@flexmoney.be'
         });
       } catch(e) { console.warn('Email contestation:', e); }
     }

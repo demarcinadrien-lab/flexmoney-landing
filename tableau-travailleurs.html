@@ -276,14 +276,13 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="competences.js"></script>
 <script src="villes.js"></script>
 <script src="codes-postaux.js"></script>
 <script src="contrat-modele.js"></script>
 <script src="shared.js"></script>
 <script>
-  const EJS_TPL_PROPOSITION = 'template_lk3kj9n'; // proposition de créneau au travailleur
+  const TPL_PROPOSITION = FLX_TPL.PROPOSITION;
   let currentUser = null;
   let employerProfile = null;
 
@@ -734,7 +733,7 @@
       const finLabel = new Date(dateFin).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' });
       const mentionCadre = existingCadre ? '' : ' (contrat-cadre + contrat trimestriel)';
       try {
-        await emailjs.send(EJS_SERVICE_ID, EJS_TPL_PROPOSITION, {
+        await flxSendEmail(TPL_PROPOSITION, {
           to_email: worker.email,
           to_name: `${worker.prenom || ''} ${worker.nom || ''}`,
           entreprise: ent,

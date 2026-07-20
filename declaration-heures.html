@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Déclaration d'heures — FlexMoney</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -199,7 +198,7 @@
 
 <script src="shared.js"></script>
 <script>
-  const EJS_TPL_EMPLOYEUR = 'template_0hbqgjd'; // template employeur (vérifié dans EmailJS)
+  const TPL_EMPLOYEUR = FLX_TPL.EMPLOYER;
   const params = new URLSearchParams(window.location.search);
   const candidatureId = params.get('cid');
   const declarationId = params.get('did'); // jour préenregistré (contrat trimestriel)
@@ -475,8 +474,9 @@
       const isResubmit = !!resubmitDeclId;
 
       try {
-        await emailjs.send(EJS_SERVICE_ID, EJS_TPL_EMPLOYEUR, {
+        await flxSendEmail(TPL_EMPLOYEUR, {
           to_email:   missionData.email_employeur,
+          subject:    `Heures prestées à valider — ${workerName}`,
           to_name:    missionData.nom_entreprise || 'Employeur',
           prenom:     missionData.nom_entreprise || 'Employeur',
           entreprise: missionData.nom_entreprise || '—',
@@ -508,7 +508,7 @@
             `\n❌ Pas d'accord ? Contestez via votre portail :\n` +
             portailUrl,
           dimona_url: portailUrl,
-          reply_to:   'contact.flexmoney@gmail.com'
+          reply_to:   'contact@flexmoney.be'
         });
       } catch(e) { console.warn('Email employeur:', e); }
     }

@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dossier de conformité — FlexMoney</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -328,7 +327,7 @@
 
 <script src="shared.js"></script>
 <script>
-  const EJS_TPL_WORKER = 'template_y3zn6ll'; // template travailleur (vérifié dans EmailJS)
+  const TPL_WORKER = FLX_TPL.WORKER;
   let currentStep = 1;
   let selectedStatut = null;
   let selectedFile = null;
@@ -598,14 +597,14 @@
       // 4. Email Jour J à l'employeur avec lien vers le dossier complet
       const employeurEmail = missionData?.email_employeur;
       if (employeurEmail && candidatureId) {
-        const BASE_URL = 'https://flexmoney.vercel.app';
+        const BASE_URL = window.location.origin;
         const lienDossier = `${BASE_URL}/dossier-jour-j.html?cid=${candidatureId}`;
         const workerName = `${document.getElementById('f-prenom').value} ${document.getElementById('f-nom').value}`.trim();
         const typeLabel = candidatureData?.type_contrat === 'test_jour'
           ? '🧪 Journée de test (contrat oral journalier)'
           : '📋 Mission récurrente (contrat trimestriel)';
         try {
-          await emailjs.send(EJS_SERVICE_ID, EJS_TPL_WORKER, {
+          await flxSendEmail(TPL_WORKER, {
             to_email:    employeurEmail,
             prenom:      missionData?.nom_entreprise || 'Employeur',
             subject:     `📁 Dossier Jour J prêt — ${workerName}`,

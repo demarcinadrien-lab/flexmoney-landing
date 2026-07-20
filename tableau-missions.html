@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Missions disponibles — FlexMoney</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; color: #1e293b; }
@@ -303,8 +302,8 @@
   const selectedTypeContrat = 'trimestriel'; // modèle unique : contrat de 1 jour à 3 mois
   let selectedDispos = [];
 
-  // ── EMAILJS CONFIG ──────────────────────────────────────
-  const EJS_TPL_CANDIDATURE = 'template_78kr3h6';
+  // ── TEMPLATES E-MAIL (Brevo via Edge Function) ──────────
+  const TPL_CANDIDATURE = FLX_TPL.CANDIDATURE;
   const JOURS_DISPO = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
 
   function renderDispoChips() {
@@ -547,7 +546,7 @@
           }
         } catch(e) { /* non-bloquant */ }
 
-        await emailjs.send(EJS_SERVICE_ID, EJS_TPL_CANDIDATURE, {
+        await flxSendEmail(TPL_CANDIDATURE, {
           to_email:         employeurEmail,
           to_name:          selectedMissionData?.nom_entreprise || 'Employeur',
           mission_titre:    selectedMissionData?.titre || 'votre mission',
@@ -557,7 +556,7 @@
           competences:      competences,
           disponibilites:   selectedDispos.length ? selectedDispos.join(', ') : 'Non précisées',
           message:          msg || 'Aucun message',
-          reply_to:         'contact.flexmoney@gmail.com'
+          reply_to:         'contact@flexmoney.be'
         });
       }
     } catch(e) { console.log('Email employeur non envoyé (non-bloquant)', e); }
