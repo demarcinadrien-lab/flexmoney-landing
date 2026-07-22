@@ -874,7 +874,7 @@
       const { error: signUpError } = await sb.auth.signUp({
         email: formData.email,
         password: formData.password,
-        options: { data: { role: 'travailleur' } }
+        options: { data: { role: 'travailleur', prenom: formData.prenom } }
       });
       if (signUpError && !signUpError.message.includes('already registered')) {
         console.log('Création de compte (non-bloquant)', signUpError.message);
@@ -903,18 +903,8 @@
       }
     } catch(e) { console.log('DB error (non-bloquant)', e); }
 
-    // ── ENVOI EMAIL CONFIRMATION ─────────────────────────────
-    try {
-      await flxSendEmail(TPL_WORKER, {
-        to_email:    formData.email,
-        subject:     'Bienvenue sur FlexMoney — votre inscription est enregistrée',
-        to_name:     formData.prenom + ' ' + formData.nom,
-        prenom:      formData.prenom,
-        competences: (formData.competences || []).join(', '),
-        eligible:    formData.eligible ? 'Éligible ' : 'En cours de vérification ⏳',
-        reply_to:    'contact@flexmoney.be'
-      });
-    } catch(e) { console.log('Email non envoyé (non-bloquant)', e); }
+    // Bienvenue + confirmation d'e-mail : envoyés en UN SEUL message
+    // par Supabase Auth (template « Confirm signup », via SMTP Brevo).
 
     // Show success
     document.getElementById('success-name').textContent  = formData.prenom + ' ' + formData.nom;
