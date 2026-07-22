@@ -8,10 +8,12 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --brand: #6C47FF; --brand-light: #8B6DFF; --brand-dim: rgba(108,71,255,0.12);
-      --accent: #00D4AA; --dark: #0A0A0F; --dark2: #12121A; --dark3: #1A1A28;
-      --text: #F0EFF8; --muted: #8A8AA8; --border: rgba(255,255,255,0.08);
-      --success: #00D4AA; --error: #FF4D6D; --warning: #FFB347; --radius: 16px;
+      --brand: #6366f1; --brand-light: #8b5cf6; --brand-dim: rgba(99,102,241,0.10);
+      --accent: #10b981; --dark: #ffffff; --dark2: #f8fafc; --dark3: #ffffff;
+      --text: #0f172a; --muted: #64748b; --border: #e2e8f0;
+      --success: #16a34a; --error: #dc2626; --warning: #d97706;
+      --radius: 16px;
+      --card-shadow: 0 4px 16px rgba(15,23,42,0.06);
     }
     html { scroll-behavior: smooth; }
     body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--dark); color: var(--text); min-height: 100vh; }
@@ -71,7 +73,7 @@
     .btn-validate-bce:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .bce-result { margin-top: 16px; border-radius: 12px; padding: 16px 20px; display: none; }
-    .bce-result.success { background: rgba(0,212,170,0.1); border: 1px solid rgba(0,212,170,0.3); }
+    .bce-result.success { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); }
     .bce-result.error   { background: rgba(255,77,109,0.1); border: 1px solid rgba(255,77,109,0.3); }
     .bce-result-row { display: flex; justify-content: space-between; font-size: 0.88rem; padding: 4px 0; }
     .bce-result-row .label { color: var(--muted); }
@@ -79,7 +81,7 @@
 
     /* SECTEUR CHECK */
     .secteur-status { border-radius: 12px; padding: 16px 20px; margin-top: 12px; display: none; }
-    .secteur-status.ok  { background: rgba(0,212,170,0.1); border: 1px solid rgba(0,212,170,0.3); color: var(--success); }
+    .secteur-status.ok  { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: var(--success); }
     .secteur-status.nok { background: rgba(255,77,109,0.1); border: 1px solid rgba(255,77,109,0.3); color: var(--error); }
     .secteur-status.warn { background: rgba(255,179,71,0.1); border: 1px solid rgba(255,179,71,0.3); color: var(--warning); }
 
@@ -100,9 +102,9 @@
     .checkbox-text a { color:var(--brand-light); text-decoration:none; }
 
     .alert { border-radius:12px; padding:16px 20px; margin-bottom:20px; font-size:0.9rem; line-height:1.6; }
-    .alert-info    { background:rgba(108,71,255,0.1); border:1px solid rgba(108,71,255,0.25); color:var(--brand-light); }
+    .alert-info    { background:rgba(99,102,241,0.1); border:1px solid rgba(99,102,241,0.25); color:var(--brand-light); }
     .alert-warning { background:rgba(255,179,71,0.1); border:1px solid rgba(255,179,71,0.3); color:var(--warning); }
-    .alert-success { background:rgba(0,212,170,0.1); border:1px solid rgba(0,212,170,0.3); color:var(--success); }
+    .alert-success { background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); color:var(--success); }
     .alert-error   { background:rgba(255,77,109,0.1); border:1px solid rgba(255,77,109,0.3); color:var(--error); display:none; }
     .alert-error.show { display:block; }
 
@@ -113,7 +115,7 @@
     .dimona-num { width: 24px; height: 24px; min-width: 24px; border-radius: 50%; background: rgba(255,179,71,0.2); color: var(--warning); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.75rem; }
 
     .btn-row { display:flex; gap:12px; margin-top:32px; }
-    .btn-primary { flex:1; background:var(--brand); color:#fff; padding:16px; border-radius:100px; font-size:1rem; font-weight:700; border:none; cursor:pointer; transition:all 0.2s; box-shadow:0 4px 20px rgba(108,71,255,0.3); }
+    .btn-primary { flex:1; background:var(--brand); color:#fff; padding:16px; border-radius:100px; font-size:1rem; font-weight:700; border:none; cursor:pointer; transition:all 0.2s; box-shadow:0 4px 20px rgba(99,102,241,0.3); }
     .btn-primary:hover { background:var(--brand-light); transform:translateY(-1px); }
     .btn-primary:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
     .btn-secondary { background:transparent; color:var(--muted); padding:16px 24px; border-radius:100px; font-size:1rem; font-weight:600; border:1px solid var(--border); cursor:pointer; transition:all 0.2s; }
