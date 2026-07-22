@@ -1,24 +1,25 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FlexMoney — Rentabilise tes pauses</title>
-  <style>
+ <meta charset="UTF-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+ <title>FlexMoney — Rentabilise tes pauses</title>
+ <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --brand: #6C47FF;
-      --brand-light: #8B6DFF;
-      --brand-dim: rgba(108,71,255,0.12);
-      --accent: #00D4AA;
-      --dark: #0A0A0F;
-      --dark2: #12121A;
-      --dark3: #1A1A28;
-      --text: #F0EFF8;
-      --muted: #8A8AA8;
-      --border: rgba(255,255,255,0.08);
+      --brand: #6366f1;
+      --brand-light: #8b5cf6;
+      --brand-dim: rgba(99,102,241,0.10);
+      --accent: #10b981;
+      --dark: #ffffff;
+      --dark2: #f8fafc;
+      --dark3: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
       --radius: 16px;
+      --card-shadow: 0 4px 16px rgba(15,23,42,0.06);
     }
 
     html { scroll-behavior: smooth; }
@@ -35,7 +36,7 @@
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
       display: flex; align-items: center; justify-content: space-between;
       padding: 20px 40px;
-      background: rgba(10,10,15,0.85);
+      background: rgba(255,255,255,0.82);
       backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border);
     }
@@ -66,13 +67,13 @@
       content: '';
       position: absolute; top: -200px; left: 50%; transform: translateX(-50%);
       width: 800px; height: 800px;
-      background: radial-gradient(circle, rgba(108,71,255,0.18) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%);
       pointer-events: none;
     }
 
     .badge {
       display: inline-flex; align-items: center; gap: 8px;
-      background: var(--brand-dim); border: 1px solid rgba(108,71,255,0.3);
+      background: var(--brand-dim); border: 1px solid rgba(99,102,241,0.3);
       color: var(--brand-light); padding: 8px 18px;
       border-radius: 100px; font-size: 0.82rem; font-weight: 600;
       margin-bottom: 32px; letter-spacing: 0.3px;
@@ -111,9 +112,9 @@
       font-size: 1rem; font-weight: 700; text-decoration: none;
       border: none; cursor: pointer;
       transition: all 0.2s; display: inline-block;
-      box-shadow: 0 4px 24px rgba(108,71,255,0.35);
+      box-shadow: 0 4px 24px rgba(99,102,241,0.35);
     }
-    .btn-primary:hover { background: var(--brand-light); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(108,71,255,0.45); }
+    .btn-primary:hover { background: var(--brand-light); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(99,102,241,0.45); }
 
     .btn-secondary {
       background: transparent; color: var(--text);
@@ -147,8 +148,8 @@
     }
     .adv-pill {
       display: flex; align-items: center; gap: 8px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.1);
+      background: #f1f5f9;
+      border: 1px solid var(--border);
       border-radius: 100px;
       padding: 8px 16px;
       font-size: 0.82rem; color: var(--text);
@@ -199,9 +200,10 @@
       background: var(--dark3); border: 1px solid var(--border);
       border-radius: var(--radius); padding: 40px;
       position: relative; overflow: hidden;
-      transition: border-color 0.2s;
+      box-shadow: var(--card-shadow);
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
-    .pillar-card:hover { border-color: rgba(108,71,255,0.4); }
+    .pillar-card:hover { border-color: rgba(99,102,241,0.4); box-shadow: 0 8px 28px rgba(15,23,42,0.10); }
     .pillar-card::before {
       content: ''; position: absolute; top: 0; left: 0; right: 0;
       height: 3px;
@@ -223,7 +225,7 @@
     .step-num {
       flex-shrink: 0;
       width: 48px; height: 48px; border-radius: 50%;
-      background: var(--brand-dim); border: 1px solid rgba(108,71,255,0.3);
+      background: var(--brand-dim); border: 1px solid rgba(99,102,241,0.3);
       display: flex; align-items: center; justify-content: center;
       font-size: 1rem; font-weight: 800; color: var(--brand-light);
     }
@@ -232,8 +234,8 @@
 
     /* ── LAW BANNER ── */
     .law-banner {
-      background: linear-gradient(135deg, rgba(108,71,255,0.15), rgba(0,212,170,0.08));
-      border: 1px solid rgba(108,71,255,0.25);
+      background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(16,185,129,0.08));
+      border: 1px solid rgba(99,102,241,0.25);
       border-radius: var(--radius); padding: 40px 48px;
       display: flex; align-items: center; gap: 32px;
       margin-top: 32px;
@@ -260,9 +262,10 @@
     .feature-card {
       background: var(--dark3); border: 1px solid var(--border);
       border-radius: var(--radius); padding: 28px;
-      transition: border-color 0.2s;
+      box-shadow: var(--card-shadow);
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
-    .feature-card:hover { border-color: rgba(108,71,255,0.35); }
+    .feature-card:hover { border-color: rgba(99,102,241,0.35); box-shadow: 0 8px 28px rgba(15,23,42,0.10); }
     .feature-icon { font-size: 1.8rem; margin-bottom: 14px; }
     .feature-title { font-weight: 700; margin-bottom: 6px; }
     .feature-text { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
@@ -273,6 +276,7 @@
       background: var(--dark2); border: 1px solid var(--border);
       border-radius: 24px; padding: 64px 40px;
       max-width: 600px; margin: 0 auto;
+      box-shadow: var(--card-shadow);
     }
     .waitlist-box h2 { font-size: 2rem; font-weight: 900; margin-bottom: 12px; letter-spacing: -1px; }
     .waitlist-box p { color: var(--muted); margin-bottom: 32px; }
@@ -299,7 +303,7 @@
       padding: 16px; border-radius: 100px;
       font-size: 1rem; font-weight: 700; border: none; cursor: pointer;
       transition: all 0.2s;
-      box-shadow: 0 4px 24px rgba(108,71,255,0.35);
+      box-shadow: 0 4px 24px rgba(99,102,241,0.35);
     }
     .btn-submit:hover { background: var(--brand-light); transform: translateY(-2px); }
     .form-note { font-size: 0.8rem; color: var(--muted); margin-top: 12px; }
@@ -318,7 +322,7 @@
     /* ── SUCCESS STATE ── */
     .success-msg {
       display: none; text-align: center; padding: 20px;
-      background: rgba(0,212,170,0.1); border: 1px solid rgba(0,212,170,0.3);
+      background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3);
       border-radius: var(--radius); color: var(--accent);
       font-weight: 600; margin-top: 16px;
     }
@@ -333,57 +337,57 @@
       footer { flex-direction: column; text-align: center; }
       .form-group { flex-direction: column; }
     }
-  </style>
+ </style>
 </head>
 <body>
 
 <!-- NAV -->
 <nav>
-  <div class="logo">Flex<span>Money</span></div>
-  <a href="inscription-travailleur.html" class="nav-cta">Je m'inscris</a>
-  <a href="auth.html" style="margin-left:8px;padding:10px 18px;background:rgba(255,255,255,0.1);color:#fff;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">Mon espace →</a>
+ <div class="logo">Flex<span>Money</span></div>
+ <a href="inscription-travailleur.html" class="nav-cta">Je m'inscris</a>
+ <a href="auth.html" style="margin-left:8px;padding:10px 18px;background:#f1f5f9;color:#334155;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;">Mon espace →</a>
 </nav>
 
 <!-- HERO -->
 <section class="hero">
-  <div class="badge">
-    <span class="badge-dot"></span>
+ <div class="badge">
+ <span class="badge-dot"></span>
     Nouveau droit belge — en vigueur le 1er juillet 2026
-  </div>
-  <h1>
+ </div>
+ <h1>
     Rentabilise<br/>
-    <span class="highlight">tes pauses.</span>
-  </h1>
-  <p class="hero-sub">
+ <span class="highlight">tes pauses.</span>
+ </h1>
+ <p class="hero-sub">
     La première plateforme belge de flexi-jobs flexibles — en présentiel ou à distance.<br/>
     Rentabilise ton jour off, ta soirée, ton week-end. Basé sur tes <strong style="color:var(--text)">compétences</strong> — pas sur ton CV.
-  </p>
-  <div class="cta-group">
-    <a href="inscription-travailleur.html" class="btn-primary"
+ </p>
+ <div class="cta-group">
+ <a href="inscription-travailleur.html" class="btn-primary"
        onmouseenter="showAdv('worker')" onmouseleave="hideAdv()"
        ontouchstart="toggleAdv('worker')">Je suis travailleur →</a>
-    <a href="inscription-employeur.html" class="btn-secondary"
+ <a href="inscription-employeur.html" class="btn-secondary"
        onmouseenter="showAdv('employer')" onmouseleave="hideAdv()"
        ontouchstart="toggleAdv('employer')">Je recrute en flexi</a>
-  </div>
+ </div>
 
-  <!-- Panneau avantages contextuel -->
-  <div class="adv-panel" id="advPanel">
-    <!-- Travailleur -->
-    <div class="adv-inner" id="advWorker" style="display:none;">
-      <div class="adv-pill"><span class="adv-icon">💶</span> <strong>Brut&nbsp;=&nbsp;Net</strong>&nbsp;— aucune cotisation à payer</div>
-      <div class="adv-pill"><span class="adv-icon">🕐</span> Tu choisis&nbsp;<strong>tes horaires</strong></div>
-      <div class="adv-pill"><span class="adv-icon">🔒</span> Droits sociaux&nbsp;<strong>maintenus</strong></div>
-    </div>
-    <!-- Employeur -->
-    <div class="adv-inner" id="advEmployer" style="display:none;">
-      <div class="adv-pill"><span class="adv-icon">💰</span> Charges&nbsp;<strong>réduites</strong>&nbsp;vs contrat classique</div>
-      <div class="adv-pill"><span class="adv-icon">⚡</span> DIMONA &amp; contrat&nbsp;<strong>automatiques</strong></div>
-      <div class="adv-pill"><span class="adv-icon">🎯</span> Profils&nbsp;<strong>déjà actifs</strong>&nbsp;et qualifiés</div>
-    </div>
-  </div>
+ <!-- Panneau avantages contextuel -->
+ <div class="adv-panel" id="advPanel">
+ <!-- Travailleur -->
+ <div class="adv-inner" id="advWorker" style="display:none;">
+ <div class="adv-pill"><strong>Brut&nbsp;=&nbsp;Net</strong>&nbsp;— aucune cotisation à payer</div>
+ <div class="adv-pill">Tu choisis&nbsp;<strong>tes horaires</strong></div>
+ <div class="adv-pill">Droits sociaux&nbsp;<strong>maintenus</strong></div>
+ </div>
+ <!-- Employeur -->
+ <div class="adv-inner" id="advEmployer" style="display:none;">
+ <div class="adv-pill">Charges&nbsp;<strong>réduites</strong>&nbsp;vs contrat classique</div>
+ <div class="adv-pill">DIMONA &amp; contrat&nbsp;<strong>automatiques</strong></div>
+ <div class="adv-pill">Profils&nbsp;<strong>déjà actifs</strong>&nbsp;et qualifiés</div>
+ </div>
+ </div>
 
-  <p class="hero-note">Rejoins la liste d'attente · Gratuit · Sans engagement</p>
+ <p class="hero-note">Rejoins la liste d'attente · Gratuit · Sans engagement</p>
 </section>
 
 <script src="shared.js"></script>
@@ -425,222 +429,206 @@
 
 <!-- STATS -->
 <div class="stats">
-  <div class="stat">
-    <div class="stat-num">+5M</div>
-    <div class="stat-label">travailleurs éligibles en Belgique</div>
-  </div>
-  <div class="stat">
-    <div class="stat-num">100%</div>
-    <div class="stat-label">du secteur privé ouvert dès juillet 2026</div>
-  </div>
-  <div class="stat">
-    <div class="stat-num">0 CV</div>
-    <div class="stat-label">requis pour postuler</div>
-  </div>
-  <div class="stat">
-    <div class="stat-num">Zéro</div>
-    <div class="stat-label">charge sociale pour le travailleur</div>
-  </div>
+ <div class="stat">
+ <div class="stat-num">+5M</div>
+ <div class="stat-label">travailleurs éligibles en Belgique</div>
+ </div>
+ <div class="stat">
+ <div class="stat-num">100%</div>
+ <div class="stat-label">du secteur privé ouvert dès juillet 2026</div>
+ </div>
+ <div class="stat">
+ <div class="stat-num">0 CV</div>
+ <div class="stat-label">requis pour postuler</div>
+ </div>
+ <div class="stat">
+ <div class="stat-num">Zéro</div>
+ <div class="stat-label">charge sociale pour le travailleur</div>
+ </div>
 </div>
 
 <!-- PILLARS -->
 <section class="pillars">
-  <div class="container">
-    <div class="section-label">Notre philosophie</div>
-    <h2 class="section-title">Deux idées. Une révolution.</h2>
-    <p class="section-sub">FlexSkill réinvente le flexi-job pour l'économie du savoir.</p>
+ <div class="container">
+ <div class="section-label">Notre philosophie</div>
+ <h2 class="section-title">Deux idées. Une révolution.</h2>
+ <p class="section-sub">FlexSkill réinvente le flexi-job pour l'économie du savoir.</p>
 
-    <div class="pillars-grid">
-      <div class="pillar-card">
-        <div class="pillar-icon">⏸️</div>
-        <div class="pillar-title">Rentabilise tes pauses</div>
-        <div class="pillar-text">
+ <div class="pillars-grid">
+ <div class="pillar-card">
+ <div class="pillar-title">Rentabilise tes pauses</div>
+ <div class="pillar-text">
           Tu travailles à 4/5e ? Tu as un vendredi libre, des soirées ou des week-ends disponibles ? Ce temps a de la valeur. FlexSkill te connecte à des employeurs qui ont besoin de toi exactement quand tu es disponible — en présentiel ou à distance, comme tu préfères.
-        </div>
-      </div>
-      <div class="pillar-card">
-        <div class="pillar-icon">🧠</div>
-        <div class="pillar-title">Tes compétences, pas ton CV</div>
-        <div class="pillar-text">
+ </div>
+ </div>
+ <div class="pillar-card">
+ <div class="pillar-title">Tes compétences, pas ton CV</div>
+ <div class="pillar-text">
           Fini les CV qui ne disent pas grand-chose. Sur FlexSkill, tu montres ce que tu sais faire : rédaction, comptabilité, support client, data, social media... Les employeurs te trouvent grâce à tes compétences réelles, tes évaluations et tes missions passées.
-        </div>
-      </div>
-    </div>
-  </div>
+ </div>
+ </div>
+ </div>
+ </div>
 </section>
 
 <!-- HOW IT WORKS -->
 <section>
-  <div class="container">
-    <div class="section-label">Comment ça marche</div>
-    <h2 class="section-title">Simple. Rapide. Efficace.</h2>
+ <div class="container">
+ <div class="section-label">Comment ça marche</div>
+ <h2 class="section-title">Simple. Rapide. Efficace.</h2>
 
-    <div class="steps">
-      <div class="step">
-        <div class="step-num">1</div>
-        <div>
-          <div class="step-title">Crée ton passeport de compétences</div>
-          <div class="step-text">Pas de CV à formater. Tu listes tes compétences, tes disponibilités et tes expériences en quelques minutes. Notre IA te suggère les bonnes catégories.</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">2</div>
-        <div>
-          <div class="step-title">Notre algorithme te matche</div>
-          <div class="step-text">FlexSkill analyse tes compétences, ta localisation, tes disponibilités et tes évaluations pour te connecter aux missions qui te correspondent vraiment.</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">3</div>
-        <div>
-          <div class="step-title">Accepte, travaille, sois évalué</div>
-          <div class="step-text">Le contrat flexi-job est généré automatiquement. Tu travailles. Tu gagnes. Chaque mission renforce ton profil et augmente ta visibilité pour les prochaines.</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">4</div>
-        <div>
-          <div class="step-title">Reçois ton salaire flexi</div>
-          <div class="step-text">Faible imposition, zéro cotisation ONSS pour toi. Le flexi-job reste l'un des revenus complémentaires les plus avantageux fiscalement en Belgique.</div>
-        </div>
-      </div>
-    </div>
+ <div class="steps">
+ <div class="step">
+ <div class="step-num">1</div>
+ <div>
+ <div class="step-title">Crée ton passeport de compétences</div>
+ <div class="step-text">Pas de CV à formater. Tu listes tes compétences, tes disponibilités et tes expériences en quelques minutes. Notre IA te suggère les bonnes catégories.</div>
+ </div>
+ </div>
+ <div class="step">
+ <div class="step-num">2</div>
+ <div>
+ <div class="step-title">Notre algorithme te matche</div>
+ <div class="step-text">FlexSkill analyse tes compétences, ta localisation, tes disponibilités et tes évaluations pour te connecter aux missions qui te correspondent vraiment.</div>
+ </div>
+ </div>
+ <div class="step">
+ <div class="step-num">3</div>
+ <div>
+ <div class="step-title">Accepte, travaille, sois évalué</div>
+ <div class="step-text">Le contrat flexi-job est généré automatiquement. Tu travailles. Tu gagnes. Chaque mission renforce ton profil et augmente ta visibilité pour les prochaines.</div>
+ </div>
+ </div>
+ <div class="step">
+ <div class="step-num">4</div>
+ <div>
+ <div class="step-title">Reçois ton salaire flexi</div>
+ <div class="step-text">Faible imposition, zéro cotisation ONSS pour toi. Le flexi-job reste l'un des revenus complémentaires les plus avantageux fiscalement en Belgique.</div>
+ </div>
+ </div>
+ </div>
 
-    <!-- LAW BANNER -->
-    <div class="law-banner">
-      <div class="law-icon">⚖️</div>
-      <div class="law-text">
-        <h3>La loi belge vient de tout changer</h3>
-        <p>À partir du <strong>1er juillet 2026</strong>, le flexi-job s'ouvre à <strong>l'ensemble du secteur privé belge</strong> — incluant le travail à distance, le back-office, le marketing, l'IT et bien plus. C'est une révolution. FlexSkill est là dès le premier jour.</p>
-      </div>
-    </div>
-  </div>
+ <!-- LAW BANNER -->
+ <div class="law-banner">
+ <div class="law-text">
+ <h3>La loi belge vient de tout changer</h3>
+ <p>À partir du <strong>1er juillet 2026</strong>, le flexi-job s'ouvre à <strong>l'ensemble du secteur privé belge</strong> — incluant le travail à distance, le back-office, le marketing, l'IT et bien plus. C'est une révolution. FlexSkill est là dès le premier jour.</p>
+ </div>
+ </div>
+ </div>
 </section>
 
 <!-- AUDIENCE TABS -->
 <section class="audience">
-  <div class="container">
-    <div class="section-label">Pour qui ?</div>
-    <h2 class="section-title">Taillé pour toi, quel que soit ton profil.</h2>
+ <div class="container">
+ <div class="section-label">Pour qui ?</div>
+ <h2 class="section-title">Taillé pour toi, quel que soit ton profil.</h2>
 
-    <div class="tabs">
-      <button class="tab active" onclick="switchTab('workers', this)">👤 Travailleurs</button>
-      <button class="tab" onclick="switchTab('employers', this)">🏢 Employeurs</button>
-    </div>
+ <div class="tabs">
+ <button class="tab active" onclick="switchTab('workers', this)">Travailleurs</button>
+ <button class="tab" onclick="switchTab('employers', this)">Employeurs</button>
+ </div>
 
-    <div id="workers" class="tab-content active">
-      <div class="feature-card">
-        <div class="feature-icon">📍</div>
-        <div class="feature-title">Présentiel ou à distance</div>
-        <div class="feature-text">Sur site, en télétravail, ou les deux. Ton jour off, ta soirée, ton week-end — tu choisis le format et le moment qui te conviennent.</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">📅</div>
-        <div class="feature-title">Tu choisis tes disponibilités</div>
-        <div class="feature-text">Tu indiques quand tu es libre. On ne te propose des missions que quand tu veux travailler. Jamais l'inverse.</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">💶</div>
-        <div class="feature-title">Revenu avantageux</div>
-        <div class="feature-text">Salaire flexi faiblement taxé. Pas de cotisation ONSS travailleur. Un des compléments de revenu les plus intéressants du marché belge.</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🏅</div>
-        <div class="feature-title">Ton passeport de compétences</div>
-        <div class="feature-text">Chaque mission enrichit ton profil. Tes évaluations remplacent ton CV et parlent pour toi.</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🤖</div>
-        <div class="feature-title">Matching intelligent</div>
-        <div class="feature-text">Notre algorithme analyse tes compétences réelles pour te proposer uniquement des missions qui te correspondent.</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">📝</div>
-        <div class="feature-title">Contrat automatique</div>
-        <div class="feature-text">Le contrat flexi-job est généré et signé électroniquement en quelques secondes. Zéro paperasse.</div>
-      </div>
-    </div>
+ <div id="workers" class="tab-content active">
+ <div class="feature-card">
+ <div class="feature-title">Présentiel ou à distance</div>
+ <div class="feature-text">Sur site, en télétravail, ou les deux. Ton jour off, ta soirée, ton week-end — tu choisis le format et le moment qui te conviennent.</div>
+ </div>
+ <div class="feature-card">
+ <div class="feature-title">Tu choisis tes disponibilités</div>
+ <div class="feature-text">Tu indiques quand tu es libre. On ne te propose des missions que quand tu veux travailler. Jamais l'inverse.</div>
+ </div>
+ <div class="feature-card">
+ <div class="feature-title">Revenu avantageux</div>
+ <div class="feature-text">Salaire flexi faiblement taxé. Pas de cotisation ONSS travailleur. Un des compléments de revenu les plus intéressants du marché belge.</div>
+ </div>
+ <div class="feature-card">
+ <div class="feature-title">Ton passeport de compétences</div>
+ <div class="feature-text">Chaque mission enrichit ton profil. Tes évaluations remplacent ton CV et parlent pour toi.</div>
+ </div>
+ <div class="feature-card">
+ <div class="feature-title">Matching intelligent</div>
+ <div class="feature-text">Notre algorithme analyse tes compétences réelles pour te proposer uniquement des missions qui te correspondent.</div>
+ </div>
+ <div class="feature-card">
+ <div class="feature-title">Contrat automatique</div>
+ <div class="feature-text">Le contrat flexi-job est généré et signé électroniquement en quelques secondes. Zéro paperasse.</div>
+ </div>
+ </div>
 
-    <div id="employers" class="tab-content">
-      <div class="feature-card">
-        <div class="feature-icon">🎯</div>
-        <div class="feature-title">Matching par compétences</div>
-        <div class="feature-text">Décrivez la tâche, pas le profil idéal. Notre IA identifie les meilleurs candidats selon leurs compétences réelles.</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">⚡</div>
-        <div class="feature-title">Disponibles rapidement</div>
-        <div class="feature-text">Des profils disponibles, qualifiés et prêts à travailler. Vous comblez un besoin ponctuel sans procédure RH complexe.</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">💰</div>
-        <div class="feature-title">Coût maîtrisé</div>
-        <div class="feature-text">Le flexi-job réduit les charges employeur. Vous payez uniquement pour les missions réellement effectuées.</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">⭐</div>
-        <div class="feature-title">Profils évalués</div>
-        <div class="feature-text">Chaque travailleur a un historique de missions et d'évaluations. Vous savez exactement à qui vous faites appel.</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">📄</div>
-        <div class="feature-title">Conformité garantie</div>
-        <div class="feature-text">FlexMoney vérifie automatiquement l'éligibilité de chaque travailleur et génère les documents légaux requis.</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🌍</div>
-        <div class="feature-title">Talent partout, en présentiel ou à distance</div>
-        <div class="feature-text">Accédez à des profils disponibles sur site ou en télétravail, partout en Belgique. Le bon profil, au bon moment — jour off, soirée ou week-end.</div>
-      </div>
-    </div>
-  </div>
+ <div id="employers" class="tab-content">
+ <div class="feature-card">
+ <div class="feature-title">Matching par compétences</div>
+ <div class="feature-text">Décrivez la tâche, pas le profil idéal. Notre IA identifie les meilleurs candidats selon leurs compétences réelles.</div>
+ </div>
+ <div class="feature-card">
+ <div class="feature-title">Disponibles rapidement</div>
+ <div class="feature-text">Des profils disponibles, qualifiés et prêts à travailler. Vous comblez un besoin ponctuel sans procédure RH complexe.</div>
+ </div>
+ <div class="feature-card">
+ <div class="feature-title">Coût maîtrisé</div>
+ <div class="feature-text">Le flexi-job réduit les charges employeur. Vous payez uniquement pour les missions réellement effectuées.</div>
+ </div>
+ <div class="feature-card">
+ <div class="feature-title">Profils évalués</div>
+ <div class="feature-text">Chaque travailleur a un historique de missions et d'évaluations. Vous savez exactement à qui vous faites appel.</div>
+ </div>
+ <div class="feature-card">
+ <div class="feature-title">Conformité garantie</div>
+ <div class="feature-text">FlexMoney vérifie automatiquement l'éligibilité de chaque travailleur et génère les documents légaux requis.</div>
+ </div>
+ <div class="feature-card">
+ <div class="feature-title">Talent partout, en présentiel ou à distance</div>
+ <div class="feature-text">Accédez à des profils disponibles sur site ou en télétravail, partout en Belgique. Le bon profil, au bon moment — jour off, soirée ou week-end.</div>
+ </div>
+ </div>
+ </div>
 </section>
 
 <!-- WAITLIST -->
 <section class="waitlist" id="waitlist">
-  <div class="container">
-    <div class="waitlist-box">
-      <div style="font-size:2.5rem;margin-bottom:16px;">🚀</div>
-      <h2>Rejoins la liste d'attente</h2>
-      <p>La plateforme ouvre le 1er juillet 2026.<br/>Sois parmi les premiers à en bénéficier.</p>
+ <div class="container">
+ <div class="waitlist-box">
+ <h2>Rejoins la liste d'attente</h2>
+ <p>La plateforme ouvre le 1er juillet 2026.<br/>Sois parmi les premiers à en bénéficier.</p>
 
-      <form id="waitlistForm" onsubmit="handleSubmit(event)">
-        <div class="form-group">
-          <input type="text" placeholder="Prénom" required />
-          <input type="text" placeholder="Nom" required />
-        </div>
-        <div class="form-full">
-          <input type="email" placeholder="Adresse e-mail" required />
-        </div>
-        <div class="form-group">
-          <select required>
-            <option value="" disabled selected>Je suis...</option>
-            <option value="worker">👤 Travailleur flexi (4/5e ou retraité)</option>
-            <option value="employer">🏢 Employeur / RH</option>
-          </select>
-        </div>
-        <button type="submit" class="btn-submit">Réserver ma place gratuitement →</button>
-      </form>
+ <form id="waitlistForm" onsubmit="handleSubmit(event)">
+ <div class="form-group">
+ <input type="text" placeholder="Prénom" required />
+ <input type="text" placeholder="Nom" required />
+ </div>
+ <div class="form-full">
+ <input type="email" placeholder="Adresse e-mail" required />
+ </div>
+ <div class="form-group">
+ <select required>
+ <option value="" disabled selected>Je suis...</option>
+ <option value="worker">Travailleur flexi (4/5e ou retraité)</option>
+ <option value="employer">Employeur / RH</option>
+ </select>
+ </div>
+ <button type="submit" class="btn-submit">Réserver ma place gratuitement →</button>
+ </form>
 
-      <div class="success-msg" id="successMsg">
-        ✅ Inscription confirmée ! On te contacte dès l'ouverture.
-      </div>
-      <p class="form-note">🔒 Tes données restent privées. Aucun spam. Désinscription en 1 clic.</p>
-    </div>
-  </div>
+ <div class="success-msg" id="successMsg">
+        Inscription confirmée ! On te contacte dès l'ouverture.
+ </div>
+ <p class="form-note">Tes données restent privées. Aucun spam. Désinscription en 1 clic.</p>
+ </div>
+ </div>
 </section>
 
 <!-- FOOTER -->
 <footer>
-  <div class="footer-logo">Flex<span>Money</span></div>
-  <p>© 2026 FlexMoney · Belgique · Tous droits réservés</p>
-  <p style="font-size:0.78rem;color:var(--muted)">Flexi-job conforme à la loi belge · RGPD</p>
-  <p style="font-size:0.8rem;margin-top:10px;">
-    <a href="conditions-generales.html" style="color:var(--muted);margin:0 8px;">CGU</a>·
-    <a href="politique-confidentialite.html" style="color:var(--muted);margin:0 8px;">Confidentialité</a>·
-    <a href="politique-cookies.html" style="color:var(--muted);margin:0 8px;">Cookies</a>·
-    <a href="mentions-legales.html" style="color:var(--muted);margin:0 8px;">Mentions légales</a>
-  </p>
+ <div class="footer-logo">Flex<span>Money</span></div>
+ <p>© 2026 FlexMoney · Belgique · Tous droits réservés</p>
+ <p style="font-size:0.78rem;color:var(--muted)">Flexi-job conforme à la loi belge · RGPD</p>
+ <p style="font-size:0.8rem;margin-top:10px;">
+ <a href="conditions-generales.html" style="color:var(--muted);margin:0 8px;">CGU</a>·
+ <a href="politique-confidentialite.html" style="color:var(--muted);margin:0 8px;">Confidentialité</a>·
+ <a href="politique-cookies.html" style="color:var(--muted);margin:0 8px;">Cookies</a>·
+ <a href="mentions-legales.html" style="color:var(--muted);margin:0 8px;">Mentions légales</a>
+ </p>
 </footer>
 
 <script>
@@ -693,7 +681,7 @@
   // Smooth nav on scroll
   window.addEventListener('scroll', () => {
     const nav = document.querySelector('nav');
-    nav.style.boxShadow = window.scrollY > 20 ? '0 4px 32px rgba(0,0,0,0.4)' : 'none';
+    nav.style.boxShadow = window.scrollY > 20 ? '0 4px 24px rgba(15,23,42,0.08)' : 'none';
   });
 </script>
 
