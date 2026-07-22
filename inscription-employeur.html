@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FlexMoney — Inscription Employeur</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <style>
+ <meta charset="UTF-8"/>
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+ <title>FlexMoney — Inscription Employeur</title>
+ <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+ <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --brand: #6366f1; --brand-light: #8b5cf6; --brand-dim: rgba(99,102,241,0.10);
@@ -96,7 +96,7 @@
     .checkbox-field input[type="checkbox"] { display:none; }
     .custom-checkbox { width:20px; height:20px; min-width:20px; border-radius:6px; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; transition:all 0.2s; margin-top:1px; }
     .checkbox-field input:checked + .custom-checkbox { background:var(--brand); border-color:var(--brand); }
-    .custom-checkbox::after { content:'✓'; font-size:0.75rem; color:#fff; display:none; }
+    .custom-checkbox::after { content:''; font-size:0.75rem; color:#fff; display:none; }
     .checkbox-field input:checked + .custom-checkbox::after { display:block; }
     .checkbox-text { font-size:0.9rem; color:var(--muted); line-height:1.5; }
     .checkbox-text a { color:var(--brand-light); text-decoration:none; }
@@ -142,356 +142,345 @@
       .bce-row { flex-direction: column; }
       .btn-row { flex-direction: column; }
     }
-  </style>
+ </style>
 </head>
 <body>
 
 <nav>
-  <div class="logo">Flex<span>Money</span></div>
-  <a href="index.html" class="nav-back">← Retour</a>
+ <div class="logo">Flex<span>Money</span></div>
+ <a href="index.html" class="nav-back">← Retour</a>
 </nav>
 
 <div class="progress-wrap">
-  <div class="progress-steps">
-    <div class="step-item active" id="prog-1"><div class="step-circle">1</div><div class="step-label">Entreprise</div></div>
-    <div class="step-item" id="prog-2"><div class="step-circle">2</div><div class="step-label">Secteur</div></div>
-    <div class="step-item" id="prog-3"><div class="step-circle">3</div><div class="step-label">Contact</div></div>
-    <div class="step-item" id="prog-4"><div class="step-circle">4</div><div class="step-label">Obligations</div></div>
-    <div class="step-item" id="prog-5"><div class="step-circle">5</div><div class="step-label">Confirmation</div></div>
-    <div class="step-item" id="prog-6"><div class="step-circle">✓</div><div class="step-label">Activé</div></div>
-  </div>
+ <div class="progress-steps">
+ <div class="step-item active" id="prog-1"><div class="step-circle">1</div><div class="step-label">Entreprise</div></div>
+ <div class="step-item" id="prog-2"><div class="step-circle">2</div><div class="step-label">Secteur</div></div>
+ <div class="step-item" id="prog-3"><div class="step-circle">3</div><div class="step-label">Contact</div></div>
+ <div class="step-item" id="prog-4"><div class="step-circle">4</div><div class="step-label">Obligations</div></div>
+ <div class="step-item" id="prog-5"><div class="step-circle">5</div><div class="step-label">Confirmation</div></div>
+ <div class="step-item" id="prog-6"><div class="step-circle"></div><div class="step-label">Activé</div></div>
+ </div>
 </div>
 
 <div class="main">
 
-  <!-- ÉTAPE 1 : ENTREPRISE + BCE -->
-  <div class="step-panel active" id="step-1">
-    <div class="panel-header">
-      <div class="panel-icon">🏢</div>
-      <h2 class="panel-title">Votre entreprise</h2>
-      <p class="panel-sub">Entrez votre numéro BCE pour valider automatiquement votre entreprise.</p>
-    </div>
+ <!-- ÉTAPE 1 : ENTREPRISE + BCE -->
+ <div class="step-panel active" id="step-1">
+ <div class="panel-header">
+ <h2 class="panel-title">Votre entreprise</h2>
+ <p class="panel-sub">Entrez votre numéro BCE pour valider automatiquement votre entreprise.</p>
+ </div>
 
-    <div class="alert alert-info">
-      🔍 Votre numéro BCE nous permet de vérifier que votre entreprise est active et éligible au régime flexi-job (loi juillet 2026).
-    </div>
+ <div class="alert alert-info">
+       Votre numéro BCE nous permet de vérifier que votre entreprise est active et éligible au régime flexi-job (loi juillet 2026).
+ </div>
 
-    <div class="field">
-      <label>Numéro BCE / TVA <span class="required">*</span></label>
-      <div class="bce-row">
-        <div class="field">
-          <input type="text" id="bce" placeholder="0XXX.XXX.XXX ou BE0XXXXXXXXX" maxlength="14" oninput="formatBCE(this)"/>
-          <div class="field-hint">Format : 0XXX.XXX.XXX (9 chiffres sans le BE)</div>
-        </div>
-        <button class="btn-validate-bce" id="btn-bce" onclick="validateBCE()">Valider</button>
-      </div>
-      <div class="bce-result" id="bce-result"></div>
-    </div>
+ <div class="field">
+ <label>Numéro BCE / TVA <span class="required">*</span></label>
+ <div class="bce-row">
+ <div class="field">
+ <input type="text" id="bce" placeholder="0XXX.XXX.XXX ou BE0XXXXXXXXX" maxlength="14" oninput="formatBCE(this)"/>
+ <div class="field-hint">Format : 0XXX.XXX.XXX (9 chiffres sans le BE)</div>
+ </div>
+ <button class="btn-validate-bce" id="btn-bce" onclick="validateBCE()">Valider</button>
+ </div>
+ <div class="bce-result" id="bce-result"></div>
+ </div>
 
-    <div id="bce-validated-fields" style="display:none">
-      <div class="field">
-        <label>Nom de l'entreprise <span class="required">*</span></label>
-        <input type="text" id="company-name" placeholder="Sera rempli automatiquement ou manuellement"/>
-      </div>
-      <div class="field">
-        <label>Adresse du siège social — rue et numéro <span class="required">*</span></label>
-        <input type="text" id="company-address" placeholder="Rue de la Loi 14"/>
-      </div>
-      <div class="fields-row">
-        <div class="field">
-          <label>Code postal <span class="required">*</span></label>
-          <input type="text" id="company-cp" placeholder="1000" maxlength="4"/>
-        </div>
-        <div class="field">
-          <label>Ville <span class="required">*</span></label>
-          <input type="text" id="company-city" placeholder="Bruxelles"/>
-        </div>
-      </div>
-    </div>
+ <div id="bce-validated-fields" style="display:none">
+ <div class="field">
+ <label>Nom de l'entreprise <span class="required">*</span></label>
+ <input type="text" id="company-name" placeholder="Sera rempli automatiquement ou manuellement"/>
+ </div>
+ <div class="field">
+ <label>Adresse du siège social — rue et numéro <span class="required">*</span></label>
+ <input type="text" id="company-address" placeholder="Rue de la Loi 14"/>
+ </div>
+ <div class="fields-row">
+ <div class="field">
+ <label>Code postal <span class="required">*</span></label>
+ <input type="text" id="company-cp" placeholder="1000" maxlength="4"/>
+ </div>
+ <div class="field">
+ <label>Ville <span class="required">*</span></label>
+ <input type="text" id="company-city" placeholder="Bruxelles"/>
+ </div>
+ </div>
+ </div>
 
-    <div class="alert alert-error" id="err-step1">Veuillez valider votre numéro BCE avant de continuer.</div>
+ <div class="alert alert-error" id="err-step1">Veuillez valider votre numéro BCE avant de continuer.</div>
 
-    <div class="btn-row">
-      <button class="btn-primary" onclick="validateStep1()">Continuer →</button>
-    </div>
-  </div>
+ <div class="btn-row">
+ <button class="btn-primary" onclick="validateStep1()">Continuer →</button>
+ </div>
+ </div>
 
-  <!-- ÉTAPE 2 : SECTEUR -->
-  <div class="step-panel" id="step-2">
-    <div class="panel-header">
-      <div class="panel-icon">🔍</div>
-      <h2 class="panel-title">Vérification de votre secteur</h2>
-      <p class="panel-sub">Depuis le 1er juillet 2026, tout le secteur privé belge peut recruter en flexi-job, avec quelques exceptions.</p>
-    </div>
+ <!-- ÉTAPE 2 : SECTEUR -->
+ <div class="step-panel" id="step-2">
+ <div class="panel-header">
+ <h2 class="panel-title">Vérification de votre secteur</h2>
+ <p class="panel-sub">Depuis le 1er juillet 2026, tout le secteur privé belge peut recruter en flexi-job, avec quelques exceptions.</p>
+ </div>
 
-    <div class="field">
-      <label>Secteur d'activité principal <span class="required">*</span></label>
-      <select id="secteur" onchange="checkSecteur(this.value)">
-        <option value="" disabled selected>Sélectionnez votre secteur</option>
-        <optgroup label="✅ Secteurs éligibles">
-          <option value="admin">Administration & Back-office</option>
-          <option value="it">Informatique & Technologies</option>
-          <option value="marketing">Marketing & Communication</option>
-          <option value="finance">Finance & Comptabilité</option>
-          <option value="commerce">Commerce & Vente</option>
-          <option value="logistique">Logistique & Transport</option>
-          <option value="sante_priv">Santé (privé)</option>
-          <option value="horeca">Horeca & Restauration</option>
-          <option value="evenementiel">Événementiel</option>
-          <option value="education">Éducation & Formation</option>
-          <option value="construction">Construction (hors exclusions)</option>
-          <option value="autre_prive">Autre secteur privé</option>
-        </optgroup>
-        <optgroup label="⚠️ Secteurs avec conditions">
-          <option value="soins">Soins de santé & CPAS</option>
-          <option value="secteur_public">Secteur public</option>
-          <option value="parcs_jardins">Parcs & Jardins (agricole)</option>
-          <option value="interim">Intérim</option>
-        </optgroup>
-        <optgroup label="❌ Secteurs exclus">
-          <option value="agriculture">Agriculture (CP 144 / CP 145)</option>
-          <option value="peche">Pêche maritime (CP 143)</option>
-          <option value="pompes_funebres">Pompes funèbres (CP 320)</option>
-          <option value="gens_maison">Gens de maison (CP 323)</option>
-          <option value="artistique">Fonctions artistiques</option>
-        </optgroup>
-      </select>
-    </div>
+ <div class="field">
+ <label>Secteur d'activité principal <span class="required">*</span></label>
+ <select id="secteur" onchange="checkSecteur(this.value)">
+ <option value="" disabled selected>Sélectionnez votre secteur</option>
+ <optgroup label=" Secteurs éligibles">
+ <option value="admin">Administration & Back-office</option>
+ <option value="it">Informatique & Technologies</option>
+ <option value="marketing">Marketing & Communication</option>
+ <option value="finance">Finance & Comptabilité</option>
+ <option value="commerce">Commerce & Vente</option>
+ <option value="logistique">Logistique & Transport</option>
+ <option value="sante_priv">Santé (privé)</option>
+ <option value="horeca">Horeca & Restauration</option>
+ <option value="evenementiel">Événementiel</option>
+ <option value="education">Éducation & Formation</option>
+ <option value="construction">Construction (hors exclusions)</option>
+ <option value="autre_prive">Autre secteur privé</option>
+ </optgroup>
+ <optgroup label=" Secteurs avec conditions">
+ <option value="soins">Soins de santé & CPAS</option>
+ <option value="secteur_public">Secteur public</option>
+ <option value="parcs_jardins">Parcs & Jardins (agricole)</option>
+ <option value="interim">Intérim</option>
+ </optgroup>
+ <optgroup label=" Secteurs exclus">
+ <option value="agriculture">Agriculture (CP 144 / CP 145)</option>
+ <option value="peche">Pêche maritime (CP 143)</option>
+ <option value="pompes_funebres">Pompes funèbres (CP 320)</option>
+ <option value="gens_maison">Gens de maison (CP 323)</option>
+ <option value="artistique">Fonctions artistiques</option>
+ </optgroup>
+ </select>
+ </div>
 
-    <div class="secteur-status" id="secteur-status"></div>
+ <div class="secteur-status" id="secteur-status"></div>
 
-    <div id="secteur-detail" style="display:none;margin-top:16px;">
-      <div class="field">
-        <label>Description précise de votre activité</label>
-        <textarea id="activite-desc" rows="3" placeholder="Ex. : Agence de marketing digital spécialisée en SEO et réseaux sociaux..."></textarea>
-      </div>
-      <div class="field">
-        <label>Commission(s) paritaire(s) de votre entreprise</label>
-        <input type="text" id="cp" placeholder="Ex. : CP 200 — Employés · CP 302 — Horeca"/>
-        <div class="field-hint">Indiquez la ou les commissions paritaires (CP) appliquées dans votre entreprise, séparées par une virgule. Vous les trouverez sur vos fiches de paie ou auprès de votre secrétariat social.</div>
-      </div>
-    </div>
+ <div id="secteur-detail" style="display:none;margin-top:16px;">
+ <div class="field">
+ <label>Description précise de votre activité</label>
+ <textarea id="activite-desc" rows="3" placeholder="Ex. : Agence de marketing digital spécialisée en SEO et réseaux sociaux..."></textarea>
+ </div>
+ <div class="field">
+ <label>Commission(s) paritaire(s) de votre entreprise</label>
+ <input type="text" id="cp" placeholder="Ex. : CP 200 — Employés · CP 302 — Horeca"/>
+ <div class="field-hint">Indiquez la ou les commissions paritaires (CP) appliquées dans votre entreprise, séparées par une virgule. Vous les trouverez sur vos fiches de paie ou auprès de votre secrétariat social.</div>
+ </div>
+ </div>
 
-    <div class="alert alert-error" id="err-secteur">Veuillez sélectionner votre secteur d'activité.</div>
+ <div class="alert alert-error" id="err-secteur">Veuillez sélectionner votre secteur d'activité.</div>
 
-    <div class="btn-row">
-      <button class="btn-secondary" onclick="goToStep(1)">← Retour</button>
-      <button class="btn-primary" id="btn-step2" onclick="validateStep2()" disabled>Continuer →</button>
-    </div>
-  </div>
+ <div class="btn-row">
+ <button class="btn-secondary" onclick="goToStep(1)">← Retour</button>
+ <button class="btn-primary" id="btn-step2" onclick="validateStep2()" disabled>Continuer →</button>
+ </div>
+ </div>
 
-  <!-- ÉTAPE 3 : CONTACT -->
-  <div class="step-panel" id="step-3">
-    <div class="panel-header">
-      <div class="panel-icon">👤</div>
-      <h2 class="panel-title">Votre contact</h2>
-      <p class="panel-sub">La personne responsable de la gestion des flexi-jobs dans votre entreprise.</p>
-    </div>
+ <!-- ÉTAPE 3 : CONTACT -->
+ <div class="step-panel" id="step-3">
+ <div class="panel-header">
+ <h2 class="panel-title">Votre contact</h2>
+ <p class="panel-sub">La personne responsable de la gestion des flexi-jobs dans votre entreprise.</p>
+ </div>
 
-    <div class="fields-row">
-      <div class="field">
-        <label>Prénom <span class="required">*</span></label>
-        <input type="text" id="contact-prenom" placeholder="Jean"/>
-        <div class="field-error" id="err-cprenom">Requis</div>
-      </div>
-      <div class="field">
-        <label>Nom <span class="required">*</span></label>
-        <input type="text" id="contact-nom" placeholder="Martin"/>
-        <div class="field-error" id="err-cnom">Requis</div>
-      </div>
-    </div>
+ <div class="fields-row">
+ <div class="field">
+ <label>Prénom <span class="required">*</span></label>
+ <input type="text" id="contact-prenom" placeholder="Jean"/>
+ <div class="field-error" id="err-cprenom">Requis</div>
+ </div>
+ <div class="field">
+ <label>Nom <span class="required">*</span></label>
+ <input type="text" id="contact-nom" placeholder="Martin"/>
+ <div class="field-error" id="err-cnom">Requis</div>
+ </div>
+ </div>
 
-    <div class="field">
-      <label>Fonction dans l'entreprise <span class="required">*</span></label>
-      <select id="contact-fonction">
-        <option value="" disabled selected>Sélectionnez...</option>
-        <option value="gerant">Gérant / CEO / Fondateur</option>
-        <option value="rh">Responsable RH</option>
-        <option value="directeur">Directeur</option>
-        <option value="manager">Manager / Chef d'équipe</option>
-        <option value="comptable">Comptable / CFO</option>
-        <option value="autre">Autre</option>
-      </select>
-    </div>
+ <div class="field">
+ <label>Fonction dans l'entreprise <span class="required">*</span></label>
+ <select id="contact-fonction">
+ <option value="" disabled selected>Sélectionnez...</option>
+ <option value="gerant">Gérant / CEO / Fondateur</option>
+ <option value="rh">Responsable RH</option>
+ <option value="directeur">Directeur</option>
+ <option value="manager">Manager / Chef d'équipe</option>
+ <option value="comptable">Comptable / CFO</option>
+ <option value="autre">Autre</option>
+ </select>
+ </div>
 
-    <div class="field">
-      <label>Email professionnel <span class="required">*</span></label>
-      <input type="email" id="contact-email" placeholder="jean.martin@entreprise.be"/>
-      <div class="field-error" id="err-cemail">Email invalide</div>
-    </div>
+ <div class="field">
+ <label>Email professionnel <span class="required">*</span></label>
+ <input type="email" id="contact-email" placeholder="jean.martin@entreprise.be"/>
+ <div class="field-error" id="err-cemail">Email invalide</div>
+ </div>
 
-    <div class="fields-row">
-      <div class="field">
-        <label>Mot de passe <span class="required">*</span></label>
-        <div class="password-wrap">
-          <input type="password" id="contact-password" placeholder="8 caractères minimum"/>
-          <button type="button" class="password-toggle" onclick="togglePasswordVisibility('contact-password', this)">👁️</button>
-        </div>
-        <div class="field-error" id="err-cpassword">8 caractères minimum</div>
-      </div>
-      <div class="field">
-        <label>Confirmer le mot de passe <span class="required">*</span></label>
-        <div class="password-wrap">
-          <input type="password" id="contact-password-confirm" placeholder="8 caractères minimum"/>
-          <button type="button" class="password-toggle" onclick="togglePasswordVisibility('contact-password-confirm', this)">👁️</button>
-        </div>
-        <div class="field-error" id="err-cpassword-confirm">Les mots de passe ne correspondent pas</div>
-      </div>
-    </div>
+ <div class="fields-row">
+ <div class="field">
+ <label>Mot de passe <span class="required">*</span></label>
+ <div class="password-wrap">
+ <input type="password" id="contact-password" placeholder="8 caractères minimum"/>
+ <button type="button" class="password-toggle" onclick="togglePasswordVisibility('contact-password', this)"></button>
+ </div>
+ <div class="field-error" id="err-cpassword">8 caractères minimum</div>
+ </div>
+ <div class="field">
+ <label>Confirmer le mot de passe <span class="required">*</span></label>
+ <div class="password-wrap">
+ <input type="password" id="contact-password-confirm" placeholder="8 caractères minimum"/>
+ <button type="button" class="password-toggle" onclick="togglePasswordVisibility('contact-password-confirm', this)"></button>
+ </div>
+ <div class="field-error" id="err-cpassword-confirm">Les mots de passe ne correspondent pas</div>
+ </div>
+ </div>
 
-    <div class="field">
-      <label>Téléphone direct <span class="required">*</span></label>
-      <input type="tel" id="contact-tel" placeholder="+32 470 00 00 00"/>
-      <div class="field-error" id="err-ctel">Requis</div>
-    </div>
+ <div class="field">
+ <label>Téléphone direct <span class="required">*</span></label>
+ <input type="tel" id="contact-tel" placeholder="+32 470 00 00 00"/>
+ <div class="field-error" id="err-ctel">Requis</div>
+ </div>
 
-    <div class="field">
-      <label>Nombre de recrutements flexi envisagés par mois</label>
-      <select id="volume">
-        <option value="1-2">1 à 2 missions</option>
-        <option value="3-5">3 à 5 missions</option>
-        <option value="6-10">6 à 10 missions</option>
-        <option value="10+">Plus de 10 missions</option>
-      </select>
-    </div>
+ <div class="field">
+ <label>Nombre de recrutements flexi envisagés par mois</label>
+ <select id="volume">
+ <option value="1-2">1 à 2 missions</option>
+ <option value="3-5">3 à 5 missions</option>
+ <option value="6-10">6 à 10 missions</option>
+ <option value="10+">Plus de 10 missions</option>
+ </select>
+ </div>
 
-    <div class="btn-row">
-      <button class="btn-secondary" onclick="goToStep(2)">← Retour</button>
-      <button class="btn-primary" onclick="validateStep3()">Continuer →</button>
-    </div>
-  </div>
+ <div class="btn-row">
+ <button class="btn-secondary" onclick="goToStep(2)">← Retour</button>
+ <button class="btn-primary" onclick="validateStep3()">Continuer →</button>
+ </div>
+ </div>
 
-  <!-- ÉTAPE 4 : OBLIGATIONS LÉGALES -->
-  <div class="step-panel" id="step-4">
-    <div class="panel-header">
-      <div class="panel-icon">📋</div>
-      <h2 class="panel-title">Vos obligations légales</h2>
-      <p class="panel-sub">En tant qu'employeur flexi-job, vous avez des obligations précises à respecter.</p>
-    </div>
+ <!-- ÉTAPE 4 : OBLIGATIONS LÉGALES -->
+ <div class="step-panel" id="step-4">
+ <div class="panel-header">
+ <h2 class="panel-title">Vos obligations légales</h2>
+ <p class="panel-sub">En tant qu'employeur flexi-job, vous avez des obligations précises à respecter.</p>
+ </div>
 
-    <div class="obligations-list">
-      <div class="obligation-item">
-        <div class="obligation-icon">📝</div>
-        <div>
-          <div class="obligation-title">Contrat flexi-job</div>
-          <div class="obligation-desc">Un contrat écrit doit être signé avant le début de chaque mission. FlexMoney le génère automatiquement pour vous.</div>
-        </div>
-      </div>
-      <div class="obligation-item">
-        <div class="obligation-icon">🔔</div>
-        <div>
-          <div class="obligation-title">Déclaration Dimona (type FLX)</div>
-          <div class="obligation-desc">Vous devez déclarer chaque travailleur flexi avant le début de sa mission sur socialsecurity.be. FlexMoney vous fournit un formulaire pré-rempli.</div>
-        </div>
-      </div>
-      <div class="obligation-item">
-        <div class="obligation-icon">🛡️</div>
-        <div>
-          <div class="obligation-title">Assurance accidents du travail</div>
-          <div class="obligation-desc">Les travailleurs flexi doivent être couverts par votre assurance accidents du travail existante.</div>
-        </div>
-      </div>
-      <div class="obligation-item">
-        <div class="obligation-icon">💶</div>
-        <div>
-          <div class="obligation-title">Cotisations ONSS employeur</div>
-          <div class="obligation-desc">Taux réduit de 25% sur le flexi-salaire (vs taux normal). Déclaration mensuelle via votre secrétariat social.</div>
-        </div>
-      </div>
-      <div class="obligation-item">
-        <div class="obligation-icon">💰</div>
-        <div>
-          <div class="obligation-title">Respect du plafond salarial</div>
-          <div class="obligation-desc">Le salaire de base ne peut dépasser 150% du minimum sectoriel. Les suppléments légaux (nuit, dimanche, etc.) s'ajoutent librement.</div>
-        </div>
-      </div>
-      <div class="obligation-item">
-        <div class="obligation-icon">🧾</div>
-        <div>
-          <div class="obligation-title">Fiche de paie</div>
-          <div class="obligation-desc">Une fiche de paie doit être remise au travailleur. FlexMoney génère un récapitulatif de mission que vous pouvez utiliser comme base.</div>
-        </div>
-      </div>
-    </div>
+ <div class="obligations-list">
+ <div class="obligation-item">
+ <div>
+ <div class="obligation-title">Contrat flexi-job</div>
+ <div class="obligation-desc">Un contrat écrit doit être signé avant le début de chaque mission. FlexMoney le génère automatiquement pour vous.</div>
+ </div>
+ </div>
+ <div class="obligation-item">
+ <div>
+ <div class="obligation-title">Déclaration Dimona (type FLX)</div>
+ <div class="obligation-desc">Vous devez déclarer chaque travailleur flexi avant le début de sa mission sur socialsecurity.be. FlexMoney vous fournit un formulaire pré-rempli.</div>
+ </div>
+ </div>
+ <div class="obligation-item">
+ <div>
+ <div class="obligation-title">Assurance accidents du travail</div>
+ <div class="obligation-desc">Les travailleurs flexi doivent être couverts par votre assurance accidents du travail existante.</div>
+ </div>
+ </div>
+ <div class="obligation-item">
+ <div>
+ <div class="obligation-title">Cotisations ONSS employeur</div>
+ <div class="obligation-desc">Taux réduit de 25% sur le flexi-salaire (vs taux normal). Déclaration mensuelle via votre secrétariat social.</div>
+ </div>
+ </div>
+ <div class="obligation-item">
+ <div>
+ <div class="obligation-title">Respect du plafond salarial</div>
+ <div class="obligation-desc">Le salaire de base ne peut dépasser 150% du minimum sectoriel. Les suppléments légaux (nuit, dimanche, etc.) s'ajoutent librement.</div>
+ </div>
+ </div>
+ <div class="obligation-item">
+ <div>
+ <div class="obligation-title">Fiche de paie</div>
+ <div class="obligation-desc">Une fiche de paie doit être remise au travailleur. FlexMoney génère un récapitulatif de mission que vous pouvez utiliser comme base.</div>
+ </div>
+ </div>
+ </div>
 
-    <!-- DIMONA GUIDE -->
-    <div class="dimona-box">
-      <h3>⚡ Comment faire votre Dimona FLX ?</h3>
-      <div class="dimona-step"><div class="dimona-num">1</div><span>Connectez-vous sur <strong style="color:var(--text)">socialsecurity.be</strong> avec votre accès employeur</span></div>
-      <div class="dimona-step"><div class="dimona-num">2</div><span>Choisissez "Dimona" → "Nouvelle déclaration" → Type <strong style="color:var(--text)">FLX</strong></span></div>
-      <div class="dimona-step"><div class="dimona-num">3</div><span>Utilisez le formulaire pré-rempli que FlexMoney vous envoie automatiquement</span></div>
-      <div class="dimona-step"><div class="dimona-num">4</div><span>Soumettez avant le début de la mission (obligatoire)</span></div>
-    </div>
+ <!-- DIMONA GUIDE -->
+ <div class="dimona-box">
+ <h3>Comment faire votre Dimona FLX ?</h3>
+ <div class="dimona-step"><div class="dimona-num">1</div><span>Connectez-vous sur <strong style="color:var(--text)">socialsecurity.be</strong> avec votre accès employeur</span></div>
+ <div class="dimona-step"><div class="dimona-num">2</div><span>Choisissez "Dimona" → "Nouvelle déclaration" → Type <strong style="color:var(--text)">FLX</strong></span></div>
+ <div class="dimona-step"><div class="dimona-num">3</div><span>Utilisez le formulaire pré-rempli que FlexMoney vous envoie automatiquement</span></div>
+ <div class="dimona-step"><div class="dimona-num">4</div><span>Soumettez avant le début de la mission (obligatoire)</span></div>
+ </div>
 
-    <!-- COMMISSION PREVIEW -->
-    <div class="commission-calc">
-      <h4>💡 Exemple de coût pour une mission</h4>
-      <div class="calc-row"><span class="label">Salaire horaire flexi</span><span>20,00 €</span></div>
-      <div class="calc-row"><span class="label">Durée de la mission</span><span>8 heures</span></div>
-      <div class="calc-row"><span class="label">Salaire brut total</span><span>160,00 €</span></div>
-      <div class="calc-row"><span class="label">ONSS employeur (25%)</span><span>40,00 €</span></div>
-      <div class="calc-row"><span class="label">Commission FlexMoney</span><span style="color:#16a34a;font-weight:700;">Gratuit</span></div>
-      <div class="calc-row"><span class="label">Coût total employeur</span><span>200,00 €</span></div>
-    </div>
+ <!-- COMMISSION PREVIEW -->
+ <div class="commission-calc">
+ <h4>Exemple de coût pour une mission</h4>
+ <div class="calc-row"><span class="label">Salaire horaire flexi</span><span>20,00 €</span></div>
+ <div class="calc-row"><span class="label">Durée de la mission</span><span>8 heures</span></div>
+ <div class="calc-row"><span class="label">Salaire brut total</span><span>160,00 €</span></div>
+ <div class="calc-row"><span class="label">ONSS employeur (25%)</span><span>40,00 €</span></div>
+ <div class="calc-row"><span class="label">Commission FlexMoney</span><span style="color:#16a34a;font-weight:700;">Gratuit</span></div>
+ <div class="calc-row"><span class="label">Coût total employeur</span><span>200,00 €</span></div>
+ </div>
 
-    <div style="border-top:1px solid var(--border);padding-top:24px;margin-top:24px;">
-      <label class="checkbox-field">
-        <input type="checkbox" id="obl1"/>
-        <div class="custom-checkbox"></div>
-        <div class="checkbox-text">Je m'engage à effectuer la déclaration Dimona FLX avant chaque début de mission. <span style="color:var(--error)">*</span></div>
-      </label>
-      <label class="checkbox-field">
-        <input type="checkbox" id="obl2"/>
-        <div class="custom-checkbox"></div>
-        <div class="checkbox-text">Je confirme que mon entreprise dispose d'une assurance accidents du travail couvrant les travailleurs flexi. <span style="color:var(--error)">*</span></div>
-      </label>
-      <label class="checkbox-field">
-        <input type="checkbox" id="obl3"/>
-        <div class="custom-checkbox"></div>
-        <div class="checkbox-text">Je confirme que mon secteur d'activité est éligible au régime flexi-job selon la loi belge. <span style="color:var(--error)">*</span></div>
-      </label>
-      <label class="checkbox-field">
-        <input type="checkbox" id="obl4"/>
-        <div class="custom-checkbox"></div>
-        <div class="checkbox-text">J'accepte les <a href="conditions-generales.html" target="_blank">CGU employeur</a> et la <a href="politique-confidentialite.html" target="_blank">Politique de confidentialité</a> de FlexMoney. <span style="color:var(--error)">*</span></div>
-      </label>
-    </div>
+ <div style="border-top:1px solid var(--border);padding-top:24px;margin-top:24px;">
+ <label class="checkbox-field">
+ <input type="checkbox" id="obl1"/>
+ <div class="custom-checkbox"></div>
+ <div class="checkbox-text">Je m'engage à effectuer la déclaration Dimona FLX avant chaque début de mission. <span style="color:var(--error)">*</span></div>
+ </label>
+ <label class="checkbox-field">
+ <input type="checkbox" id="obl2"/>
+ <div class="custom-checkbox"></div>
+ <div class="checkbox-text">Je confirme que mon entreprise dispose d'une assurance accidents du travail couvrant les travailleurs flexi. <span style="color:var(--error)">*</span></div>
+ </label>
+ <label class="checkbox-field">
+ <input type="checkbox" id="obl3"/>
+ <div class="custom-checkbox"></div>
+ <div class="checkbox-text">Je confirme que mon secteur d'activité est éligible au régime flexi-job selon la loi belge. <span style="color:var(--error)">*</span></div>
+ </label>
+ <label class="checkbox-field">
+ <input type="checkbox" id="obl4"/>
+ <div class="custom-checkbox"></div>
+ <div class="checkbox-text">J'accepte les <a href="conditions-generales.html" target="_blank">CGU employeur</a> et la <a href="politique-confidentialite.html" target="_blank">Politique de confidentialité</a> de FlexMoney. <span style="color:var(--error)">*</span></div>
+ </label>
+ </div>
 
-    <div class="alert alert-error" id="err-obl">Veuillez accepter toutes les obligations obligatoires.</div>
+ <div class="alert alert-error" id="err-obl">Veuillez accepter toutes les obligations obligatoires.</div>
 
-    <div class="btn-row">
-      <button class="btn-secondary" onclick="goToStep(3)">← Retour</button>
-      <button class="btn-primary" id="btn-submit" onclick="validateAndSubmit()">Activer mon compte employeur ✓</button>
-    </div>
-  </div>
+ <div class="btn-row">
+ <button class="btn-secondary" onclick="goToStep(3)">← Retour</button>
+ <button class="btn-primary" id="btn-submit" onclick="validateAndSubmit()">Activer mon compte employeur </button>
+ </div>
+ </div>
 
-  <!-- ÉTAPE 5 : VALIDATION EN COURS -->
-  <div class="step-panel" id="step-5">
-    <div class="success-page">
-      <div class="success-icon">🎉</div>
-      <h2 class="success-title">Compte créé !</h2>
-      <p class="success-sub">
-        Bienvenue sur FlexMoney, <strong id="success-company"></strong> !<br/>
+ <!-- ÉTAPE 5 : VALIDATION EN COURS -->
+ <div class="step-panel" id="step-5">
+ <div class="success-page">
+ <h2 class="success-title">Compte créé !</h2>
+ <p class="success-sub">
+        Bienvenue sur FlexMoney, <strong id="success-company"></strong>!<br/>
         Votre compte employeur est en cours d'activation.<br/>
         Vous recevrez une confirmation à <strong id="success-email"></strong> sous 24h.
-      </p>
+ </p>
 
-      <div id="secteur-result-final" style="margin-bottom:24px;"></div>
+ <div id="secteur-result-final" style="margin-bottom:24px;"></div>
 
-      <div class="guide-box">
-        <h3>🚀 Ce qui vous attend</h3>
-        <div class="guide-item"><span>✉️</span><span>Email de bienvenue avec votre guide démarrage flexi-job</span></div>
-        <div class="guide-item"><span>✅</span><span>Validation de votre compte par notre équipe sous 24h</span></div>
-        <div class="guide-item"><span>📄</span><span>Guide complet Dimona FLX envoyé par email</span></div>
-        <div class="guide-item"><span>🔍</span><span>Dès activation : publiez votre première mission et trouvez votre flexi-worker en 24h</span></div>
-        <div class="guide-item"><span>💰</span><span>100% gratuit : aucune commission FlexMoney sur vos missions</span></div>
-      </div>
+ <div class="guide-box">
+ <h3>Ce qui vous attend</h3>
+ <div class="guide-item"><span></span><span>Email de bienvenue avec votre guide démarrage flexi-job</span></div>
+ <div class="guide-item"><span></span><span>Validation de votre compte par notre équipe sous 24h</span></div>
+ <div class="guide-item"><span></span><span>Guide complet Dimona FLX envoyé par email</span></div>
+ <div class="guide-item"><span></span><span>Dès activation : publiez votre première mission et trouvez votre flexi-worker en 24h</span></div>
+ <div class="guide-item"><span></span><span>100% gratuit : aucune commission FlexMoney sur vos missions</span></div>
+ </div>
 
-      <div class="btn-row" style="margin-top:24px;justify-content:center;">
-        <a href="index.html" class="btn-primary" style="display:inline-block;text-decoration:none;text-align:center;max-width:300px;">Retour à l'accueil</a>
-      </div>
-    </div>
-  </div>
+ <div class="btn-row" style="margin-top:24px;justify-content:center;">
+ <a href="index.html" class="btn-primary" style="display:inline-block;text-decoration:none;text-align:center;max-width:300px;">Retour à l'accueil</a>
+ </div>
+ </div>
+ </div>
 
 </div>
 
@@ -509,7 +498,7 @@
     const input = document.getElementById(inputId);
     const isHidden = input.type === 'password';
     input.type = isHidden ? 'text' : 'password';
-    btn.textContent = isHidden ? '🙈' : '👁️';
+    btn.textContent = isHidden ? '' : '';
   }
 
   // ── NAVIGATION ──────────────────────────────────────────
@@ -543,7 +532,7 @@
     if (bceRaw.length !== 9 && bceRaw.length !== 10) {
       resultDiv.className = 'bce-result error';
       resultDiv.style.display = 'block';
-      resultDiv.innerHTML = '❌ Numéro BCE invalide. Il doit contenir 9 ou 10 chiffres.';
+      resultDiv.innerHTML = ' Numéro BCE invalide. Il doit contenir 9 ou 10 chiffres.';
       return;
     }
 
@@ -571,10 +560,10 @@
         resultDiv.className = 'bce-result success';
         resultDiv.style.display = 'block';
         resultDiv.innerHTML = `
-          <div style="color:var(--success);font-weight:700;margin-bottom:12px;">✅ Entreprise trouvée dans la BCE</div>
-          <div class="bce-result-row"><span class="label">Numéro BCE</span><span class="value">${bceFormatted}</span></div>
-          <div class="bce-result-row"><span class="label">Dénomination</span><span class="value">${name}</span></div>
-          <div class="bce-result-row"><span class="label">Statut</span><span class="value" style="color:var(--success)">${status}</span></div>
+ <div style="color:var(--success);font-weight:700;margin-bottom:12px;"> Entreprise trouvée dans la BCE</div>
+ <div class="bce-result-row"><span class="label">Numéro BCE</span><span class="value">${bceFormatted}</span></div>
+ <div class="bce-result-row"><span class="label">Dénomination</span><span class="value">${name}</span></div>
+ <div class="bce-result-row"><span class="label">Statut</span><span class="value" style="color:var(--success)">${status}</span></div>
         `;
         document.getElementById('company-name').value = name;
         document.getElementById('bce-validated-fields').style.display = 'block';
@@ -587,13 +576,13 @@
       resultDiv.className = 'bce-result success';
       resultDiv.style.display = 'block';
       resultDiv.innerHTML = `
-        <div style="color:var(--success);font-weight:700;margin-bottom:8px;">✅ Format BCE valide</div>
-        <div style="font-size:0.85rem;color:var(--muted)">BCE : <strong style="color:var(--text)">${bceFormatted}</strong> — Complétez les informations ci-dessous.</div>
+ <div style="color:var(--success);font-weight:700;margin-bottom:8px;"> Format BCE valide</div>
+ <div style="font-size:0.85rem;color:var(--muted)">BCE : <strong style="color:var(--text)">${bceFormatted}</strong> — Complétez les informations ci-dessous.</div>
       `;
       document.getElementById('bce-validated-fields').style.display = 'block';
     }
 
-    btn.textContent = '✓ Validé'; btn.disabled = false;
+    btn.textContent = ' Validé'; btn.disabled = false;
   }
 
   // ── SECTEUR CHECK ────────────────────────────────────────
@@ -608,7 +597,7 @@
     if (SECTEURS_EXCLUS.includes(val)) {
       status.className = 'secteur-status nok';
       status.style.display = 'block';
-      status.innerHTML = `❌ <strong>Secteur exclu</strong> — Ce secteur n'est pas autorisé pour le régime flexi-job, même après la réforme de juillet 2026. Contactez-nous si vous pensez être dans une exception.`;
+      status.innerHTML = ` <strong>Secteur exclu</strong> — Ce secteur n'est pas autorisé pour le régime flexi-job, même après la réforme de juillet 2026. Contactez-nous si vous pensez être dans une exception.`;
       btn2.disabled = true;
       secteurOk = false;
       formData.secteur_statut = 'exclu';
@@ -616,10 +605,10 @@
       status.className = 'secteur-status warn';
       status.style.display = 'block';
       let msg = '';
-      if (val === 'soins') msg = `⚠️ <strong>Secteur des soins</strong> — Autorisé mais avec une limite proportionnelle sur le volume total de travail. Notre équipe vérifie votre situation.`;
-      else if (val === 'secteur_public') msg = `⚠️ <strong>Secteur public</strong> — Autorisé pour les fonctions contractuelles. Fonctions sous statut, magistrats et police exclus. Notre équipe vérifie.`;
-      else if (val === 'interim') msg = `⚠️ <strong>Intérim</strong> — Autorisé mais un travailleur intérimaire ne peut pas être en flexi chez le même utilisateur en même temps.`;
-      else msg = `⚠️ <strong>Agriculture partielle</strong> — L'aménagement et l'entretien de parcs et jardins est autorisé. Notre équipe confirme votre éligibilité.`;
+      if (val === 'soins') msg = ` <strong>Secteur des soins</strong> — Autorisé mais avec une limite proportionnelle sur le volume total de travail. Notre équipe vérifie votre situation.`;
+      else if (val === 'secteur_public') msg = ` <strong>Secteur public</strong> — Autorisé pour les fonctions contractuelles. Fonctions sous statut, magistrats et police exclus. Notre équipe vérifie.`;
+      else if (val === 'interim') msg = ` <strong>Intérim</strong> — Autorisé mais un travailleur intérimaire ne peut pas être en flexi chez le même utilisateur en même temps.`;
+      else msg = ` <strong>Agriculture partielle</strong> — L'aménagement et l'entretien de parcs et jardins est autorisé. Notre équipe confirme votre éligibilité.`;
       status.innerHTML = msg;
       btn2.disabled = false;
       secteurOk = true;
@@ -628,7 +617,7 @@
     } else {
       status.className = 'secteur-status ok';
       status.style.display = 'block';
-      status.innerHTML = `✅ <strong>Secteur éligible</strong> — Votre secteur est autorisé pour le recrutement flexi-job depuis le 1er juillet 2026.`;
+      status.innerHTML = ` <strong>Secteur éligible</strong> — Votre secteur est autorisé pour le recrutement flexi-job depuis le 1er juillet 2026.`;
       btn2.disabled = false;
       secteurOk = true;
       detail.style.display = 'block';
@@ -837,9 +826,9 @@
 
     const finalDiv = document.getElementById('secteur-result-final');
     if (SECTEURS_CONDITION.includes(formData.secteur)) {
-      finalDiv.innerHTML = '<div class="alert alert-warning">⚠️ Notre équipe vérifie les conditions spécifiques à votre secteur et vous confirme sous 24h.</div>';
+      finalDiv.innerHTML = '<div class="alert alert-warning"> Notre équipe vérifie les conditions spécifiques à votre secteur et vous confirme sous 24h.</div>';
     } else {
-      finalDiv.innerHTML = '<div class="alert alert-success">✅ Votre secteur est éligible. Votre compte est en cours d\'activation.</div>';
+      finalDiv.innerHTML = '<div class="alert alert-success"> Votre secteur est éligible. Votre compte est en cours d\'activation.</div>';
     }
 
     goToStep(5);
@@ -868,7 +857,7 @@
     formData.company_name = row.nom_entreprise;
     document.getElementById('bce-result').className = 'bce-result success';
     document.getElementById('bce-result').style.display = 'block';
-    document.getElementById('bce-result').innerHTML = `<div style="color:var(--success);font-weight:700;">✅ Numéro BCE déjà validé</div>`;
+    document.getElementById('bce-result').innerHTML = `<div style="color:var(--success);font-weight:700;"> Numéro BCE déjà validé</div>`;
     document.getElementById('bce-validated-fields').style.display = 'block';
     document.getElementById('company-name').value = row.nom_entreprise || '';
     document.getElementById('company-address').value = row.adresse || '';
@@ -900,7 +889,7 @@
 
     // Adapter les textes
     document.querySelector('#step-1 .panel-title').textContent = 'Modifiez votre entreprise';
-    document.getElementById('btn-submit').textContent = 'Mettre à jour mon profil ✓';
+    document.getElementById('btn-submit').textContent = 'Mettre à jour mon profil ';
   }
 
   initEditMode();

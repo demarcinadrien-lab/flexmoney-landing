@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FlexMoney — Inscription Travailleur</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="competences.js"></script>
-  <style>
+ <meta charset="UTF-8"/>
+ <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+ <title>FlexMoney — Inscription Travailleur</title>
+ <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+ <script src="competences.js"></script>
+ <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --brand: #6366f1; --brand-light: #8b5cf6; --brand-dim: rgba(99,102,241,0.10);
@@ -156,7 +156,7 @@
       justify-content: center; transition: all 0.2s; margin-top: 1px;
     }
     .checkbox-field input:checked + .custom-checkbox { background: var(--brand); border-color: var(--brand); }
-    .custom-checkbox::after { content: '✓'; font-size: 0.75rem; color: #fff; display: none; }
+    .custom-checkbox::after { content: ''; font-size: 0.75rem; color: #fff; display: none; }
     .checkbox-field input:checked + .custom-checkbox::after { display: block; }
     .checkbox-text { font-size: 0.9rem; color: var(--muted); line-height: 1.5; }
     .checkbox-text a { color: var(--brand-light); text-decoration: none; }
@@ -211,363 +211,354 @@
       .dispo-slot { padding: 9px 2px; min-height: 30px; }
       .btn-row { flex-direction: column; }
     }
-  </style>
+ </style>
 </head>
 <body>
 
 <nav>
-  <div class="logo">Flex<span>Money</span></div>
-  <a href="index.html" class="nav-back">← Retour</a>
+ <div class="logo">Flex<span>Money</span></div>
+ <a href="index.html" class="nav-back">← Retour</a>
 </nav>
 
 <div class="progress-wrap">
-  <div class="progress-steps">
-    <div class="step-item active" id="prog-1">
-      <div class="step-circle">1</div>
-      <div class="step-label">Identité</div>
-    </div>
-    <div class="step-item" id="prog-2">
-      <div class="step-circle">2</div>
-      <div class="step-label">Éligibilité</div>
-    </div>
-    <div class="step-item" id="prog-3">
-      <div class="step-circle">3</div>
-      <div class="step-label">Compétences</div>
-    </div>
-    <div class="step-item" id="prog-4">
-      <div class="step-circle">4</div>
-      <div class="step-label">Disponibilités</div>
-    </div>
-    <div class="step-item" id="prog-5">
-      <div class="step-circle">5</div>
-      <div class="step-label">Confirmation</div>
-    </div>
-  </div>
+ <div class="progress-steps">
+ <div class="step-item active" id="prog-1">
+ <div class="step-circle">1</div>
+ <div class="step-label">Identité</div>
+ </div>
+ <div class="step-item" id="prog-2">
+ <div class="step-circle">2</div>
+ <div class="step-label">Éligibilité</div>
+ </div>
+ <div class="step-item" id="prog-3">
+ <div class="step-circle">3</div>
+ <div class="step-label">Compétences</div>
+ </div>
+ <div class="step-item" id="prog-4">
+ <div class="step-circle">4</div>
+ <div class="step-label">Disponibilités</div>
+ </div>
+ <div class="step-item" id="prog-5">
+ <div class="step-circle">5</div>
+ <div class="step-label">Confirmation</div>
+ </div>
+ </div>
 </div>
 
 <div class="main">
 
-  <!-- ÉTAPE 1 : IDENTITÉ -->
-  <div class="step-panel active" id="step-1">
-    <div class="panel-header">
-      <div class="panel-icon">👤</div>
-      <h2 class="panel-title">Vos informations personnelles</h2>
-      <p class="panel-sub">Ces informations sont nécessaires pour vérifier votre éligibilité au régime flexi-job.</p>
-    </div>
+ <!-- ÉTAPE 1 : IDENTITÉ -->
+ <div class="step-panel active" id="step-1">
+ <div class="panel-header">
+ <h2 class="panel-title">Vos informations personnelles</h2>
+ <p class="panel-sub">Ces informations sont nécessaires pour vérifier votre éligibilité au régime flexi-job.</p>
+ </div>
 
-    <div class="fields-row">
-      <div class="field">
-        <label>Prénom <span class="required">*</span></label>
-        <input type="text" id="prenom" placeholder="Marie" />
-        <div class="field-error" id="err-prenom">Champ requis</div>
-      </div>
-      <div class="field">
-        <label>Nom <span class="required">*</span></label>
-        <input type="text" id="nom" placeholder="Dupont" />
-        <div class="field-error" id="err-nom">Champ requis</div>
-      </div>
-    </div>
+ <div class="fields-row">
+ <div class="field">
+ <label>Prénom <span class="required">*</span></label>
+ <input type="text" id="prenom" placeholder="Marie" />
+ <div class="field-error" id="err-prenom">Champ requis</div>
+ </div>
+ <div class="field">
+ <label>Nom <span class="required">*</span></label>
+ <input type="text" id="nom" placeholder="Dupont" />
+ <div class="field-error" id="err-nom">Champ requis</div>
+ </div>
+ </div>
 
-    <div class="field">
-      <label>Adresse email <span class="required">*</span></label>
-      <input type="email" id="email" placeholder="marie.dupont@gmail.com" />
-      <div class="field-error" id="err-email">Email invalide</div>
-    </div>
+ <div class="field">
+ <label>Adresse email <span class="required">*</span></label>
+ <input type="email" id="email" placeholder="marie.dupont@gmail.com" />
+ <div class="field-error" id="err-email">Email invalide</div>
+ </div>
 
-    <div class="fields-row">
-      <div class="field">
-        <label>Mot de passe <span class="required">*</span></label>
-        <div class="password-wrap">
-          <input type="password" id="password" placeholder="8 caractères minimum" />
-          <button type="button" class="password-toggle" onclick="togglePasswordVisibility('password', this)">👁️</button>
-        </div>
-        <div class="field-error" id="err-password">8 caractères minimum</div>
-      </div>
-      <div class="field">
-        <label>Confirmer le mot de passe <span class="required">*</span></label>
-        <div class="password-wrap">
-          <input type="password" id="password-confirm" placeholder="8 caractères minimum" />
-          <button type="button" class="password-toggle" onclick="togglePasswordVisibility('password-confirm', this)">👁️</button>
-        </div>
-        <div class="field-error" id="err-password-confirm">Les mots de passe ne correspondent pas</div>
-      </div>
-    </div>
+ <div class="fields-row">
+ <div class="field">
+ <label>Mot de passe <span class="required">*</span></label>
+ <div class="password-wrap">
+ <input type="password" id="password" placeholder="8 caractères minimum" />
+ <button type="button" class="password-toggle" onclick="togglePasswordVisibility('password', this)"></button>
+ </div>
+ <div class="field-error" id="err-password">8 caractères minimum</div>
+ </div>
+ <div class="field">
+ <label>Confirmer le mot de passe <span class="required">*</span></label>
+ <div class="password-wrap">
+ <input type="password" id="password-confirm" placeholder="8 caractères minimum" />
+ <button type="button" class="password-toggle" onclick="togglePasswordVisibility('password-confirm', this)"></button>
+ </div>
+ <div class="field-error" id="err-password-confirm">Les mots de passe ne correspondent pas</div>
+ </div>
+ </div>
 
-    <div class="field">
-      <label>Téléphone <span class="required">*</span></label>
-      <input type="tel" id="tel" placeholder="+32 470 00 00 00" />
-      <div class="field-error" id="err-tel">Champ requis</div>
-    </div>
+ <div class="field">
+ <label>Téléphone <span class="required">*</span></label>
+ <input type="tel" id="tel" placeholder="+32 470 00 00 00" />
+ <div class="field-error" id="err-tel">Champ requis</div>
+ </div>
 
-    <div class="fields-row">
-      <div class="field">
-        <label>Date de naissance <span class="required">*</span></label>
-        <input type="date" id="ddn" />
-        <div class="field-error" id="err-ddn">Champ requis</div>
-      </div>
-      <div class="field">
-        <label>Code postal <span class="required">*</span></label>
-        <input type="text" id="cp" placeholder="1000" maxlength="4" inputmode="numeric" oninput="autoVilleFromCP()" />
-        <div class="field-error" id="err-cp">Code postal belge invalide ou inconnu</div>
-        <small id="cp-hint" style="display:none;margin-top:4px;color:#16a34a;font-size:0.75rem;font-weight:600;"></small>
-      </div>
-    </div>
+ <div class="fields-row">
+ <div class="field">
+ <label>Date de naissance <span class="required">*</span></label>
+ <input type="date" id="ddn" />
+ <div class="field-error" id="err-ddn">Champ requis</div>
+ </div>
+ <div class="field">
+ <label>Code postal <span class="required">*</span></label>
+ <input type="text" id="cp" placeholder="1000" maxlength="4" inputmode="numeric" oninput="autoVilleFromCP()" />
+ <div class="field-error" id="err-cp">Code postal belge invalide ou inconnu</div>
+ <small id="cp-hint" style="display:none;margin-top:4px;color:#16a34a;font-size:0.75rem;font-weight:600;"></small>
+ </div>
+ </div>
 
-    <div class="field">
-      <label>Ville <span class="required">*</span></label>
-      <input type="text" id="ville" placeholder="Bruxelles" oninput="this.dataset.auto=''" />
-    </div>
+ <div class="field">
+ <label>Ville <span class="required">*</span></label>
+ <input type="text" id="ville" placeholder="Bruxelles" oninput="this.dataset.auto=''" />
+ </div>
 
-    <div class="btn-row">
-      <button class="btn-primary" onclick="validateStep1()">Continuer →</button>
-    </div>
-  </div>
+ <div class="btn-row">
+ <button class="btn-primary" onclick="validateStep1()">Continuer →</button>
+ </div>
+ </div>
 
-  <!-- ÉTAPE 2 : ÉLIGIBILITÉ -->
-  <div class="step-panel" id="step-2">
-    <div class="panel-header">
-      <div class="panel-icon">⚖️</div>
-      <h2 class="panel-title">Vérification de votre éligibilité</h2>
-      <p class="panel-sub">La loi belge impose des conditions précises pour bénéficier du régime flexi-job.</p>
-    </div>
+ <!-- ÉTAPE 2 : ÉLIGIBILITÉ -->
+ <div class="step-panel" id="step-2">
+ <div class="panel-header">
+ <h2 class="panel-title">Vérification de votre éligibilité</h2>
+ <p class="panel-sub">La loi belge impose des conditions précises pour bénéficier du régime flexi-job.</p>
+ </div>
 
-    <div class="alert alert-info">
-      ℹ️ Pour être éligible, vous devez soit travailler à minimum 4/5e chez un ou plusieurs employeurs, soit être pensionné.
-    </div>
+ <div class="alert alert-info">
+      ℹ Pour être éligible, vous devez soit travailler à minimum 4/5e chez un ou plusieurs employeurs, soit être pensionné.
+ </div>
 
-    <p style="font-size:0.9rem;font-weight:700;margin-bottom:16px;">Votre situation actuelle <span class="required">*</span></p>
-    <div class="radio-cards">
-      <label class="radio-card">
-        <input type="radio" name="statut" value="salarie" onchange="showStatutFields('salarie')"/>
-        <div class="radio-card-inner">
-          <div class="radio-card-icon">💼</div>
-          <div class="radio-card-title">Salarié(e)</div>
-          <div class="radio-card-desc">Je travaille à 4/5e minimum</div>
-        </div>
-      </label>
-      <label class="radio-card">
-        <input type="radio" name="statut" value="pensionné" onchange="showStatutFields('pensionné')"/>
-        <div class="radio-card-inner">
-          <div class="radio-card-icon">🏡</div>
-          <div class="radio-card-title">Pensionné(e)</div>
-          <div class="radio-card-desc">Je bénéficie d'une pension de retraite</div>
-        </div>
-      </label>
-    </div>
+ <p style="font-size:0.9rem;font-weight:700;margin-bottom:16px;">Votre situation actuelle <span class="required">*</span></p>
+ <div class="radio-cards">
+ <label class="radio-card">
+ <input type="radio" name="statut" value="salarie" onchange="showStatutFields('salarie')"/>
+ <div class="radio-card-inner">
+ <div class="radio-card-title">Salarié(e)</div>
+ <div class="radio-card-desc">Je travaille à 4/5e minimum</div>
+ </div>
+ </label>
+ <label class="radio-card">
+ <input type="radio" name="statut" value="pensionné" onchange="showStatutFields('pensionné')"/>
+ <div class="radio-card-inner">
+ <div class="radio-card-title">Pensionné(e)</div>
+ <div class="radio-card-desc">Je bénéficie d'une pension de retraite</div>
+ </div>
+ </label>
+ </div>
 
-    <!-- Champs salarié -->
-    <div id="fields-salarie" style="display:none">
-      <div class="field">
-        <label>Nom de votre employeur principal <span class="required">*</span></label>
-        <input type="text" id="employeur-principal" placeholder="Ex. : Société ABC" />
-      </div>
-      <div class="field">
-        <label>Votre régime de travail actuel <span class="required">*</span></label>
-        <select id="regime">
-          <option value="" disabled selected>Sélectionnez votre régime</option>
-          <option value="5/5">Temps plein (5/5)</option>
-          <option value="4/5">4/5e</option>
-          <option value="3/5">3/5e — ⚠️ Non éligible</option>
-          <option value="2/5">Mi-temps (2/5) — ⚠️ Non éligible</option>
-          <option value="autre">Autre arrangement</option>
-        </select>
-        <div class="field-error" id="err-regime" style="display:none">Vous devez travailler au minimum à 4/5e pour être éligible au flexi-job.</div>
-      </div>
-      <div class="alert alert-warning" id="warning-regime" style="display:none">
-        ⚠️ Votre régime actuel ne remplit pas la condition de 4/5e minimum. Vous n'êtes pas éligible au flexi-job en tant que salarié. Vous pouvez tout de même vous inscrire si vous êtes pensionné.
-      </div>
-      <div class="field" id="field-preuve-contrat">
-        <label>Preuve de votre contrat (optionnel mais recommandé)</label>
-        <div class="upload-zone" id="upload-contrat">
-          <input type="file" id="file-contrat" accept=".pdf,.jpg,.png" onchange="showUploadPreview('file-contrat','preview-contrat')"/>
-          <div class="upload-icon">📄</div>
-          <div class="upload-text"><strong>Cliquez</strong> ou glissez votre contrat / fiche de paie</div>
-          <div class="upload-hint">PDF, JPG ou PNG — max 5MB</div>
-          <div class="upload-preview" id="preview-contrat"></div>
-        </div>
-      </div>
-    </div>
+ <!-- Champs salarié -->
+ <div id="fields-salarie" style="display:none">
+ <div class="field">
+ <label>Nom de votre employeur principal <span class="required">*</span></label>
+ <input type="text" id="employeur-principal" placeholder="Ex. : Société ABC" />
+ </div>
+ <div class="field">
+ <label>Votre régime de travail actuel <span class="required">*</span></label>
+ <select id="regime">
+ <option value="" disabled selected>Sélectionnez votre régime</option>
+ <option value="5/5">Temps plein (5/5)</option>
+ <option value="4/5">4/5e</option>
+ <option value="3/5">3/5e —  Non éligible</option>
+ <option value="2/5">Mi-temps (2/5) —  Non éligible</option>
+ <option value="autre">Autre arrangement</option>
+ </select>
+ <div class="field-error" id="err-regime" style="display:none">Vous devez travailler au minimum à 4/5e pour être éligible au flexi-job.</div>
+ </div>
+ <div class="alert alert-warning" id="warning-regime" style="display:none">
+         Votre régime actuel ne remplit pas la condition de 4/5e minimum. Vous n'êtes pas éligible au flexi-job en tant que salarié. Vous pouvez tout de même vous inscrire si vous êtes pensionné.
+ </div>
+ <div class="field" id="field-preuve-contrat">
+ <label>Preuve de votre contrat (optionnel mais recommandé)</label>
+ <div class="upload-zone" id="upload-contrat">
+ <input type="file" id="file-contrat" accept=".pdf,.jpg,.png" onchange="showUploadPreview('file-contrat','preview-contrat')"/>
+ <div class="upload-text"><strong>Cliquez</strong> ou glissez votre contrat / fiche de paie</div>
+ <div class="upload-hint">PDF, JPG ou PNG — max 5MB</div>
+ <div class="upload-preview" id="preview-contrat"></div>
+ </div>
+ </div>
+ </div>
 
-    <!-- Champs pensionné -->
-    <div id="fields-pensionne" style="display:none">
-      <div class="alert alert-success">
-        ✅ Bonne nouvelle ! Depuis la nouvelle loi (juillet 2026), vous pouvez commencer le flexi-job dès le trimestre où vous êtes pensionné. Plus besoin d'attendre.
-      </div>
-      <div class="field">
-        <label>Attestation de pension (optionnel mais recommandé)</label>
-        <div class="upload-zone">
-          <input type="file" id="file-pension" accept=".pdf,.jpg,.png" onchange="showUploadPreview('file-pension','preview-pension')"/>
-          <div class="upload-icon">📋</div>
-          <div class="upload-text"><strong>Cliquez</strong> pour uploader votre attestation</div>
-          <div class="upload-hint">PDF, JPG ou PNG — max 5MB</div>
-          <div class="upload-preview" id="preview-pension"></div>
-        </div>
-      </div>
-    </div>
+ <!-- Champs pensionné -->
+ <div id="fields-pensionne" style="display:none">
+ <div class="alert alert-success">
+         Bonne nouvelle ! Depuis la nouvelle loi (juillet 2026), vous pouvez commencer le flexi-job dès le trimestre où vous êtes pensionné. Plus besoin d'attendre.
+ </div>
+ <div class="field">
+ <label>Attestation de pension (optionnel mais recommandé)</label>
+ <div class="upload-zone">
+ <input type="file" id="file-pension" accept=".pdf,.jpg,.png" onchange="showUploadPreview('file-pension','preview-pension')"/>
+ <div class="upload-text"><strong>Cliquez</strong> pour uploader votre attestation</div>
+ <div class="upload-hint">PDF, JPG ou PNG — max 5MB</div>
+ <div class="upload-preview" id="preview-pension"></div>
+ </div>
+ </div>
+ </div>
 
-    <div class="alert alert-error" id="err-statut">Veuillez sélectionner votre situation.</div>
+ <div class="alert alert-error" id="err-statut">Veuillez sélectionner votre situation.</div>
 
-    <div class="btn-row">
-      <button class="btn-secondary" onclick="goToStep(1)">← Retour</button>
-      <button class="btn-primary" onclick="validateStep2()">Continuer →</button>
-    </div>
-  </div>
+ <div class="btn-row">
+ <button class="btn-secondary" onclick="goToStep(1)">← Retour</button>
+ <button class="btn-primary" onclick="validateStep2()">Continuer →</button>
+ </div>
+ </div>
 
-  <!-- ÉTAPE 3 : COMPÉTENCES -->
-  <div class="step-panel" id="step-3">
-    <div class="panel-header">
-      <div class="panel-icon">🧠</div>
-      <h2 class="panel-title">Vos compétences</h2>
-      <p class="panel-sub">Sélectionnez toutes vos compétences. Elles remplacent votre CV — soyez précis.</p>
-    </div>
+ <!-- ÉTAPE 3 : COMPÉTENCES -->
+ <div class="step-panel" id="step-3">
+ <div class="panel-header">
+ <h2 class="panel-title">Vos compétences</h2>
+ <p class="panel-sub">Sélectionnez toutes vos compétences. Elles remplacent votre CV — soyez précis.</p>
+ </div>
 
-    <div class="alert alert-info">💡 Sélectionnez au minimum <strong>3 compétences</strong>. Plus vous en ajoutez, plus vous aurez de missions proposées.</div>
+ <div class="alert alert-info"> Sélectionnez au minimum <strong>3 compétences</strong>. Plus vous en ajoutez, plus vous aurez de missions proposées.</div>
 
-    <div class="competences-section">
-      <!-- Onglets secteurs (générés par competences.js) -->
-      <div class="secteur-tabs-wrap" id="secteur-tabs-ins"></div>
-      <!-- Description du secteur actif -->
-      <div class="secteur-desc" id="secteur-desc-ins"></div>
-      <!-- Chips compétences du secteur actif -->
-      <div class="competences-list" id="competences-chips-ins"></div>
-    </div>
+ <div class="competences-section">
+ <!-- Onglets secteurs (générés par competences.js) -->
+ <div class="secteur-tabs-wrap" id="secteur-tabs-ins"></div>
+ <!-- Description du secteur actif -->
+ <div class="secteur-desc" id="secteur-desc-ins"></div>
+ <!-- Chips compétences du secteur actif -->
+ <div class="competences-list" id="competences-chips-ins"></div>
+ </div>
 
-    <div class="field">
-      <label>Compétence(s) non listée(s) ci-dessus</label>
-      <input type="text" id="comp-autre" placeholder="Ex. : Gestion de projet Agile, Photoshop..."/>
-    </div>
+ <div class="field">
+ <label>Compétence(s) non listée(s) ci-dessus</label>
+ <input type="text" id="comp-autre" placeholder="Ex. : Gestion de projet Agile, Photoshop..."/>
+ </div>
 
-    <div id="comp-count-msg" class="alert alert-warning" style="display:none">
-      ⚠️ Sélectionnez au minimum 3 compétences.
-    </div>
+ <div id="comp-count-msg" class="alert alert-warning" style="display:none">
+       Sélectionnez au minimum 3 compétences.
+ </div>
 
-    <div class="btn-row">
-      <button class="btn-secondary" onclick="goToStep(2)">← Retour</button>
-      <button class="btn-primary" onclick="validateStep3()">Continuer →</button>
-    </div>
-  </div>
+ <div class="btn-row">
+ <button class="btn-secondary" onclick="goToStep(2)">← Retour</button>
+ <button class="btn-primary" onclick="validateStep3()">Continuer →</button>
+ </div>
+ </div>
 
-  <!-- ÉTAPE 4 : DISPONIBILITÉS -->
-  <div class="step-panel" id="step-4">
-    <div class="panel-header">
-      <div class="panel-icon">📅</div>
-      <h2 class="panel-title">Vos disponibilités</h2>
-      <p class="panel-sub">Indiquez quand vous pouvez travailler. Cliquez sur les cases pour les sélectionner.</p>
-    </div>
+ <!-- ÉTAPE 4 : DISPONIBILITÉS -->
+ <div class="step-panel" id="step-4">
+ <div class="panel-header">
+ <h2 class="panel-title">Vos disponibilités</h2>
+ <p class="panel-sub">Indiquez quand vous pouvez travailler. Cliquez sur les cases pour les sélectionner.</p>
+ </div>
 
-    <p style="font-size:0.85rem;font-weight:600;color:var(--muted);margin-bottom:12px;">Sélectionnez vos créneaux disponibles</p>
+ <p style="font-size:0.85rem;font-weight:600;color:var(--muted);margin-bottom:12px;">Sélectionnez vos créneaux disponibles</p>
 
-    <div class="dispo-grid" id="dispo-grid">
-      <!-- Généré par JS -->
-    </div>
+ <div class="dispo-grid" id="dispo-grid">
+ <!-- Généré par JS -->
+ </div>
 
-    <div class="field" style="margin-top:8px;">
-      <label>Préférence de travail <span class="required">*</span></label>
-      <select id="pref-lieu">
-        <option value="" disabled selected>Choisissez...</option>
-        <option value="teletravail">🏠 Télétravail uniquement</option>
-        <option value="presentiel">🏢 Présentiel uniquement</option>
-        <option value="mixte">🔄 Mixte (télétravail + présentiel)</option>
-      </select>
-    </div>
+ <div class="field" style="margin-top:8px;">
+ <label>Préférence de travail <span class="required">*</span></label>
+ <select id="pref-lieu">
+ <option value="" disabled selected>Choisissez...</option>
+ <option value="teletravail">Télétravail uniquement</option>
+ <option value="presentiel">Présentiel uniquement</option>
+ <option value="mixte">Mixte (télétravail + présentiel)</option>
+ </select>
+ </div>
 
-    <div class="field">
-      <label>Taux horaire minimum souhaité</label>
-      <select id="taux-min">
-        <option value="">Pas de minimum</option>
-        <option value="12">12€/h minimum</option>
-        <option value="15">15€/h minimum</option>
-        <option value="18">18€/h minimum</option>
-        <option value="20">20€/h minimum</option>
-        <option value="25">25€/h minimum</option>
-        <option value="30">30€/h minimum</option>
-        <option value="35">35€/h minimum</option>
-      </select>
-    </div>
+ <div class="field">
+ <label>Taux horaire minimum souhaité</label>
+ <select id="taux-min">
+ <option value="">Pas de minimum</option>
+ <option value="12">12€/h minimum</option>
+ <option value="15">15€/h minimum</option>
+ <option value="18">18€/h minimum</option>
+ <option value="20">20€/h minimum</option>
+ <option value="25">25€/h minimum</option>
+ <option value="30">30€/h minimum</option>
+ <option value="35">35€/h minimum</option>
+ </select>
+ </div>
 
-    <div class="field">
-      <label>Présentation — parlez de vous <span style="font-weight:400;color:var(--muted);">(facultatif)</span></label>
-      <textarea id="presentation" maxlength="600" placeholder="Décrivez votre expérience, vos points forts, ce que vous recherchez... Cette description sera visible par les employeurs."></textarea>
-      <small style="display:block;margin-top:4px;color:var(--muted);font-size:0.75rem;">Max 600 caractères. Visible sur votre fiche par les employeurs.</small>
-    </div>
+ <div class="field">
+ <label>Présentation — parlez de vous <span style="font-weight:400;color:var(--muted);">(facultatif)</span></label>
+ <textarea id="presentation" maxlength="600" placeholder="Décrivez votre expérience, vos points forts, ce que vous recherchez... Cette description sera visible par les employeurs."></textarea>
+ <small style="display:block;margin-top:4px;color:var(--muted);font-size:0.75rem;">Max 600 caractères. Visible sur votre fiche par les employeurs.</small>
+ </div>
 
-    <!-- CGU dans cette étape -->
-    <div style="border-top:1px solid var(--border);padding-top:24px;margin-top:8px;">
-      <p style="font-weight:700;margin-bottom:16px;">Confirmation et acceptation</p>
+ <!-- CGU dans cette étape -->
+ <div style="border-top:1px solid var(--border);padding-top:24px;margin-top:8px;">
+ <p style="font-weight:700;margin-bottom:16px;">Confirmation et acceptation</p>
 
-      <label class="checkbox-field">
-        <input type="checkbox" id="cgu1"/>
-        <div class="custom-checkbox"></div>
-        <div class="checkbox-text">J'ai lu et j'accepte les <a href="conditions-generales.html" target="_blank">Conditions Générales d'Utilisation</a> de FlexMoney. <span class="required">*</span></div>
-      </label>
+ <label class="checkbox-field">
+ <input type="checkbox" id="cgu1"/>
+ <div class="custom-checkbox"></div>
+ <div class="checkbox-text">J'ai lu et j'accepte les <a href="conditions-generales.html" target="_blank">Conditions Générales d'Utilisation</a> de FlexMoney. <span class="required">*</span></div>
+ </label>
 
-      <label class="checkbox-field">
-        <input type="checkbox" id="cgu2"/>
-        <div class="custom-checkbox"></div>
-        <div class="checkbox-text">J'accepte la <a href="politique-confidentialite.html" target="_blank">Politique de confidentialité</a> et le traitement de mes données personnelles conformément au RGPD. <span class="required">*</span></div>
-      </label>
+ <label class="checkbox-field">
+ <input type="checkbox" id="cgu2"/>
+ <div class="custom-checkbox"></div>
+ <div class="checkbox-text">J'accepte la <a href="politique-confidentialite.html" target="_blank">Politique de confidentialité</a> et le traitement de mes données personnelles conformément au RGPD. <span class="required">*</span></div>
+ </label>
 
-      <label class="checkbox-field">
-        <input type="checkbox" id="cgu3"/>
-        <div class="custom-checkbox"></div>
-        <div class="checkbox-text">Je certifie sur l'honneur que les informations fournies sont exactes et que je réponds aux conditions d'éligibilité du régime flexi-job. <span class="required">*</span></div>
-      </label>
+ <label class="checkbox-field">
+ <input type="checkbox" id="cgu3"/>
+ <div class="custom-checkbox"></div>
+ <div class="checkbox-text">Je certifie sur l'honneur que les informations fournies sont exactes et que je réponds aux conditions d'éligibilité du régime flexi-job. <span class="required">*</span></div>
+ </label>
 
-      <label class="checkbox-field">
-        <input type="checkbox" id="cgu4"/>
-        <div class="custom-checkbox"></div>
-        <div class="checkbox-text">J'accepte de recevoir des notifications par email concernant les missions disponibles et les actualités FlexMoney.</div>
-      </label>
-    </div>
+ <label class="checkbox-field">
+ <input type="checkbox" id="cgu4"/>
+ <div class="custom-checkbox"></div>
+ <div class="checkbox-text">J'accepte de recevoir des notifications par email concernant les missions disponibles et les actualités FlexMoney.</div>
+ </label>
+ </div>
 
-    <div class="alert alert-error" id="err-cgu">Veuillez accepter les conditions obligatoires.</div>
+ <div class="alert alert-error" id="err-cgu">Veuillez accepter les conditions obligatoires.</div>
 
-    <div class="btn-row">
-      <button class="btn-secondary" onclick="goToStep(3)">← Retour</button>
-      <button class="btn-primary" id="btn-submit" onclick="validateAndSubmit()">Créer mon profil FlexMoney ✓</button>
-    </div>
-  </div>
+ <div class="btn-row">
+ <button class="btn-secondary" onclick="goToStep(3)">← Retour</button>
+ <button class="btn-primary" id="btn-submit" onclick="validateAndSubmit()">Créer mon profil FlexMoney </button>
+ </div>
+ </div>
 
-  <!-- ÉTAPE 5 : CONFIRMATION -->
-  <div class="step-panel" id="step-5">
-    <div class="success-page">
-      <div class="success-icon">🎉</div>
-      <h2 class="success-title">Profil créé avec succès !</h2>
-      <p class="success-sub">
-        Bienvenue sur FlexMoney, <strong id="success-name"></strong> !<br/>
+ <!-- ÉTAPE 5 : CONFIRMATION -->
+ <div class="step-panel" id="step-5">
+ <div class="success-page">
+ <h2 class="success-title">Profil créé avec succès !</h2>
+ <p class="success-sub">
+        Bienvenue sur FlexMoney, <strong id="success-name"></strong>!<br/>
         Votre profil est en cours de validation.<br/>
         Vous recevrez une confirmation à <strong id="success-email"></strong> dans les 24h.
-      </p>
+ </p>
 
-      <div id="eligibility-result" style="margin-bottom:24px;"></div>
+ <div id="eligibility-result" style="margin-bottom:24px;"></div>
 
-      <div class="next-steps">
-        <h3>📋 Prochaines étapes</h3>
-        <div class="next-step-item">
-          <span>✉️</span>
-          <span>Confirmez votre email (vérifiez vos spams)</span>
-        </div>
-        <div class="next-step-item">
-          <span>✅</span>
-          <span>Notre équipe valide votre éligibilité sous 24h</span>
-        </div>
-        <div class="next-step-item">
-          <span>🔔</span>
-          <span>Vous recevrez une alerte dès qu'une mission correspond à votre profil</span>
-        </div>
-        <div class="next-step-item">
-          <span>💰</span>
-          <span>La plateforme complète ouvre le 1er juillet 2026</span>
-        </div>
-      </div>
+ <div class="next-steps">
+ <h3>Prochaines étapes</h3>
+ <div class="next-step-item">
+ <span></span>
+ <span>Confirmez votre email (vérifiez vos spams)</span>
+ </div>
+ <div class="next-step-item">
+ <span></span>
+ <span>Notre équipe valide votre éligibilité sous 24h</span>
+ </div>
+ <div class="next-step-item">
+ <span></span>
+ <span>Vous recevrez une alerte dès qu'une mission correspond à votre profil</span>
+ </div>
+ <div class="next-step-item">
+ <span></span>
+ <span>La plateforme complète ouvre le 1er juillet 2026</span>
+ </div>
+ </div>
 
-      <div class="btn-row" style="margin-top:24px;justify-content:center;">
-        <a href="index.html" class="btn-primary" style="display:inline-block;text-decoration:none;text-align:center;max-width:300px;">
+ <div class="btn-row" style="margin-top:24px;justify-content:center;">
+ <a href="index.html" class="btn-primary" style="display:inline-block;text-decoration:none;text-align:center;max-width:300px;">
           Retour à l'accueil
-        </a>
-      </div>
-    </div>
-  </div>
+ </a>
+ </div>
+ </div>
+ </div>
 
 </div>
 
@@ -586,7 +577,7 @@
     const input = document.getElementById(inputId);
     const isHidden = input.type === 'password';
     input.type = isHidden ? 'text' : 'password';
-    btn.textContent = isHidden ? '🙈' : '👁️';
+    btn.textContent = isHidden ? '' : '';
   }
 
   // ── NAVIGATION ──────────────────────────────────────────
@@ -617,7 +608,7 @@
     if (info) {
       cpEl.classList.remove('error');
       errEl.classList.remove('show');
-      hint.textContent = `📍 ${info.nom} (${info.prov})`;
+      hint.textContent = ` ${info.nom} (${info.prov})`;
       hint.style.display = 'block';
       // Pré-remplit la ville si vide ou issue d'un précédent code
       if (!villeEl.value.trim() || villeEl.dataset.auto === '1') {
@@ -722,12 +713,12 @@
     // Render tabs
     const tabsWrap = document.getElementById('secteur-tabs-ins');
     tabsWrap.innerHTML = FLEXMONEY_SECTEURS.map((s, i) => `
-      <button class="secteur-tab${i === 0 ? ' active' : ''}"
+ <button class="secteur-tab${i === 0 ? ' active' : ''}"
         data-id="${s.id}"
         style="${i === 0 ? `background:${s.couleur};color:#fff;border-color:${s.couleur}` : ''}"
         onclick="switchSecteurIns('${s.id}', this, '${s.couleur}')">
         ${s.label}
-      </button>
+ </button>
     `).join('');
     renderSecteurChipsIns(FLEXMONEY_SECTEURS[0]);
   }
@@ -803,7 +794,7 @@
   const grid = document.getElementById('dispo-grid');
   grid.innerHTML = `<div></div>${jours.map(j => `<div class="dispo-col-head">${j}</div>`).join('')}` +
     slots.map(s => `
-      <div class="dispo-row-label">${s}</div>
+ <div class="dispo-row-label">${s}</div>
       ${jours.map(j => `<div class="dispo-slot" data-key="${j}-${s}" onclick="toggleDispo(this,'${j}-${s}')"></div>`).join('')}
     `).join('');
 
@@ -817,7 +808,7 @@
   function showUploadPreview(inputId, previewId) {
     const file = document.getElementById(inputId)?.files[0];
     const preview = document.getElementById(previewId);
-    if (file && preview) { preview.textContent = '✅ ' + file.name; preview.style.display = 'block'; }
+    if (file && preview) { preview.textContent = ' ' + file.name; preview.style.display = 'block'; }
   }
 
   // ── FINAL SUBMIT ────────────────────────────────────────
@@ -920,7 +911,7 @@
         to_name:     formData.prenom + ' ' + formData.nom,
         prenom:      formData.prenom,
         competences: (formData.competences || []).join(', '),
-        eligible:    formData.eligible ? 'Éligible ✅' : 'En cours de vérification ⏳',
+        eligible:    formData.eligible ? 'Éligible ' : 'En cours de vérification ⏳',
         reply_to:    'contact@flexmoney.be'
       });
     } catch(e) { console.log('Email non envoyé (non-bloquant)', e); }
@@ -931,9 +922,9 @@
 
     const eligDiv = document.getElementById('eligibility-result');
     if (formData.eligible) {
-      eligDiv.innerHTML = '<div class="alert alert-success">✅ Vous semblez éligible au régime flexi-job. Notre équipe confirme votre dossier sous 24h.</div>';
+      eligDiv.innerHTML = '<div class="alert alert-success"> Vous semblez éligible au régime flexi-job. Notre équipe confirme votre dossier sous 24h.</div>';
     } else {
-      eligDiv.innerHTML = '<div class="alert alert-warning">⚠️ Votre régime de travail actuel ne semble pas remplir la condition 4/5e. Notre équipe examine votre dossier et vous contacte pour trouver une solution.</div>';
+      eligDiv.innerHTML = '<div class="alert alert-warning"> Votre régime de travail actuel ne semble pas remplir la condition 4/5e. Notre équipe examine votre dossier et vous contacte pour trouver une solution.</div>';
     }
 
     goToStep(5);
@@ -1006,7 +997,7 @@
 
     // Adapter les textes de l'interface
     document.querySelector('#step-1 .panel-title').textContent = 'Modifiez vos informations';
-    document.getElementById('btn-submit').textContent = 'Mettre à jour mon profil ✓';
+    document.getElementById('btn-submit').textContent = 'Mettre à jour mon profil ';
   }
 
   initEditMode();

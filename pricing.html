@@ -1,22 +1,23 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tarifs — FlexMoney</title>
-  <style>
+ <meta charset="UTF-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+ <title>Tarifs — FlexMoney</title>
+ <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --brand: #6C47FF; --brand-light: #8B6DFF; --brand-dim: rgba(108,71,255,0.12);
-      --accent: #00D4AA; --dark: #0A0A0F; --dark2: #12121A; --dark3: #1A1A28;
-      --text: #F0EFF8; --muted: #8A8AA8; --border: rgba(255,255,255,0.08); --radius: 16px;
+      --brand: #6366f1; --brand-light: #8b5cf6; --brand-dim: rgba(99,102,241,0.10);
+      --accent: #10b981; --dark: #ffffff; --dark2: #f8fafc; --dark3: #ffffff;
+      --text: #0f172a; --muted: #64748b; --border: #e2e8f0; --radius: 16px;
+      --card-shadow: 0 4px 16px rgba(15,23,42,0.06);
     }
     body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--dark); color: var(--text); line-height: 1.6; }
 
     nav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
       display: flex; align-items: center; justify-content: space-between;
-      padding: 20px 40px; background: rgba(10,10,15,0.9); backdrop-filter: blur(16px);
+      padding: 20px 40px; background: rgba(255,255,255,0.85); backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border);
     }
     .logo { font-size: 1.4rem; font-weight: 800; color: var(--text); text-decoration: none; }
@@ -30,7 +31,7 @@
     .hero { padding: 160px 24px 72px; text-align: center; }
     .badge {
       display: inline-flex; align-items: center; gap: 8px;
-      background: rgba(0,212,170,0.1); border: 1px solid rgba(0,212,170,0.3);
+      background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3);
       color: var(--accent); padding: 8px 18px; border-radius: 100px;
       font-size: 0.82rem; font-weight: 600; margin-bottom: 32px;
     }
@@ -44,12 +45,12 @@
       border-radius: var(--radius); padding: 40px 36px; text-align: center;
     }
     .journey-card.intro {
-      background: linear-gradient(160deg, rgba(0,212,170,0.15), var(--dark2));
-      border: 1px solid rgba(0,212,170,0.4);
+      background: linear-gradient(160deg, rgba(16,185,129,0.15), var(--dark2));
+      border: 1px solid rgba(16,185,129,0.4);
     }
     .journey-card.normal {
-      background: linear-gradient(160deg, rgba(108,71,255,0.18), var(--dark2));
-      border: 1px solid rgba(108,71,255,0.4);
+      background: linear-gradient(160deg, rgba(99,102,241,0.18), var(--dark2));
+      border: 1px solid rgba(99,102,241,0.4);
     }
     .journey-arrow { text-align: center; font-size: 2rem; color: var(--muted); }
     .journey-label { font-size: 0.78rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; }
@@ -61,7 +62,7 @@
     .journey-rate-label { font-size: 1.1rem; color: var(--muted); margin-top: 8px; }
     .journey-desc { font-size: 0.88rem; color: var(--muted); margin-top: 20px; line-height: 1.6; }
     .journey-included { margin-top: 20px; display: flex; flex-direction: column; gap: 8px; }
-    .journey-item { display: flex; align-items: center; gap: 8px; font-size: 0.87rem; color: var(--text); background: rgba(255,255,255,0.04); border-radius: 8px; padding: 8px 12px; }
+    .journey-item { display: flex; align-items: center; gap: 8px; font-size: 0.87rem; color: var(--text); background: #f8fafc; border-radius: 8px; padding: 8px 12px; }
     .journey-item .ic { font-size: 1rem; flex-shrink: 0; }
 
     /* INCLUDED */
@@ -75,7 +76,7 @@
     .inc-icon { font-size: 1.6rem; margin-bottom: 12px; }
     .inc-title { font-weight: 700; margin-bottom: 6px; font-size: 0.95rem; }
     .inc-text { font-size: 0.84rem; color: var(--muted); line-height: 1.5; }
-    .inc-badge { display: inline-block; background: rgba(0,212,170,0.12); border: 1px solid rgba(0,212,170,0.25); color: var(--accent); font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 100px; margin-top: 8px; }
+    .inc-badge { display: inline-block; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.25); color: var(--accent); font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 100px; margin-top: 8px; }
 
     /* CALCULATOR */
     .calc-section { padding: 80px 24px; max-width: 720px; margin: 0 auto; }
@@ -103,12 +104,12 @@
     .faq-a.open { display: block; }
 
     /* CTA */
-    .cta-final { background: linear-gradient(135deg, rgba(108,71,255,0.18), rgba(0,212,170,0.06)); border-top: 1px solid rgba(108,71,255,0.2); padding: 96px 24px; text-align: center; }
+    .cta-final { background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(16,185,129,0.06)); border-top: 1px solid rgba(99,102,241,0.2); padding: 96px 24px; text-align: center; }
     .cta-final h2 { font-size: 2.4rem; font-weight: 900; margin-bottom: 16px; letter-spacing: -1px; }
     .cta-final p { color: var(--muted); margin-bottom: 40px; }
     .cta-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
     .btn { padding: 16px 36px; border-radius: 100px; font-size: 1rem; font-weight: 700; text-decoration: none; display: inline-block; transition: all 0.2s; border: none; cursor: pointer; }
-    .btn-primary { background: var(--brand); color: #fff; box-shadow: 0 4px 24px rgba(108,71,255,0.35); }
+    .btn-primary { background: var(--brand); color: #fff; box-shadow: 0 4px 24px rgba(99,102,241,0.35); }
     .btn-primary:hover { background: var(--brand-light); transform: translateY(-2px); }
     .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
     .btn-outline:hover { border-color: var(--brand); color: var(--brand-light); }
@@ -126,173 +127,167 @@
       nav { padding: 16px 20px; }
       .nav-links a:not(.nav-cta) { display: none; }
     }
-  </style>
+ </style>
 </head>
 <body>
 
 <nav>
-  <a href="index.html" class="logo">Flex<span>Money</span></a>
-  <div class="nav-links">
-    <a href="index.html">Accueil</a>
-    <a href="inscription-travailleur.html">Travailleurs</a>
-    <a href="inscription-employeur.html" class="nav-cta">S'inscrire employeur</a>
-  </div>
+ <a href="index.html" class="logo">Flex<span>Money</span></a>
+ <div class="nav-links">
+ <a href="index.html">Accueil</a>
+ <a href="inscription-travailleur.html">Travailleurs</a>
+ <a href="inscription-employeur.html" class="nav-cta">S'inscrire employeur</a>
+ </div>
 </nav>
 
 <!-- HERO -->
 <section class="hero">
-  <div class="badge">🎁 100% gratuit · Sans commission · Dimona offerte</div>
-  <h1>Simple. Sans abonnement.<br/><span style="color:var(--accent)">Sans commission.</span></h1>
-  <p class="hero-sub">FlexMoney est gratuit : aucune commission, aucun abonnement. Vous ne payez que le salaire et les cotisations. Travailleurs gratuits, Dimona offerte.</p>
+ <div class="badge"> 100% gratuit · Sans commission · Dimona offerte</div>
+ <h1>Simple. Sans abonnement.<br/><span style="color:var(--accent)">Sans commission.</span></h1>
+ <p class="hero-sub">FlexMoney est gratuit : aucune commission, aucun abonnement. Vous ne payez que le salaire et les cotisations. Travailleurs gratuits, Dimona offerte.</p>
 </section>
 
 <!-- JOURNEY -->
 <div class="journey">
-  <div style="max-width:520px;margin:0 auto;">
-    <div class="journey-card intro">
-      <div class="journey-label">🎁 Notre tarif</div>
-      <div class="journey-rate">0<span style="font-size:2.5rem">€</span></div>
-      <div class="journey-rate-label">de commission</div>
-      <p class="journey-desc">FlexMoney est actuellement <strong>100% gratuit</strong> pour les employeurs comme pour les travailleurs. Aucune commission n'est prélevée sur vos missions.</p>
-      <div class="journey-included">
-        <div class="journey-item"><span class="ic">✓</span> Matching IA inclus</div>
-        <div class="journey-item"><span class="ic">✓</span> Contrat flexi automatique</div>
-        <div class="journey-item"><span class="ic" style="color:var(--accent)">🎁</span> Guide Dimona offert</div>
-        <div class="journey-item"><span class="ic">✓</span> Validation éligibilité incluse</div>
-      </div>
-    </div>
-  </div>
+ <div style="max-width:520px;margin:0 auto;">
+ <div class="journey-card intro">
+ <div class="journey-label"> Notre tarif</div>
+ <div class="journey-rate">0<span style="font-size:2.5rem">€</span></div>
+ <div class="journey-rate-label">de commission</div>
+ <p class="journey-desc">FlexMoney est actuellement <strong>100% gratuit</strong> pour les employeurs comme pour les travailleurs. Aucune commission n'est prélevée sur vos missions.</p>
+ <div class="journey-included">
+ <div class="journey-item"><span class="ic"></span> Matching IA inclus</div>
+ <div class="journey-item"><span class="ic"></span> Contrat flexi automatique</div>
+ <div class="journey-item"><span class="ic" style="color:var(--accent)"></span> Guide Dimona offert</div>
+ <div class="journey-item"><span class="ic"></span> Validation éligibilité incluse</div>
+ </div>
+ </div>
+ </div>
 </div>
 
 <!-- INCLUDED -->
 <section class="included-section">
-  <div class="included-inner">
-    <div class="section-label">Toujours inclus</div>
-    <h2 class="section-title">Tout ce dont vous avez besoin,<br/>sans supplément.</h2>
-    <p class="section-sub">Chaque mission inclut l'ensemble des outils légaux et administratifs.</p>
-    <div class="included-grid">
-      <div class="inc-card">
-        <div class="inc-icon">🤖</div>
-        <div class="inc-title">Matching IA</div>
-        <div class="inc-text">Notre algorithme identifie les meilleurs profils par compétences réelles, pas par CV.</div>
-      </div>
-      <div class="inc-card">
-        <div class="inc-icon">📝</div>
-        <div class="inc-title">Contrat flexi auto</div>
-        <div class="inc-text">Contrat conforme généré et signé électroniquement en quelques secondes.</div>
-      </div>
-      <div class="inc-card">
-        <div class="inc-icon">📋</div>
-        <div class="inc-title">Guide Dimona</div>
-        <div class="inc-text">Guide personnalisé pré-rempli pour chaque mission. Soumission en moins de 5 minutes.</div>
-        <span class="inc-badge">🎁 OFFERT</span>
-      </div>
-      <div class="inc-card">
-        <div class="inc-icon">✅</div>
-        <div class="inc-title">Validation éligibilité</div>
-        <div class="inc-text">Chaque travailleur est vérifié avant la mission : régime, statut, documents.</div>
-      </div>
-      <div class="inc-card">
-        <div class="inc-icon">⭐</div>
-        <div class="inc-title">Système d'évaluation</div>
-        <div class="inc-text">Évaluez chaque mission. Les notes remplacent le CV et construisent la confiance.</div>
-      </div>
-      <div class="inc-card">
-        <div class="inc-icon">🔒</div>
-        <div class="inc-title">Conformité légale</div>
-        <div class="inc-text">Plateforme conforme à la loi belge flexi-job 2026. Secteurs éligibles vérifiés automatiquement.</div>
-      </div>
-    </div>
-  </div>
+ <div class="included-inner">
+ <div class="section-label">Toujours inclus</div>
+ <h2 class="section-title">Tout ce dont vous avez besoin,<br/>sans supplément.</h2>
+ <p class="section-sub">Chaque mission inclut l'ensemble des outils légaux et administratifs.</p>
+ <div class="included-grid">
+ <div class="inc-card">
+ <div class="inc-title">Matching IA</div>
+ <div class="inc-text">Notre algorithme identifie les meilleurs profils par compétences réelles, pas par CV.</div>
+ </div>
+ <div class="inc-card">
+ <div class="inc-title">Contrat flexi auto</div>
+ <div class="inc-text">Contrat conforme généré et signé électroniquement en quelques secondes.</div>
+ </div>
+ <div class="inc-card">
+ <div class="inc-title">Guide Dimona</div>
+ <div class="inc-text">Guide personnalisé pré-rempli pour chaque mission. Soumission en moins de 5 minutes.</div>
+ <span class="inc-badge"> OFFERT</span>
+ </div>
+ <div class="inc-card">
+ <div class="inc-title">Validation éligibilité</div>
+ <div class="inc-text">Chaque travailleur est vérifié avant la mission : régime, statut, documents.</div>
+ </div>
+ <div class="inc-card">
+ <div class="inc-title">Système d'évaluation</div>
+ <div class="inc-text">Évaluez chaque mission. Les notes remplacent le CV et construisent la confiance.</div>
+ </div>
+ <div class="inc-card">
+ <div class="inc-title">Conformité légale</div>
+ <div class="inc-text">Plateforme conforme à la loi belge flexi-job 2026. Secteurs éligibles vérifiés automatiquement.</div>
+ </div>
+ </div>
+ </div>
 </section>
 
 <!-- CALCULATOR -->
 <section class="calc-section">
-  <div class="section-label" style="text-align:center;">Calculateur</div>
-  <h2 class="section-title" style="text-align:center;margin-bottom:12px;">Combien ça coûte ?</h2>
-  <p class="section-sub" style="text-align:center;margin-bottom:40px;">Comparez votre coût réel avec FlexMoney vs une agence d'intérim.</p>
-  <div class="calc-box">
-    <div class="calc-row">
-      <div class="calc-field">
-        <label>Heures par mission</label>
-        <input type="number" id="calc-hours" value="8" min="1" max="50" oninput="calculate()" />
-      </div>
-      <div class="calc-field">
-        <label>Salaire horaire (€)</label>
-        <input type="number" id="calc-rate" value="20" min="10" max="60" oninput="calculate()" />
-      </div>
-    </div>
-    <div class="calc-row">
-      <div class="calc-field">
-        <label>Missions par mois</label>
-        <input type="number" id="calc-missions" value="4" min="1" max="100" oninput="calculate()" />
-      </div>
-      <div class="calc-field">
-        <label>Commission FlexMoney</label>
-        <input type="text" value="0 € — Gratuit" disabled style="color:var(--accent);font-weight:700;" />
-      </div>
-    </div>
-    <div class="calc-results">
-      <div class="calc-result">
-        <div class="calc-result-value" id="res-flexmoney">—</div>
-        <div class="calc-result-label">Coût total<br/>FlexMoney / mois</div>
-      </div>
-      <div class="calc-result">
-        <div class="calc-result-value" id="res-interim">—</div>
-        <div class="calc-result-label">Coût via agence<br/>intérim / mois</div>
-      </div>
-      <div class="calc-result">
-        <div class="calc-result-value saving-val" id="res-saving">—</div>
-        <div class="calc-result-label">Économie mensuelle<br/>avec FlexMoney</div>
-      </div>
-    </div>
-  </div>
+ <div class="section-label" style="text-align:center;">Calculateur</div>
+ <h2 class="section-title" style="text-align:center;margin-bottom:12px;">Combien ça coûte ?</h2>
+ <p class="section-sub" style="text-align:center;margin-bottom:40px;">Comparez votre coût réel avec FlexMoney vs une agence d'intérim.</p>
+ <div class="calc-box">
+ <div class="calc-row">
+ <div class="calc-field">
+ <label>Heures par mission</label>
+ <input type="number" id="calc-hours" value="8" min="1" max="50" oninput="calculate()" />
+ </div>
+ <div class="calc-field">
+ <label>Salaire horaire (€)</label>
+ <input type="number" id="calc-rate" value="20" min="10" max="60" oninput="calculate()" />
+ </div>
+ </div>
+ <div class="calc-row">
+ <div class="calc-field">
+ <label>Missions par mois</label>
+ <input type="number" id="calc-missions" value="4" min="1" max="100" oninput="calculate()" />
+ </div>
+ <div class="calc-field">
+ <label>Commission FlexMoney</label>
+ <input type="text" value="0 € — Gratuit" disabled style="color:var(--accent);font-weight:700;" />
+ </div>
+ </div>
+ <div class="calc-results">
+ <div class="calc-result">
+ <div class="calc-result-value" id="res-flexmoney">—</div>
+ <div class="calc-result-label">Coût total<br/>FlexMoney / mois</div>
+ </div>
+ <div class="calc-result">
+ <div class="calc-result-value" id="res-interim">—</div>
+ <div class="calc-result-label">Coût via agence<br/>intérim / mois</div>
+ </div>
+ <div class="calc-result">
+ <div class="calc-result-value saving-val" id="res-saving">—</div>
+ <div class="calc-result-label">Économie mensuelle<br/>avec FlexMoney</div>
+ </div>
+ </div>
+ </div>
 </section>
 
 <!-- FAQ -->
 <section class="faq">
-  <h2 style="font-size:2rem;font-weight:900;text-align:center;margin-bottom:48px;letter-spacing:-1px;">Questions fréquentes</h2>
+ <h2 style="font-size:2rem;font-weight:900;text-align:center;margin-bottom:48px;letter-spacing:-1px;">Questions fréquentes</h2>
 
-  <div class="faq-item">
-    <button class="faq-q" onclick="toggleFaq(this)">FlexMoney est-il vraiment gratuit ? <span class="arrow">▼</span></button>
-    <div class="faq-a">Oui. Pour l'instant, FlexMoney ne prélève <strong>aucune commission</strong> et n'impose aucun abonnement, ni aux employeurs ni aux travailleurs. Vous ne payez que le salaire du travailleur et les cotisations ONSS légales.</div>
-  </div>
+ <div class="faq-item">
+ <button class="faq-q" onclick="toggleFaq(this)">FlexMoney est-il vraiment gratuit ? <span class="arrow">▼</span></button>
+ <div class="faq-a">Oui. Pour l'instant, FlexMoney ne prélève <strong>aucune commission</strong> et n'impose aucun abonnement, ni aux employeurs ni aux travailleurs. Vous ne payez que le salaire du travailleur et les cotisations ONSS légales.</div>
+ </div>
 
-  <div class="faq-item">
-    <button class="faq-q" onclick="toggleFaq(this)">Que paie exactement l'employeur ? <span class="arrow">▼</span></button>
-    <div class="faq-a">Uniquement le <strong>salaire brut flexi</strong> versé au travailleur et les <strong>cotisations ONSS employeur</strong>. Exemple : 8h @ 20€ = 160€ brut + 40€ ONSS = 200€, sans aucun frais FlexMoney.</div>
-  </div>
+ <div class="faq-item">
+ <button class="faq-q" onclick="toggleFaq(this)">Que paie exactement l'employeur ? <span class="arrow">▼</span></button>
+ <div class="faq-a">Uniquement le <strong>salaire brut flexi</strong> versé au travailleur et les <strong>cotisations ONSS employeur</strong>. Exemple : 8h @ 20€ = 160€ brut + 40€ ONSS = 200€, sans aucun frais FlexMoney.</div>
+ </div>
 
-  <div class="faq-item">
-    <button class="faq-q" onclick="toggleFaq(this)">Pourquoi la Dimona est-elle offerte ? <span class="arrow">▼</span></button>
-    <div class="faq-a">La Dimona FLX est une obligation légale que chaque employeur doit soumettre avant chaque mission. On vous prépare le dossier pré-rempli gratuitement parce que c'est notre rôle de vous simplifier la vie, pas de vous facturer des services administratifs de base.</div>
-  </div>
+ <div class="faq-item">
+ <button class="faq-q" onclick="toggleFaq(this)">Pourquoi la Dimona est-elle offerte ? <span class="arrow">▼</span></button>
+ <div class="faq-a">La Dimona FLX est une obligation légale que chaque employeur doit soumettre avant chaque mission. On vous prépare le dossier pré-rempli gratuitement parce que c'est notre rôle de vous simplifier la vie, pas de vous facturer des services administratifs de base.</div>
+ </div>
 
-  <div class="faq-item">
-    <button class="faq-q" onclick="toggleFaq(this)">Le service restera-t-il gratuit ? <span class="arrow">▼</span></button>
-    <div class="faq-a">FlexMoney est gratuit à ce stade. Si un modèle tarifaire est introduit à l'avenir, il vous sera communiqué clairement et à l'avance. Aucun frais caché ne vous sera jamais appliqué sans votre accord.</div>
-  </div>
+ <div class="faq-item">
+ <button class="faq-q" onclick="toggleFaq(this)">Le service restera-t-il gratuit ? <span class="arrow">▼</span></button>
+ <div class="faq-a">FlexMoney est gratuit à ce stade. Si un modèle tarifaire est introduit à l'avenir, il vous sera communiqué clairement et à l'avance. Aucun frais caché ne vous sera jamais appliqué sans votre accord.</div>
+ </div>
 </section>
 
 <!-- CTA FINAL -->
 <section class="cta-final">
-  <h2>Commencez gratuitement.</h2>
-  <p>Sans commission · Sans abonnement · Dimona offerte · Travailleurs toujours gratuits</p>
-  <div class="cta-buttons">
-    <a href="inscription-employeur.html" class="btn btn-primary">Je recrute en flexi →</a>
-    <a href="inscription-travailleur.html" class="btn btn-outline">Je cherche des missions</a>
-  </div>
+ <h2>Commencez gratuitement.</h2>
+ <p>Sans commission · Sans abonnement · Dimona offerte · Travailleurs toujours gratuits</p>
+ <div class="cta-buttons">
+ <a href="inscription-employeur.html" class="btn btn-primary">Je recrute en flexi →</a>
+ <a href="inscription-travailleur.html" class="btn btn-outline">Je cherche des missions</a>
+ </div>
 </section>
 
 <footer>
-  <div class="footer-logo">Flex<span>Money</span></div>
-  <p>© 2026 FlexMoney · flexmoney.be · contact@flexmoney.be</p>
-  <p style="font-size:0.8rem;margin-top:8px;">
-    <a href="conditions-generales.html" style="color:var(--muted);margin:0 8px;">CGU</a>·
-    <a href="politique-confidentialite.html" style="color:var(--muted);margin:0 8px;">Confidentialité</a>·
-    <a href="politique-cookies.html" style="color:var(--muted);margin:0 8px;">Cookies</a>·
-    <a href="mentions-legales.html" style="color:var(--muted);margin:0 8px;">Mentions légales</a>
-  </p>
+ <div class="footer-logo">Flex<span>Money</span></div>
+ <p>© 2026 FlexMoney · flexmoney.be · contact@flexmoney.be</p>
+ <p style="font-size:0.8rem;margin-top:8px;">
+ <a href="conditions-generales.html" style="color:var(--muted);margin:0 8px;">CGU</a>·
+ <a href="politique-confidentialite.html" style="color:var(--muted);margin:0 8px;">Confidentialité</a>·
+ <a href="politique-cookies.html" style="color:var(--muted);margin:0 8px;">Cookies</a>·
+ <a href="mentions-legales.html" style="color:var(--muted);margin:0 8px;">Mentions légales</a>
+ </p>
 </footer>
 
 <script>
