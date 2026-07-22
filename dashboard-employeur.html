@@ -339,21 +339,13 @@
   <!-- MODAL PROPOSER CRÉNEAU -->
   <div class="modal-overlay hidden" id="proposerCreneauModal">
     <div class="modal-box">
-      <h2>📅 Proposer un créneau</h2>
-      <p class="modal-subtitle">Choisissez la date et l'horaire de la journée de test. Le travailleur recevra un email pour confirmer.</p>
+      <h2>📅 Proposer les jours de travail</h2>
+      <p class="modal-subtitle">Indiquez un ou plusieurs jours et un message. Le travailleur recevra la proposition avec les contrats à compléter et signer, en une seule étape.</p>
+      <div id="joursList"></div>
+      <button type="button" class="btn-copy" style="background:#eef2ff;color:#4338ca;margin-bottom:16px;" onclick="ajouterJour()">+ Ajouter un jour</button>
       <div class="field" style="margin-bottom:14px;">
-        <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;">Date *</label>
-        <input type="date" id="propDate" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;">
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
-        <div class="field">
-          <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;">Heure de début *</label>
-          <input type="time" id="propHeureDebut" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;">
-        </div>
-        <div class="field">
-          <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;">Heure de fin *</label>
-          <input type="time" id="propHeureFin" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;">
-        </div>
+        <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;">Message au travailleur</label>
+        <textarea id="propMessage" rows="3" placeholder="Ex : Bonjour, nous vous proposons de commencer aux dates ci-dessus. Merci de compléter vos données (NISS, IBAN) et de signer les contrats pour que tout soit en ordre." style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;"></textarea>
       </div>
       <div class="modal-footer">
         <button class="btn-copy" style="background:#e2e8f0;color:#374151;" onclick="closeProposerCreneauModal()">Annuler</button>
@@ -721,13 +713,28 @@
     await loadCandidatures();
   }
 
+  function jourRowHtml() {
+    const min = new Date().toISOString().split('T')[0];
+    const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+    return `<div class="jour-row" style="display:grid;grid-template-columns:1.3fr 1fr 1fr auto;gap:8px;align-items:end;margin-bottom:10px;">
+      <div><label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:4px;">Date *</label>
+        <input type="date" class="j-date" min="${min}" value="${tomorrow}" style="width:100%;padding:9px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;"></div>
+      <div><label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:4px;">Début *</label>
+        <input type="time" class="j-deb" style="width:100%;padding:9px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;"></div>
+      <div><label style="display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:4px;">Fin *</label>
+        <input type="time" class="j-fin" style="width:100%;padding:9px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;"></div>
+      <button type="button" onclick="this.closest('.jour-row').remove()" title="Retirer ce jour" style="background:#fef2f2;color:#dc2626;border:none;border-radius:8px;padding:9px 12px;font-size:14px;font-weight:700;cursor:pointer;height:38px;">✕</button>
+    </div>`;
+  }
+
+  function ajouterJour() {
+    document.getElementById('joursList').insertAdjacentHTML('beforeend', jourRowHtml());
+  }
+
   function ouvrirProposerCreneau(id) {
     pendingCandidatureId = id;
-    const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
-    document.getElementById('propDate').value = tomorrow;
-    document.getElementById('propDate').min = new Date().toISOString().split('T')[0];
-    document.getElementById('propHeureDebut').value = '';
-    document.getElementById('propHeureFin').value = '';
+    document.getElementById('joursList').innerHTML = jourRowHtml();
+    document.getElementById('propMessage').value = '';
     document.getElementById('proposerCreneauModal').classList.remove('hidden');
   }
 
@@ -737,26 +744,39 @@
   }
 
   async function confirmerPropositionCreneau() {
-    const date = document.getElementById('propDate').value;
-    const hdeb = document.getElementById('propHeureDebut').value;
-    const hfin = document.getElementById('propHeureFin').value;
-    if (!date) { alert('Date requise.'); return; }
-    if (!hdeb || !hfin) { alert('Heures de début et fin requises.'); return; }
-    if (hdeb >= hfin) { alert("L'heure de fin doit être après l'heure de début."); return; }
+    const rows = [...document.querySelectorAll('#joursList .jour-row')];
+    const jours = [];
+    for (const r of rows) {
+      const date = r.querySelector('.j-date').value;
+      const hdeb = r.querySelector('.j-deb').value;
+      const hfin = r.querySelector('.j-fin').value;
+      if (!date || !hdeb || !hfin) { alert('Chaque jour doit avoir une date et des heures de début/fin.'); return; }
+      if (hdeb >= hfin) { alert("L'heure de fin doit être après l'heure de début."); return; }
+      jours.push({ date, heure_debut: hdeb, heure_fin: hfin });
+    }
+    if (!jours.length) { alert('Ajoutez au moins un jour.'); return; }
+    jours.sort((a, b) => (a.date + a.heure_debut).localeCompare(b.date + b.heure_debut));
+    const message = document.getElementById('propMessage').value.trim();
 
     const id = pendingCandidatureId;
+    const premier = jours[0];
     await sb.from('candidatures').update({
       statut: 'date_proposee',
-      date_test: date,
-      heure_debut: hdeb,
-      heure_fin: hfin,
+      jours_proposes: jours,
+      message_employeur: message || null,
+      proposition_le: new Date().toISOString(),
+      date_test: premier.date,          // compat 1er jour
+      heure_debut: premier.heure_debut,
+      heure_fin: premier.heure_fin,
       updated_at: new Date().toISOString()
     }).eq('id', id);
 
     const { data: cand } = await sb.from('candidatures').select('*').eq('id', id).single();
     if (cand) {
       const confirmUrl = `${window.location.origin}/confirmation-creneau.html?cid=${cand.id}`;
-      const dateLabel = new Date(date).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' });
+      const joursLabel = jours.map(j =>
+        `• ${new Date(j.date).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' })} de ${j.heure_debut} à ${j.heure_fin}`
+      ).join('\n');
       try {
         const missionData = myMissionsList.find(m => m.id === cand.mission_id);
         await flxSendEmail(TPL_PROPOSITION, {
@@ -764,12 +784,13 @@
           to_name:         `${cand.worker_prenom || ''} ${cand.worker_nom || ''}`,
           entreprise:      employerProfile?.nom_entreprise || 'L\'employeur',
           mission_titre:   missionData?.titre || 'la mission',
-          description:     missionData?.description || cand.message || '—',
+          description:     missionData?.description || '—',
           taux_horaire:    missionData?.taux_horaire ? `${missionData.taux_horaire} €/h` : '—',
           lieu_prestation: missionData?.lieu === 'remote' ? 'Télétravail' : (missionData?.adresse_lieu || '—'),
-          date_proposee:   dateLabel,
-          heure_debut:     hdeb,
-          heure_fin:       hfin,
+          date_proposee:   joursLabel,
+          heure_debut:     '—',
+          heure_fin:       '—',
+          message_employeur: message || '',
           lien_confirmation: confirmUrl,
           reply_to:        'contact@flexmoney.be'
         });
