@@ -522,42 +522,39 @@
 
  <!-- ÉTAPE 5 : CONFIRMATION -->
  <div class="step-panel" id="step-5">
- <div class="success-page">
- <h2 class="success-title">Profil créé avec succès !</h2>
+
+ <!-- Saisie du code (OTP) -->
+ <div class="success-page" id="otp-block">
+ <h2 class="success-title">Vérifiez votre adresse e-mail</h2>
  <p class="success-sub">
-        Bienvenue sur FlexMoney, <strong id="success-name"></strong>!<br/>
-        Votre profil est en cours de validation.<br/>
-        Vous recevrez une confirmation à <strong id="success-email"></strong> dans les 24h.
+        Nous avons envoyé un <strong>code à 6 chiffres</strong> à <strong id="otp-email"></strong>.<br/>
+        Saisissez-le ci-dessous pour activer votre profil.
  </p>
+ <div style="max-width:320px;margin:0 auto;">
+ <input type="text" id="otp-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"
+        style="width:100%;text-align:center;letter-spacing:10px;font-size:1.8rem;font-weight:800;padding:16px;border:1.5px solid var(--border);border-radius:12px;color:var(--text);background:var(--dark3);outline:none;"
+        oninput="this.value=this.value.replace(/[^0-9]/g,'')"/>
+ <div class="alert alert-error" id="otp-error" style="margin-top:12px;display:none;"></div>
+ <button class="btn-primary" id="otp-confirm" style="width:100%;margin-top:16px;" onclick="confirmOtp()">Confirmer mon adresse</button>
+ <p style="margin-top:14px;font-size:0.85rem;color:var(--muted);">
+        Vous n'avez rien reçu ? Vérifiez vos spams ou
+        <a href="#" id="otp-resend" onclick="resendOtp(event)" style="color:var(--brand-light);font-weight:600;">renvoyez un code</a>.
+ </p>
+ </div>
+ </div>
 
+ <!-- Succès après confirmation -->
+ <div class="success-page" id="done-block" style="display:none;">
+ <h2 class="success-title">Profil activé !</h2>
+ <p class="success-sub">
+        Bienvenue sur FlexMoney, <strong id="success-name"></strong>. Votre profil est confirmé.
+ </p>
  <div id="eligibility-result" style="margin-bottom:24px;"></div>
-
- <div class="next-steps">
- <h3>Prochaines étapes</h3>
- <div class="next-step-item">
- <span></span>
- <span>Confirmez votre email (vérifiez vos spams)</span>
- </div>
- <div class="next-step-item">
- <span></span>
- <span>Notre équipe valide votre éligibilité sous 24h</span>
- </div>
- <div class="next-step-item">
- <span></span>
- <span>Vous recevrez une alerte dès qu'une mission correspond à votre profil</span>
- </div>
- <div class="next-step-item">
- <span></span>
- <span>La plateforme complète ouvre le 1er juillet 2026</span>
+ <div class="btn-row" style="margin-top:8px;justify-content:center;">
+ <a href="dashboard-travailleur.html" class="btn-primary" style="display:inline-block;text-decoration:none;text-align:center;max-width:320px;">Accéder à mon espace →</a>
  </div>
  </div>
 
- <div class="btn-row" style="margin-top:24px;justify-content:center;">
- <a href="index.html" class="btn-primary" style="display:inline-block;text-decoration:none;text-align:center;max-width:300px;">
-          Retour à l'accueil
- </a>
- </div>
- </div>
  </div>
 
 </div>
@@ -908,7 +905,7 @@
 
     // Show success
     document.getElementById('success-name').textContent  = formData.prenom + ' ' + formData.nom;
-    document.getElementById('success-email').textContent = formData.email;
+    document.getElementById('otp-email').textContent     = formData.email;
 
     const eligDiv = document.getElementById('eligibility-result');
     if (formData.eligible) {
@@ -920,6 +917,37 @@
     goToStep(5);
     document.querySelector(`#prog-4`).classList.add('completed');
     document.querySelector(`#prog-5`).classList.add('active');
+  }
+
+  // ── Confirmation par code OTP (insensible aux scanners d'e-mail) ──
+  async function confirmOtp() {
+    const code = (document.getElementById('otp-code').value || '').trim();
+    const err  = document.getElementById('otp-error');
+    const btn  = document.getElementById('otp-confirm');
+    err.style.display = 'none';
+    if (code.length !== 6) { err.textContent = 'Entrez le code à 6 chiffres reçu par e-mail.'; err.style.display = 'block'; return; }
+    btn.disabled = true; btn.textContent = 'Vérification...';
+    try {
+      const { error } = await sb.auth.verifyOtp({ email: formData.email, token: code, type: 'signup' });
+      if (error) throw error;
+      document.getElementById('otp-block').style.display = 'none';
+      document.getElementById('done-block').style.display = 'block';
+    } catch (e) {
+      btn.disabled = false; btn.textContent = 'Confirmer mon adresse';
+      err.textContent = 'Code invalide ou expiré. Vérifiez le code ou demandez-en un nouveau.';
+      err.style.display = 'block';
+    }
+  }
+
+  async function resendOtp(e) {
+    e.preventDefault();
+    const link = document.getElementById('otp-resend');
+    link.textContent = 'Envoi...';
+    try {
+      const { error } = await sb.auth.resend({ type: 'signup', email: formData.email });
+      link.textContent = error ? 'Échec, réessayez' : 'Nouveau code envoyé';
+    } catch (_) { link.textContent = 'Échec, réessayez'; }
+    setTimeout(() => { link.textContent = 'renvoyez un code'; }, 4000);
   }
 
   // ── MODE ÉDITION (profil existant pré-rempli) ────────────
