@@ -449,12 +449,12 @@
  <div class="success-page" id="otp-block">
  <h2 class="success-title">Vérifiez votre adresse e-mail</h2>
  <p class="success-sub">
-        Nous avons envoyé un <strong>code à 6 chiffres</strong> à <strong id="otp-email"></strong>.<br/>
+        Nous avons envoyé un <strong>code à 8 chiffres</strong> à <strong id="otp-email"></strong>.<br/>
         Saisissez-le ci-dessous pour activer votre compte employeur.
  </p>
  <div style="max-width:320px;margin:0 auto;">
- <input type="text" id="otp-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"
-        style="width:100%;text-align:center;letter-spacing:10px;font-size:1.8rem;font-weight:800;padding:16px;border:1.5px solid var(--border);border-radius:12px;color:var(--text);background:var(--dark3);outline:none;"
+ <input type="text" id="otp-code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="00000000"
+        style="width:100%;text-align:center;letter-spacing:6px;font-size:1.5rem;font-weight:800;padding:16px;border:1.5px solid var(--border);border-radius:12px;color:var(--text);background:var(--dark3);outline:none;"
         oninput="this.value=this.value.replace(/[^0-9]/g,'')"/>
  <div class="alert alert-error" id="otp-error" style="margin-top:12px;display:none;"></div>
  <button class="btn-primary" id="otp-confirm" style="width:100%;margin-top:16px;" onclick="confirmOtp()">Confirmer mon adresse</button>
@@ -827,7 +827,7 @@
     const err  = document.getElementById('otp-error');
     const btn  = document.getElementById('otp-confirm');
     err.style.display = 'none';
-    if (code.length !== 6) { err.textContent = 'Entrez le code à 6 chiffres reçu par e-mail.'; err.style.display = 'block'; return; }
+    if (!/^[0-9]{6,8}$/.test(code)) { err.textContent = 'Entrez le code reçu par e-mail.'; err.style.display = 'block'; return; }
     btn.disabled = true; btn.textContent = 'Vérification...';
     try {
       const { error } = await sb.auth.verifyOtp({ email: formData.contact_email, token: code, type: 'signup' });

@@ -527,12 +527,12 @@
  <div class="success-page" id="otp-block">
  <h2 class="success-title">Vérifiez votre adresse e-mail</h2>
  <p class="success-sub">
-        Nous avons envoyé un <strong>code à 6 chiffres</strong> à <strong id="otp-email"></strong>.<br/>
+        Nous avons envoyé un <strong>code à 8 chiffres</strong> à <strong id="otp-email"></strong>.<br/>
         Saisissez-le ci-dessous pour activer votre profil.
  </p>
  <div style="max-width:320px;margin:0 auto;">
- <input type="text" id="otp-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"
-        style="width:100%;text-align:center;letter-spacing:10px;font-size:1.8rem;font-weight:800;padding:16px;border:1.5px solid var(--border);border-radius:12px;color:var(--text);background:var(--dark3);outline:none;"
+ <input type="text" id="otp-code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="00000000"
+        style="width:100%;text-align:center;letter-spacing:6px;font-size:1.5rem;font-weight:800;padding:16px;border:1.5px solid var(--border);border-radius:12px;color:var(--text);background:var(--dark3);outline:none;"
         oninput="this.value=this.value.replace(/[^0-9]/g,'')"/>
  <div class="alert alert-error" id="otp-error" style="margin-top:12px;display:none;"></div>
  <button class="btn-primary" id="otp-confirm" style="width:100%;margin-top:16px;" onclick="confirmOtp()">Confirmer mon adresse</button>
@@ -925,7 +925,7 @@
     const err  = document.getElementById('otp-error');
     const btn  = document.getElementById('otp-confirm');
     err.style.display = 'none';
-    if (code.length !== 6) { err.textContent = 'Entrez le code à 6 chiffres reçu par e-mail.'; err.style.display = 'block'; return; }
+    if (!/^[0-9]{6,8}$/.test(code)) { err.textContent = 'Entrez le code reçu par e-mail.'; err.style.display = 'block'; return; }
     btn.disabled = true; btn.textContent = 'Vérification...';
     try {
       const { error } = await sb.auth.verifyOtp({ email: formData.email, token: code, type: 'signup' });
@@ -977,48 +977,4 @@
     editingId = row.id;
 
     // Étape 1
-    document.getElementById('prenom').value = row.prenom || '';
-    document.getElementById('nom').value = row.nom || '';
-    document.getElementById('email').value = row.email || '';
-    document.getElementById('email').readOnly = true;
-    document.getElementById('email').title = 'Contactez le support pour changer votre adresse email de connexion.';
-    document.getElementById('tel').value = row.telephone || '';
-    if (row.date_naissance) document.getElementById('ddn').value = row.date_naissance;
-    document.getElementById('cp').value = row.code_postal || '';
-    document.getElementById('ville').value = row.ville || '';
-    document.getElementById('password').placeholder = 'Laisser vide pour ne pas changer';
-    document.getElementById('password-confirm').placeholder = 'Laisser vide pour ne pas changer';
-
-    // Étape 2
-    if (row.statut_eligibilite) {
-      const radio = document.querySelector(`input[name="statut"][value="${row.statut_eligibilite}"]`);
-      if (radio) { radio.checked = true; showStatutFields(row.statut_eligibilite); }
-    }
-    if (row.regime_travail) document.getElementById('regime').value = row.regime_travail;
-    formData.eligible = row.eligible;
-    formData.statut = row.statut_eligibilite;
-    formData.regime = row.regime_travail;
-
-    // Étape 3
-    selectedComps = [...(row.competences || [])];
-    refreshCompChips();
-
-    // Étape 4
-    selectedDispos = [...(row.disponibilites || [])];
-    applyDispoSelections();
-    if (row.teletravail_preference) document.getElementById('pref-lieu').value = row.teletravail_preference;
-    if (row.taux_horaire_min) document.getElementById('taux-min').value = row.taux_horaire_min;
-    if (row.presentation) document.getElementById('presentation').value = row.presentation;
-
-    // CGU déjà acceptées lors de l'inscription initiale
-    ['cgu1','cgu2','cgu3'].forEach(id => { const el = document.getElementById(id); if (el) el.checked = true; });
-
-    // Adapter les textes de l'interface
-    document.querySelector('#step-1 .panel-title').textContent = 'Modifiez vos informations';
-    document.getElementById('btn-submit').textContent = 'Mettre à jour mon profil ';
-  }
-
-  initEditMode();
-</script>
-</body>
-</html>
+    document.g
