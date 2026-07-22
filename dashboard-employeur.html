@@ -339,7 +339,7 @@
   <!-- MODAL PROPOSER CRÉNEAU -->
   <div class="modal-overlay hidden" id="proposerCreneauModal">
     <div class="modal-box">
-      <h2>📅 Proposer les jours de travail</h2>
+      <h2>Proposer les jours de travail</h2>
       <p class="modal-subtitle">Indiquez un ou plusieurs jours et un message. Le travailleur recevra la proposition avec les contrats à compléter et signer, en une seule étape.</p>
       <div id="joursList"></div>
       <button type="button" class="btn-copy" style="background:#eef2ff;color:#4338ca;margin-bottom:16px;" onclick="ajouterJour()">+ Ajouter un jour</button>
@@ -350,6 +350,17 @@
       <div class="modal-footer">
         <button class="btn-copy" style="background:#e2e8f0;color:#374151;" onclick="closeProposerCreneauModal()">Annuler</button>
         <button class="btn-copy" style="background:#6366f1;" onclick="confirmerPropositionCreneau()">Envoyer la proposition →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PROFIL TRAVAILLEUR -->
+  <div class="modal-overlay hidden" id="profilModal">
+    <div class="modal-box">
+      <h2 id="profilTitle">Profil du travailleur</h2>
+      <div id="profilContent"></div>
+      <div class="modal-footer">
+        <button class="btn-close-modal" onclick="closeProfilModal()">Fermer</button>
       </div>
     </div>
   </div>
@@ -592,8 +603,65 @@
           ${dateInfo}
           <div class="cand-detail">🕑 Reçue le ${new Date(c.created_at).toLocaleDateString('fr-BE')}</div>
         </div>
+        <div style="margin-top:10px;">
+          <button type="button" onclick="voirProfilTravailleur('${(c.worker_email || '').replace(/'/g, "\\'")}')"
+            style="padding:8px 14px;background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">
+            Voir le profil
+          </button>
+        </div>
         ${actions}
       </div>`;
+  }
+
+  async function voirProfilTravailleur(email) {
+    const box = document.getElementById('profilContent');
+    box.innerHTML = '<div style="padding:24px;text-align:center;color:#64748b;">Chargement...</div>';
+    document.getElementById('profilModal').classList.remove('hidden');
+
+    const { data: rows } = await sb.from('workers_inscription')
+      .select('*').eq('email', email).order('created_at', { ascending: false }).limit(1);
+    const w = rows && rows[0];
+    if (!w) {
+      box.innerHTML = '<div style="padding:24px;text-align:center;color:#94a3b8;">Profil introuvable pour ' + email + '.</div>';
+      return;
+    }
+
+    document.getElementById('profilTitle').textContent = `${w.prenom || ''} ${w.nom || ''}`.trim() || 'Profil du travailleur';
+
+    let age = '';
+    if (w.date_naissance) {
+      const d = new Date(w.date_naissance);
+      age = Math.floor((Date.now() - d.getTime()) / (365.25 * 24 * 3600 * 1000)) + ' ans';
+    }
+    const dispo = Array.isArray(w.disponibilites) ? w.disponibilites.join(', ') : (w.disponibilites || '');
+    const comp  = Array.isArray(w.competences) ? w.competences.join(', ') : (w.competences || '');
+    const teletravail = w.teletravail_preference === true ? 'Ouvert au télétravail'
+      : w.teletravail_preference === false ? 'Sur place uniquement' : (w.teletravail_preference || '—');
+    const esc = s => (s == null ? '' : String(s)).replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
+
+    const ligne = (label, val) => val ? `<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;">
+        <span style="min-width:150px;font-size:13px;color:#64748b;font-weight:600;">${label}</span>
+        <span style="font-size:13px;color:#0f172a;">${esc(val)}</span></div>` : '';
+
+    box.innerHTML = `
+      ${w.presentation ? `<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#334155;line-height:1.6;">${esc(w.presentation)}</div>` : ''}
+      ${ligne('E-mail', w.email)}
+      ${ligne('Téléphone', w.telephone)}
+      ${ligne('Âge', age)}
+      ${ligne('Localisation', [w.code_postal, w.ville].filter(Boolean).join(' '))}
+      ${ligne('Statut principal', w.statut_eligibilite)}
+      ${ligne('Régime de travail', w.regime_travail)}
+      ${ligne('Éligible flexi-job', w.eligible === true ? 'Oui' : w.eligible === false ? 'À vérifier' : '')}
+      ${ligne('Compétences', comp)}
+      ${ligne('Disponibilités', dispo)}
+      ${ligne('Télétravail', teletravail)}
+      ${ligne('Rayon de déplacement', w.rayon_deplacement ? w.rayon_deplacement + ' km' : '')}
+      ${ligne('Taux horaire souhaité', w.taux_horaire_min ? w.taux_horaire_min + ' €/h min.' : '')}
+    `;
+  }
+
+  function closeProfilModal() {
+    document.getElementById('profilModal').classList.add('hidden');
   }
 
   // ── Historique d'un travailleur : journée de test, puis journées du contrat trimestriel ──
@@ -679,38 +747,9 @@
   let pendingCandidatureId = null;
 
   async function accepterCandidature(id, type) {
-    if (type === 'test_jour') {
-      // Pour une journée de test : proposer un créneau plutôt que d'accepter directement
-      ouvrirProposerCreneau(id);
-      return;
-    }
-
-    await sb.from('candidatures').update({ statut: 'acceptee', updated_at: new Date().toISOString() }).eq('id', id);
-
-    // Mission récurrente : envoyer directement le lien compliance au travailleur
-    const { data: cand } = await sb.from('candidatures').select('*').eq('id', id).single();
-    if (cand) {
-      const confirmUrl = `${window.location.origin}/signer-contrat.html?cid=${cand.id}`;
-      const missionData = myMissionsList.find(m => m.id === cand.mission_id);
-      try {
-        await flxSendEmail(TPL_PROPOSITION, {
-          to_email:        cand.worker_email,
-          to_name:         `${cand.worker_prenom || ''} ${cand.worker_nom || ''}`,
-          entreprise:      employerProfile?.nom_entreprise || 'L\'employeur',
-          mission_titre:   `${missionData?.titre || 'Mission'} — votre candidature est acceptée (contrat trimestriel)`,
-          description:     missionData?.description || cand.message || '—',
-          taux_horaire:    missionData?.taux_horaire ? `${missionData.taux_horaire} €/h` : '—',
-          lieu_prestation: missionData?.lieu === 'remote' ? 'Télétravail' : (missionData?.adresse_lieu || '—'),
-          date_proposee:   missionData?.date_debut ? new Date(missionData.date_debut).toLocaleDateString('fr-BE') : '—',
-          heure_debut:     '—',
-          heure_fin:       '—',
-          lien_confirmation: confirmUrl,
-          reply_to:        'contact@flexmoney.be'
-        });
-      } catch(e) { console.log('Email non bloquant', e); }
-    }
-    document.getElementById('complianceModal').classList.remove('hidden');
-    await loadCandidatures();
+    // Accepter une candidature = proposer directement le(s) jour(s) de travail
+    // et les contrats au travailleur, en une seule étape.
+    ouvrirProposerCreneau(id);
   }
 
   function jourRowHtml() {
