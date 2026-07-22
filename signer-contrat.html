@@ -66,29 +66,62 @@
 <div class="wrap">
   <!-- Chargement -->
   <div class="state active" id="stLoading">
-    <div class="loading">⏳ Chargement de votre contrat...</div>
+    <div class="loading">Chargement de votre proposition...</div>
   </div>
 
   <!-- Erreur -->
   <div class="state" id="stError">
-    <div class="msg"><div class="big">🚫</div><p id="errorMsg">Contrat introuvable.</p></div>
+    <div class="msg"><p id="errorMsg">Contrat introuvable.</p></div>
   </div>
 
   <!-- Déjà signé -->
   <div class="state" id="stAlready">
     <div class="card center">
-      <div class="success-icon">✅</div>
       <h2 style="font-size:20px;font-weight:800;margin-bottom:8px;">Contrat déjà signé</h2>
       <p style="color:#64748b;margin-bottom:20px;" id="alreadyMsg">Vous avez déjà signé ce contrat.</p>
-      <a class="btn-primary" id="alreadyLink" href="#" target="_blank">📄 Ouvrir mon contrat signé</a>
+      <a class="btn-primary" id="alreadyLink" href="#" target="_blank">Ouvrir mon contrat signé</a>
     </div>
   </div>
 
   <!-- Signature -->
   <div class="state" id="stSign">
     <div class="banner">
-      <h1>✍️ Signature de votre contrat flexi-job</h1>
-      <p id="bannerSub">Relisez votre contrat puis signez-le en ligne.</p>
+      <h1>Proposition de jour(s) de travail</h1>
+      <p id="bannerSub">Un employeur vous propose de commencer. Complétez vos données, relisez les contrats, puis signez — ou déclinez.</p>
+    </div>
+
+    <!-- En-tête : jours proposés + message de l'employeur -->
+    <div class="card" id="propositionCard">
+      <h3 style="font-size:15px;font-weight:800;margin-bottom:6px;color:#4f46e5;">Jour(s) de travail proposé(s)</h3>
+      <p style="font-size:13px;color:#64748b;margin-bottom:14px;">
+        Il vous a été proposé la ou les date(s) ci-dessous pour commencer à travailler.
+        Complétez vos informations plus bas afin que les contrats soient en ordre, puis signez-les.
+      </p>
+      <div id="joursProposes"></div>
+      <div id="messageEmployeurBox" style="display:none;margin-top:14px;background:#eef2ff;border:1px solid #c7d2fe;border-radius:10px;padding:12px 14px;">
+        <div style="font-size:12px;font-weight:700;color:#4338ca;margin-bottom:4px;">Message de l'employeur</div>
+        <div id="messageEmployeur" style="font-size:13px;color:#334155;white-space:pre-wrap;"></div>
+      </div>
+    </div>
+
+    <!-- Données à compléter par le travailleur (NISS / IBAN) -->
+    <div class="card">
+      <h3 style="font-size:15px;font-weight:800;margin-bottom:6px;color:#4f46e5;">Vos données pour la déclaration Dimona et le paiement</h3>
+      <p style="font-size:13px;color:#64748b;margin-bottom:16px;">
+        Ces informations sont nécessaires à la déclaration Dimona FLX (effectuée par l'employeur ou son secrétariat social) et au versement de votre salaire. Elles ne sont visibles que par l'employeur concerné.
+      </p>
+      <div class="field">
+        <label>Numéro de registre national (NISS) *</label>
+        <input type="text" id="fNiss" placeholder="00.00.00-000.00" oninput="onSignInput()">
+      </div>
+      <div class="field">
+        <label>IBAN (compte sur lequel verser le salaire) *</label>
+        <input type="text" id="fIban" placeholder="BE00 0000 0000 0000" oninput="onSignInput()">
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <label>Titulaire du compte *</label>
+        <input type="text" id="fTitulaire" placeholder="Prénom Nom" oninput="onSignInput()">
+      </div>
     </div>
 
     <div class="card">
@@ -97,34 +130,66 @@
 
     <div class="card">
       <div class="sign-box">
-        <h3>✍️ Signature électronique</h3>
+        <h3>Signature électronique</h3>
         <div class="field">
           <label>Votre nom et prénom (signature) *</label>
           <input type="text" id="signName" placeholder="Prénom Nom" oninput="onSignInput()">
         </div>
         <label class="consent">
           <input type="checkbox" id="consent" onchange="onSignInput()">
-          <span>Je soussigné(e), certifie mon identité, avoir lu et compris l'intégralité du contrat ci-dessus, et je l'accepte et le signe électroniquement. Cette signature électronique a valeur légale (eIDAS — signature électronique simple).</span>
+          <span>Je soussigné(e), certifie mon identité, avoir lu et compris l'intégralité des contrats ci-dessus, et je les accepte et les signe électroniquement. Cette signature électronique a valeur légale (eIDAS — signature électronique simple).</span>
         </label>
 
         <div class="sig-preview" id="sigPreview"></div>
         <div class="sig-meta" id="sigMeta">Signature — date et heure ajoutées automatiquement.</div>
 
-        <button class="btn-sign" id="btnSign" disabled onclick="signerContrat()">🔒 Signer et transmettre le contrat</button>
+        <button class="btn-sign" id="btnSign" disabled onclick="signerContrat()">Signer et transmettre les contrats</button>
         <div class="info">Une fois signé, votre employeur reçoit une notification et le contrat signé (PDF) dans votre dossier.</div>
       </div>
+
+      <!-- Décliner -->
+      <div style="margin-top:18px;border-top:1px solid #e2e8f0;padding-top:16px;">
+        <button type="button" id="btnShowDecline" onclick="toggleDeclin(true)"
+          style="background:none;border:none;color:#dc2626;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:underline;">
+          Je ne suis pas disponible — décliner la proposition
+        </button>
+        <div id="declinBox" style="display:none;margin-top:12px;">
+          <div class="field">
+            <label>Motif (facultatif) — un mot à l'employeur</label>
+            <input type="text" id="fMotif" placeholder="Ex. : non disponible à ces dates">
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button type="button" onclick="declinerProposition()"
+              style="padding:11px 18px;background:#dc2626;color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">
+              Confirmer le refus
+            </button>
+            <button type="button" onclick="toggleDeclin(false)"
+              style="padding:11px 18px;background:#fff;color:#64748b;border:1px solid #e2e8f0;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">
+              Annuler
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Refus confirmé -->
+  <div class="state" id="stDeclined">
+    <div class="card center">
+      <h2 style="font-size:22px;font-weight:800;margin-bottom:8px;">Proposition déclinée</h2>
+      <p style="color:#64748b;margin-bottom:24px;">L'employeur a été informé que vous n'êtes pas disponible pour ces dates. Merci de votre retour.</p>
+      <a class="btn-outline" href="dashboard-travailleur.html">Aller à mon espace →</a>
     </div>
   </div>
 
   <!-- Succès -->
   <div class="state" id="stSuccess">
     <div class="card center">
-      <div class="success-icon">🎉</div>
-      <h2 style="font-size:22px;font-weight:800;margin-bottom:8px;">Contrat signé !</h2>
+      <h2 style="font-size:22px;font-weight:800;margin-bottom:8px;">Contrat signé</h2>
       <p style="color:#64748b;margin-bottom:8px;">Votre contrat a été signé et transmis à l'employeur.</p>
       <p style="color:#64748b;margin-bottom:24px;font-size:14px;">Un email de notification lui a été envoyé, et le contrat signé est disponible dans votre dossier.</p>
       <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-        <a class="btn-primary" id="successPdf" href="#" target="_blank">📄 Télécharger mon contrat signé</a>
+        <a class="btn-primary" id="successPdf" href="#" target="_blank">Télécharger mon contrat signé</a>
         <a class="btn-outline" href="dashboard-travailleur.html">Aller à mon espace →</a>
       </div>
     </div>
@@ -186,6 +251,12 @@
       return;
     }
 
+    // Déjà décliné ?
+    if (cand.statut === 'declinee' || cand.declin_le) {
+      show('stDeclined');
+      return;
+    }
+
     // Charger mission, employeur, profil travailleur
     if (cand.mission_id) {
       const { data: m } = await sb.from('missions').select('*').eq('id', cand.mission_id).single();
@@ -211,21 +282,65 @@
     cadreTexte = cadreASigner ? (cadre.texte || (typeof construireContratCadreTexte === 'function' ? construireContratCadreTexte(C) : '')) : '';
 
     renderView();
+    renderProposition();
     document.getElementById('bannerSub').textContent = cadreASigner
-      ? `${C.entreprise} vous propose un contrat-cadre + un contrat trimestriel. Relisez-les puis signez ci-dessous.`
-      : `${C.entreprise} vous propose un contrat flexi-job. Relisez-le puis signez ci-dessous.`;
+      ? `${C.entreprise} vous propose un contrat-cadre + un contrat trimestriel. Complétez vos données, relisez-les puis signez — ou déclinez.`
+      : `${C.entreprise} vous propose un contrat flexi-job. Complétez vos données, relisez-le puis signez — ou déclinez.`;
     document.getElementById('signName').value = `${cand.worker_prenom || worker?.prenom || ''} ${cand.worker_nom || worker?.nom || ''}`.trim();
+
+    // Pré-remplissage NISS / IBAN si déjà connus
+    document.getElementById('fNiss').value      = cand.worker_niss || worker?.niss || worker?.numero_national || '';
+    document.getElementById('fIban').value      = cand.worker_iban || worker?.iban || '';
+    document.getElementById('fTitulaire').value = cand.worker_iban_titulaire || worker?.iban_titulaire
+      || `${cand.worker_prenom || worker?.prenom || ''} ${cand.worker_nom || worker?.nom || ''}`.trim();
+
     onSignInput();
     show('stSign');
+  }
+
+  // Affiche les jours proposés + le message de l'employeur
+  function renderProposition() {
+    const cont = document.getElementById('joursProposes');
+    let jours = [];
+    try { jours = Array.isArray(cand.jours_proposes) ? cand.jours_proposes : JSON.parse(cand.jours_proposes || '[]'); }
+    catch (e) { jours = []; }
+
+    // Repli sur date_test si aucun jour structuré n'a été enregistré
+    if ((!jours || !jours.length) && cand.date_test) {
+      jours = [{ date: cand.date_test, debut: cand.heure_debut, fin: cand.heure_fin }];
+    }
+
+    if (jours && jours.length) {
+      cont.innerHTML = jours.map(j => {
+        const d = j.date ? new Date(j.date).toLocaleDateString('fr-BE', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }) : '—';
+        const h = (j.debut || j.heure_debut) && (j.fin || j.heure_fin)
+          ? `${j.debut || j.heure_debut} – ${j.fin || j.heure_fin}` : '';
+        return `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:8px;">
+          <span style="font-weight:700;color:#0f172a;text-transform:capitalize;">${esc(d)}</span>
+          <span style="font-size:13px;color:#475569;">${esc(h)}</span></div>`;
+      }).join('');
+    } else {
+      cont.innerHTML = `<div style="font-size:13px;color:#64748b;">Aucune date précise n'a été enregistrée. Contactez l'employeur si besoin.</div>`;
+    }
+
+    if (cand.message_employeur && cand.message_employeur.trim()) {
+      document.getElementById('messageEmployeur').textContent = cand.message_employeur.trim();
+      document.getElementById('messageEmployeurBox').style.display = 'block';
+    }
+  }
+
+  function toggleDeclin(open) {
+    document.getElementById('declinBox').style.display = open ? 'block' : 'none';
+    document.getElementById('btnShowDecline').style.display = open ? 'none' : 'inline';
   }
 
   function renderView() {
     const block = (t) => `<pre style="white-space:pre-wrap;font-family:inherit;font-size:13px;line-height:1.6;margin:0;">${esc(t)}</pre>`;
     let html = '';
     if (cadreASigner) {
-      html += `<h2 style="margin-top:0;">📘 Contrat-cadre (signé une seule fois)</h2>` + block(cadreTexte);
+      html += `<h2 style="margin-top:0;">Contrat-cadre (signé une seule fois)</h2>` + block(cadreTexte);
       html += `<hr style="border:none;border-top:1px solid #e2e8f0;margin:22px 0;">`;
-      html += `<h2>📗 Contrat trimestriel</h2>`;
+      html += `<h2>Contrat trimestriel</h2>`;
     }
     html += block(trimTexte);
     document.getElementById('contractView').innerHTML = html;
@@ -299,11 +414,15 @@
   function onSignInput() {
     const name = document.getElementById('signName').value.trim();
     const consent = document.getElementById('consent').checked;
+    const niss = document.getElementById('fNiss').value.trim();
+    const iban = document.getElementById('fIban').value.trim();
+    const titulaire = document.getElementById('fTitulaire').value.trim();
     document.getElementById('sigPreview').textContent = name;
     document.getElementById('sigMeta').textContent = name
       ? `Signé électroniquement par ${name} — ${new Date().toLocaleString('fr-BE')}`
       : 'Signature — date et heure ajoutées automatiquement.';
-    document.getElementById('btnSign').disabled = !(name.length > 2 && consent);
+    const donneesOk = niss.length >= 11 && iban.replace(/\s/g, '').length >= 14 && titulaire.length > 2;
+    document.getElementById('btnSign').disabled = !(name.length > 2 && consent && donneesOk);
   }
 
   function genererPDF(signName, signedAt) {
@@ -355,7 +474,11 @@
     const btn = document.getElementById('btnSign');
     const name = document.getElementById('signName').value.trim();
     if (name.length < 3 || !document.getElementById('consent').checked) return;
-    btn.disabled = true; btn.textContent = '⏳ Signature en cours...';
+    const niss = document.getElementById('fNiss').value.trim();
+    const iban = document.getElementById('fIban').value.trim();
+    const titulaire = document.getElementById('fTitulaire').value.trim();
+    if (niss.length < 11 || iban.replace(/\s/g, '').length < 14 || titulaire.length < 3) return;
+    btn.disabled = true; btn.textContent = 'Signature en cours...';
 
     try {
       const signedAt = new Date();
@@ -367,11 +490,14 @@
       if (upErr) throw upErr;
       const publicUrl = sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
 
-      // Mise à jour de la candidature (contrat trimestriel)
+      // Mise à jour de la candidature (contrat trimestriel + données Dimona/paie)
       const { error: updErr } = await sb.from('candidatures').update({
         contrat_signe_le: signedAt.toISOString(),
         contrat_signe_url: publicUrl,
         contrat_signataire_nom: name,
+        worker_niss: niss,
+        worker_iban: iban,
+        worker_iban_titulaire: titulaire,
         statut: 'acceptee',
         updated_at: signedAt.toISOString()
       }).eq('id', cid);
@@ -391,16 +517,20 @@
       // Notification email à l'employeur (non bloquant)
       if (mission?.email_employeur && window.flxSendEmail) {
         const corps =
-          `✍️ CONTRAT FLEXI-JOB SIGNÉ EN LIGNE\n` +
-          `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+          `CONTRAT FLEXI-JOB SIGNÉ EN LIGNE\n` +
+          `--------------------------------\n` +
           `Le travailleur ${name} a signé électroniquement ${cadreASigner ? 'le contrat-cadre ET le contrat trimestriel' : 'le contrat trimestriel'}.\n\n` +
           `Fonction : ${C.fonction}\n` +
-          `Période  : ${C.dateDebut} → ${C.dateFin}\n` +
+          `Période  : ${C.dateDebut} -> ${C.dateFin}\n` +
           `Taux     : ${C.taux}\n` +
           `Signé le : ${signedAt.toLocaleString('fr-BE')}\n\n` +
-          `📄 Contrat signé (PDF) : ${publicUrl}\n\n` +
-          `Vous le retrouvez aussi dans « Mes travailleurs » › fiche du travailleur › Documents signés reçus.\n\n` +
-          `⚠️ RAPPEL : la déclaration DIMONA FLX doit être introduite AVANT le début de la prestation.\n\n` +
+          `Données à transmettre au secrétariat social pour la Dimona FLX et la paie :\n` +
+          `NISS      : ${niss}\n` +
+          `IBAN      : ${iban}\n` +
+          `Titulaire : ${titulaire}\n\n` +
+          `Contrat signé (PDF) : ${publicUrl}\n\n` +
+          `Vous le retrouvez aussi dans « Mes travailleurs » > fiche du travailleur > Documents signés reçus.\n\n` +
+          `RAPPEL : la déclaration DIMONA FLX doit être introduite AVANT le début de la prestation. Si vous passez par un secrétariat social, transmettez-lui ces informations sans tarder.\n\n` +
           `— FlexMoney`;
 
         try {
@@ -409,7 +539,7 @@
             to_name:    C.entreprise,
             prenom:     C.representant || C.entreprise,
             entreprise: C.entreprise,
-            subject:    `✍️ Contrat flexi-job signé par ${name}`,
+            subject:    `Contrat flexi-job signé par ${name}`,
             message:    corps,
             reply_to:   'contact@flexmoney.be'
           });
@@ -424,8 +554,49 @@
     } catch (e) {
       console.error('Signature échouée', e);
       btn.disabled = false;
-      btn.textContent = '🔒 Signer et transmettre le contrat';
+      btn.textContent = 'Signer et transmettre les contrats';
       erreur("La signature n'a pas pu être enregistrée. Réessayez ou contactez le support.");
+    }
+  }
+
+  async function declinerProposition() {
+    const motif = document.getElementById('fMotif').value.trim();
+    try {
+      const declinAt = new Date();
+      const { error } = await sb.from('candidatures').update({
+        statut: 'declinee',
+        motif_declin: motif || null,
+        declin_le: declinAt.toISOString(),
+        updated_at: declinAt.toISOString()
+      }).eq('id', cid);
+      if (error) throw error;
+
+      // Notifier l'employeur (non bloquant)
+      if (mission?.email_employeur && window.flxSendEmail) {
+        const nomW = `${cand.worker_prenom || worker?.prenom || ''} ${cand.worker_nom || worker?.nom || ''}`.trim() || 'Le travailleur';
+        const corps =
+          `PROPOSITION DE TRAVAIL DÉCLINÉE\n` +
+          `-------------------------------\n` +
+          `${nomW} n'est pas disponible pour la ou les date(s) proposée(s) pour la mission « ${C.fonction} ».\n\n` +
+          (motif ? `Motif indiqué : ${motif}\n\n` : '') +
+          `Vous pouvez lui proposer d'autres dates depuis votre tableau de bord, ou contacter un autre candidat.\n\n` +
+          `— FlexMoney`;
+        try {
+          await flxSendEmail(TPL_EMPLOYEUR, {
+            to_email:   mission.email_employeur,
+            to_name:    C.entreprise,
+            prenom:     C.representant || C.entreprise,
+            entreprise: C.entreprise,
+            subject:    `Proposition déclinée par ${nomW}`,
+            message:    corps,
+            reply_to:   'contact@flexmoney.be'
+          });
+        } catch (e) { console.warn('Email employeur (refus) non envoyé', e); }
+      }
+      show('stDeclined');
+    } catch (e) {
+      console.error('Refus échoué', e);
+      erreur("Le refus n'a pas pu être enregistré. Réessayez ou contactez le support.");
     }
   }
 

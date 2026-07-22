@@ -690,7 +690,7 @@
     // Mission récurrente : envoyer directement le lien compliance au travailleur
     const { data: cand } = await sb.from('candidatures').select('*').eq('id', id).single();
     if (cand) {
-      const confirmUrl = `${window.location.origin}/confirmation-creneau.html?cid=${cand.id}`;
+      const confirmUrl = `${window.location.origin}/signer-contrat.html?cid=${cand.id}`;
       const missionData = myMissionsList.find(m => m.id === cand.mission_id);
       try {
         await flxSendEmail(TPL_PROPOSITION, {
@@ -773,7 +773,7 @@
 
     const { data: cand } = await sb.from('candidatures').select('*').eq('id', id).single();
     if (cand) {
-      const confirmUrl = `${window.location.origin}/confirmation-creneau.html?cid=${cand.id}`;
+      const confirmUrl = `${window.location.origin}/signer-contrat.html?cid=${cand.id}`;
       const joursLabel = jours.map(j =>
         `• ${new Date(j.date).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' })} de ${j.heure_debut} à ${j.heure_fin}`
       ).join('\n');
