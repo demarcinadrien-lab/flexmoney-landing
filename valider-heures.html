@@ -145,11 +145,14 @@
   }
 
   async function loadDeclarations() {
-    const { data } = await sb.from('declarations_heures')
+    // Le RLS restreint déjà aux déclarations de cet employeur (employer_email = moi
+    // ou mission m'appartenant). On filtre uniquement par travailleur pour éviter
+    // tout écart sur employer_email.
+    const { data, error } = await sb.from('declarations_heures')
       .select('*')
       .eq('worker_email', workerEmail)
-      .eq('employer_email', currentUser.email)
       .order('date_prestation', { ascending: true });
+    if (error) console.warn('Lecture déclarations:', error);
 
     const decls = data || [];
     document.getElementById('loading').classList.add('hidden');
