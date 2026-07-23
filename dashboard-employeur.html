@@ -207,9 +207,17 @@
 </header>
 
 <div class="hero-banner">
-  <div>
-    <h1>Bonjour, <span id="heroName">—</span> 👋</h1>
+  <div style="min-width:0;">
+    <h1>Bonjour, <span id="heroName">—</span></h1>
     <p>Espace employeur FlexMoney</p>
+    <div style="display:flex;flex-wrap:wrap;gap:20px;margin-top:16px;">
+      <div><div style="opacity:.6;font-size:11px;">Entreprise</div><div style="font-weight:700;font-size:14px;" id="pEntreprise">—</div></div>
+      <div><div style="opacity:.6;font-size:11px;">BCE</div><div style="font-weight:700;font-size:14px;" id="pBCE">—</div></div>
+      <div><div style="opacity:.6;font-size:11px;">Secteur</div><div style="font-weight:700;font-size:14px;" id="pSecteur">—</div></div>
+      <div><div style="opacity:.6;font-size:11px;">Contact</div><div style="font-weight:700;font-size:14px;" id="pContact">—</div></div>
+      <div><div style="opacity:.6;font-size:11px;">Email</div><div style="font-weight:700;font-size:14px;" id="pEmail">—</div></div>
+    </div>
+    <a href="inscription-employeur.html" style="display:inline-block;margin-top:16px;background:rgba(255,255,255,0.12);color:#fff;border:1px solid rgba(255,255,255,0.25);padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;">Modifier le profil</a>
   </div>
   <div class="hero-stats">
     <div class="h-stat"><div class="val" id="statMissions">0</div><div class="lab">Missions postées</div></div>
@@ -219,18 +227,14 @@
 </div>
 
 <div class="container">
-  <div id="loadingState" class="loading">⏳ Chargement...</div>
+  <div id="loadingState" class="loading">Chargement...</div>
 
   <div id="mainContent" class="hidden">
 
-    <div class="alert-warning">
-      🛡️ <strong>Rappel légal :</strong> Vérifiez que votre <strong>assurance accidents du travail</strong> couvre les travailleurs flexi avant chaque mission. Effectuez la <strong>déclaration Dimona FLX</strong> avant chaque prestation sur <a href="https://www.socialsecurity.be" target="_blank" style="color:#92400e;">socialsecurity.be</a>.
-    </div>
-
-    <!-- DÉCLARATIONS D'HEURES À VALIDER -->
+<!-- DÉCLARATIONS D'HEURES À VALIDER -->
     <div class="candidatures-section" id="declarationsSection" style="display:none;">
       <div class="section-header">
-        <h2>⏱️ Déclarations d'heures à valider <span class="badge-count" id="declCount">0</span></h2>
+        <h2>Déclarations d'heures à valider <span class="badge-count" id="declCount">0</span></h2>
       </div>
       <div id="declarationsList"></div>
     </div>
@@ -238,53 +242,20 @@
     <!-- 1. MISSIONS POSTÉES + CANDIDATURES PAR MISSION -->
     <div class="candidatures-section">
       <div class="section-header">
-        <h2>📢 Missions postées <span class="badge-count" id="posteesCount">0</span></h2>
+        <h2>Missions postées <span class="badge-count" id="posteesCount">0</span></h2>
       </div>
-      <div id="posteesList"><div class="loading">⏳ Chargement...</div></div>
+      <div id="posteesList"><div class="loading">Chargement...</div></div>
     </div>
 
     <!-- Profils suggérés -->
     <div class="card">
-      <h2>🎯 Profils suggérés pour vos missions</h2>
+      <h2>Profils suggérés pour vos missions</h2>
       <div id="suggestedWorkers"><div class="loading">Chargement...</div></div>
       <div style="margin-top:12px;">
         <a href="tableau-travailleurs.html"><button class="btn btn-outline" style="width:100%;">Voir tous les profils →</button></a>
       </div>
     </div>
 
-    <!-- Profil entreprise -->
-    <div class="card">
-      <h2>🏢 Profil entreprise</h2>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
-        <div>
-          <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">Entreprise</div>
-          <div style="font-weight:700;" id="pEntreprise">—</div>
-        </div>
-        <div>
-          <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">BCE</div>
-          <div style="font-weight:700;" id="pBCE">—</div>
-        </div>
-        <div>
-          <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">Secteur</div>
-          <div style="font-weight:700;" id="pSecteur">—</div>
-        </div>
-        <div>
-          <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">Contact</div>
-          <div style="font-weight:700;" id="pContact">—</div>
-        </div>
-        <div>
-          <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">Email</div>
-          <div style="font-weight:700;" id="pEmail">—</div>
-        </div>
-        <div>
-          <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">Statut</div>
-          <div style="font-weight:700;color:#16a34a;" id="pStatut">✅ Inscrit</div>
-        </div>
-      </div>
-      <div style="margin-top:16px;">
-        <a href="inscription-employeur.html"><button class="btn btn-outline btn-sm">✏️ Modifier le profil</button></a>
-      </div>
-    </div>
   </div>
 
   <!-- MODAL DIMONA -->
@@ -431,9 +402,20 @@
     document.getElementById('heroName').textContent = e.prenom_contact || e.nom_entreprise;
     document.getElementById('pEntreprise').textContent = e.nom_entreprise || '—';
     document.getElementById('pBCE').textContent = e.numero_bce || '—';
-    document.getElementById('pSecteur').textContent = e.secteur || '—';
+    document.getElementById('pSecteur').textContent = prettySecteur(e.secteur);
     document.getElementById('pContact').textContent = (e.prenom_contact || '') + ' ' + (e.nom_contact || '');
     document.getElementById('pEmail').textContent = e.email_contact || '—';
+  }
+
+  function prettySecteur(s) {
+    if (!s) return '—';
+    const map = {
+      parcs_jardins: 'Parcs & jardins', horeca: 'Horeca', commerce: 'Commerce & retail',
+      evenementiel: 'Événementiel', agriculture: 'Agriculture', soins: 'Soins & aide',
+      construction: 'Construction', nettoyage: 'Nettoyage', transport: 'Transport & logistique',
+      boulangerie: 'Boulangerie', coiffure: 'Coiffure & beauté'
+    };
+    return map[s] || String(s).replace(/_/g, ' ').replace(/^./, c => c.toUpperCase());
   }
 
   async function loadData() {

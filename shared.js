@@ -148,7 +148,7 @@ function mountCookieNotice() {
   const bar = document.createElement('div');
   bar.setAttribute('role', 'dialog');
   bar.style.cssText = 'position:fixed;left:16px;right:16px;bottom:16px;z-index:2000;max-width:720px;margin:0 auto;background:#0f172a;color:#f1f5f9;border-radius:14px;padding:16px 18px;box-shadow:0 10px 30px rgba(0,0,0,0.25);display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-family:inherit;';
-  bar.innerHTML = '<span style="font-size:13px;line-height:1.5;flex:1;min-width:220px;">🍪 FlexMoney n\'utilise que du stockage <strong>strictement nécessaire</strong> (connexion), sans cookie publicitaire ni de suivi. <a href="politique-cookies.html" style="color:#a5b4fc;font-weight:600;">En savoir plus</a></span>'
+  bar.innerHTML = '<span style="font-size:13px;line-height:1.5;flex:1;min-width:220px;">FlexMoney n\'utilise que du stockage <strong>strictement nécessaire</strong> (connexion), sans cookie publicitaire ni de suivi. <a href="politique-cookies.html" style="color:#a5b4fc;font-weight:600;">En savoir plus</a></span>'
     + '<button id="flxCookieOk" style="background:#6366f1;color:#fff;border:none;border-radius:9px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">J\'ai compris</button>';
   document.body.appendChild(bar);
   document.getElementById('flxCookieOk').onclick = () => {
@@ -200,9 +200,15 @@ function mountEmployerQuickbar() {
   bar.innerHTML = FLX_QUICKBAR_LINKS.map(l => {
     const target = l.href.split('#')[0].toLowerCase();
     const isActive = target === current; // met en évidence l'onglet de la page courante
-    return `<a class="flx-qbtn${isActive ? ' active' : ''}" href="${l.href}">${l.icon} ${l.label}</a>`;
+    return `<a class="flx-qbtn${isActive ? ' active' : ''}" href="${l.href}">${l.label}</a>`;
   }).join('');
-  document.body.insertBefore(bar, document.body.firstChild);
+  // Placer la barre sous la bande bleue (hero) si présente, sinon en haut de page
+  const hero = document.querySelector('.hero-banner');
+  if (hero && hero.parentNode) {
+    hero.parentNode.insertBefore(bar, hero.nextSibling);
+  } else {
+    document.body.insertBefore(bar, document.body.firstChild);
+  }
 }
 
 // Auto-montage : uniquement sur une page employeur ET pour un utilisateur employeur
