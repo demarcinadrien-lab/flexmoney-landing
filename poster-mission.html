@@ -118,13 +118,13 @@
 </header>
 
 <div class="container">
-  <h1>📢 Poster une mission flexi-job</h1>
+  <h1>Poster une mission flexi-job</h1>
   <p class="subtitle">Décrivez votre besoin, FlexMoney identifie les meilleurs profils disponibles.</p>
 
   <!-- Formulaire -->
   <div id="formSection">
     <div class="card">
-      <h2>🏢 Votre entreprise</h2>
+      <h2>Votre entreprise</h2>
       <div class="form-row">
         <div class="form-group">
           <label>Email de contact *</label>
@@ -142,7 +142,7 @@
     </div>
 
     <div class="card">
-      <h2>📋 Détails de la mission</h2>
+      <h2>Détails de la mission</h2>
       <div class="form-group">
         <label>Titre de la mission *</label>
         <input type="text" id="titre" placeholder="Assistant comptable — encodage TVA" oninput="updatePreview()">
@@ -160,12 +160,12 @@
     </div>
 
     <div class="card">
-      <h2>📅 Quand et où ?</h2>
+      <h2>Quand et où ?</h2>
       <div class="form-group">
         <label>Planning *</label>
         <div class="lieu-toggle">
-          <button type="button" class="lieu-btn active" id="btnDateUnique" onclick="setDateMode('unique')">📅 Date unique</button>
-          <button type="button" class="lieu-btn" id="btnDateRecurrence" onclick="setDateMode('recurrence')">🔁 Récurrence</button>
+          <button type="button" class="lieu-btn active" id="btnDateUnique" onclick="setDateMode('unique')">Date unique</button>
+          <button type="button" class="lieu-btn" id="btnDateRecurrence" onclick="setDateMode('recurrence')">Récurrence</button>
         </div>
       </div>
       <div class="form-row">
@@ -196,8 +196,8 @@
       <div class="form-group">
         <label>Lieu de travail</label>
         <div class="lieu-toggle">
-          <button class="lieu-btn active" id="btnRemote" onclick="setLieu('remote')">🏠 Télétravail</button>
-          <button class="lieu-btn" id="btnOnsite" onclick="setLieu('onsite')">🏢 Sur place</button>
+          <button class="lieu-btn active" id="btnRemote" onclick="setLieu('remote')">Télétravail</button>
+          <button class="lieu-btn" id="btnOnsite" onclick="setLieu('onsite')">Sur place</button>
         </div>
       </div>
       <div class="form-group hidden" id="adresseGroup">
@@ -209,7 +209,7 @@
     </div>
 
     <div class="card">
-      <h2>💰 Rémunération</h2>
+      <h2>Rémunération</h2>
       <div class="form-row">
         <div class="form-group">
           <label>Taux horaire brut flexi (€/h) *</label>
@@ -223,35 +223,34 @@
         <div class="salary-row"><span>+ Pécule de vacances (7,67%)</span><span id="prevPecule">—</span></div>
         <div class="salary-row" style="font-weight:600;border-top:1px solid #e2e8f0;padding-top:6px;margin-top:2px;"><span>= Dû au travailleur (brut = net)</span><span id="prevWorker">—</span></div>
         <div class="salary-row"><span>+ Cotisation ONSS employeur (28%)</span><span id="prevONSS">—</span></div>
-        <div class="salary-row" style="font-weight:700;border-top:1px solid #cbd5e1;padding-top:6px;margin-top:2px;"><span>💡 Coût total pour vous</span><span id="prevTotal">—</span></div>
-        <div class="salary-row" style="color:#16a34a;font-weight:600;"><span>✅ Commission FlexMoney</span><span>Gratuit</span></div>
+        <div class="salary-row" style="font-weight:700;border-top:1px solid #cbd5e1;padding-top:6px;margin-top:2px;"><span>Coût total pour vous</span><span id="prevTotal">—</span></div>
+        <div class="salary-row" style="color:#16a34a;font-weight:600;"><span>Commission FlexMoney</span><span>Gratuit</span></div>
       </div>
       <div id="tauxMaxAlert" style="display:none;margin-top:8px;padding:8px 12px;background:#fefce8;border:1px solid #fbbf24;border-radius:8px;font-size:12px;color:#92400e;"></div>
 
       <div class="alert alert-warning" style="margin-top:16px;">
-        🛡️ <strong>Obligation légale :</strong> Vérifiez que votre <strong>assurance accidents du travail</strong> couvre bien les travailleurs flexi-job pour la durée de cette mission avant de la publier.
+        <strong>Obligation légale :</strong> Vérifiez que votre <strong>assurance accidents du travail</strong> couvre bien les travailleurs flexi-job pour la durée de cette mission avant de la publier.
       </div>
       <div class="alert alert-info">
-        📋 <strong>Dimona :</strong> Vous devez effectuer une déclaration Dimona FLX avant le début de chaque mission sur <a href="https://www.socialsecurity.be" target="_blank">socialsecurity.be</a>.
+        <strong>Dimona :</strong> Vous devez effectuer une déclaration Dimona FLX avant le début de chaque mission sur <a href="https://www.socialsecurity.be" target="_blank">socialsecurity.be</a>.
       </div>
     </div>
 
-    <button class="btn btn-primary" onclick="posterMission()">🚀 Publier la mission et voir les profils matchés</button>
+    <button class="btn btn-primary" onclick="posterMission()">Publier la mission et voir les profils matchés</button>
   </div>
 
   <!-- Résultat après publication -->
   <div id="resultSection" class="hidden">
     <div class="alert alert-success" style="font-size:15px;padding:20px;">
-      ✅ <strong>Mission publiée !</strong> Référence : <strong id="missionRef">FM-2026-XXXX</strong><br>
+      <strong>Mission publiée !</strong> Référence : <strong id="missionRef">FM-2026-XXXX</strong><br>
       <span style="font-size:13px;margin-top:4px;display:block;">Les travailleurs correspondants ont été notifiés. Voici les profils les plus compatibles :</span>
     </div>
 
     <div class="card">
-      <h2>🎯 Travailleurs matchés — <span id="matchCount">0</span> profil(s) compatible(s)</h2>
+      <h2>Travailleurs matchés — <span id="matchCount">0</span> profil(s) compatible(s)</h2>
       <p style="font-size:13px;color:#64748b;margin-bottom:16px;">Correspondance basée sur les compétences et disponibilités déclarées.</p>
       <div id="matchResults"></div>
       <div id="noMatch" class="hidden" style="text-align:center;padding:24px;color:#94a3b8;">
-        <div style="font-size:36px;margin-bottom:8px;">🔍</div>
         <div>Aucun travailleur inscrit ne correspond encore à ce profil.<br>Nous vous préviendrons par email dès qu'un profil compatible s'inscrit.</div>
       </div>
     </div>
@@ -312,7 +311,7 @@
       <button class="secteur-tab${i === 0 ? ' active' : ''}"
         style="${i === 0 ? `background:${s.couleur};color:#fff;border-color:${s.couleur}` : ''}"
         onclick="switchSecteurPm('${s.id}', this, '${s.couleur}')">
-        ${s.label}${s.featured ? ' <span class="new-badge">NOUVEAU</span>' : ''}
+        ${s.label}
       </button>
     `).join('');
     setDescPm(FLEXMONEY_SECTEURS[0]);
@@ -429,7 +428,7 @@
     const alertEl = document.getElementById('tauxMaxAlert');
     if (t > 0 && t > TAUX_MAX_BASE) {
       alertEl.style.display = 'block';
-      alertEl.innerHTML = `⚠️ Le taux de ${fmt(t)} €/h dépasse <strong>${fmt(TAUX_MAX_BASE)} €/h</strong> (150% du RMMMG). Le <em>salaire de base</em> flexi est plafonné à 150% du minimum barémique de votre Commission Paritaire (loi du 12 mai 2026). Si votre CP a un barème plus élevé, ce taux peut être valide — vérifiez avec votre secrétariat social.`;
+      alertEl.innerHTML = `Le taux de ${fmt(t)} €/h dépasse <strong>${fmt(TAUX_MAX_BASE)} €/h</strong> (150% du RMMMG). Le <em>salaire de base</em> flexi est plafonné à 150% du minimum barémique de votre Commission Paritaire (loi du 12 mai 2026). Si votre CP a un barème plus élevé, ce taux peut être valide — vérifiez avec votre secrétariat social.`;
     } else {
       alertEl.style.display = 'none';
     }
@@ -566,7 +565,7 @@
           to_email:      w.email,
           prenom:        w.prenom || 'Travailleur',
           titre_mission: document.getElementById('titre').value,
-          lieu:          lieuMode === 'remote' ? '🏠 Télétravail' : (document.getElementById('adresse').value || 'Sur place'),
+          lieu:          lieuMode === 'remote' ? 'Télétravail' : (document.getElementById('adresse').value || 'Sur place'),
           date_mission:  document.getElementById('dateMission').value,
           taux_horaire:  document.getElementById('taux').value,
           reply_to:      'contact@flexmoney.be'
@@ -583,7 +582,7 @@
         <div class="worker-avatar">${initials}</div>
         <div class="worker-info">
           <div class="worker-name">${w.prenom} ${w.nom}</div>
-          <div class="worker-meta">📍 ${w.ville || '—'} · ${w.regime_travail || 'Salarié'}</div>
+          <div class="worker-meta">${w.ville || '—'} · ${w.regime_travail || 'Salarié'}</div>
           <div class="worker-chips">
             ${w.common.map(c => `<span class="worker-chip">${c}</span>`).join('')}
           </div>
