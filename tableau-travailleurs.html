@@ -41,13 +41,13 @@
     .btn-reset { width: 100%; padding: 10px; background: #f1f5f9; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; color: #64748b; cursor: pointer; margin-top: 8px; }
 
     /* Grille travailleurs */
-    .workers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .workers-grid { display: flex; flex-direction: column; gap: 10px; }
 
     .worker-card {
-      background: #fff; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 24px;
-      transition: all 0.2s; cursor: pointer;
+      background: #fff; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 14px 18px;
+      transition: all 0.2s; cursor: pointer; display: flex; align-items: center; gap: 14px;
     }
-    .worker-card:hover { border-color: #6366f1; box-shadow: 0 4px 20px rgba(99,102,241,0.1); transform: translateY(-2px); }
+    .worker-card:hover { border-color: #6366f1; box-shadow: 0 2px 12px rgba(99,102,241,0.08); }
 
     .worker-top { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
     .avatar { width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; color: #fff; flex-shrink: 0; }
@@ -123,7 +123,7 @@
 </header>
 
 <div class="hero">
-  <h1>👥 Travailleurs flexi disponibles</h1>
+  <h1>Travailleurs flexi disponibles</h1>
   <p>Profils vérifiés · Compétences validées · Disponibles rapidement</p>
   <div class="stats">
     <div class="stat"><div class="val" id="statWorkers">—</div><div class="lab">Profils actifs</div></div>
@@ -173,17 +173,17 @@
     </div>
 
     <div class="profile-section">
-      <h4>🎯 Domaines & sous-domaines</h4>
+      <h4>Domaines & sous-domaines</h4>
       <div id="profileDomaines"></div>
     </div>
 
     <div class="profile-section">
-      <h4>📅 Disponibilités récurrentes</h4>
+      <h4>Disponibilités récurrentes</h4>
       <div id="profileDispos"></div>
     </div>
 
     <div class="profile-section">
-      <h4>💬 Présentation</h4>
+      <h4>Présentation</h4>
       <div id="profilePresentation"></div>
     </div>
 
@@ -201,7 +201,7 @@
     <p class="sub">FlexMoney transmet votre demande de mission. Le travailleur vous répondra directement.</p>
 
     <div class="alert-warning">
-      🛡️ <strong>Rappel légal :</strong> Assurez-vous que votre assurance accidents du travail couvre les travailleurs flexi-job avant toute mission.
+      <strong>Rappel légal :</strong> Assurez-vous que votre assurance accidents du travail couvre les travailleurs flexi-job avant toute mission.
     </div>
 
     <div class="form-group">
@@ -228,9 +228,9 @@
     <div class="form-group">
       <label>Lieu de la prestation *</label>
       <select id="contactLieu" onchange="document.getElementById('lieuAutreGroup').style.display = this.value === 'autre' ? 'block' : 'none'">
-        <option value="siege">🏢 Au siège social</option>
-        <option value="remote">🏠 Télétravail</option>
-        <option value="autre">📍 Autre adresse</option>
+        <option value="siege">Au siège social</option>
+        <option value="remote">Télétravail</option>
+        <option value="autre">Autre adresse</option>
       </select>
     </div>
     <div class="form-group" id="lieuAutreGroup" style="display:none;">
@@ -251,15 +251,15 @@
 <!-- Modal aperçu & édition du contrat avant envoi -->
 <div class="modal-overlay hidden" id="previewOverlay">
   <div class="modal" style="max-width:720px;">
-    <h2>📄 Vérifiez le contrat avant envoi</h2>
+    <h2>Vérifiez le contrat avant envoi</h2>
     <p class="sub" id="previewSub">Le contrat est pré-rempli. Vous pouvez le modifier librement avant de l'envoyer à la signature du travailleur.</p>
 
     <div id="cadreBlock">
-      <div style="font-size:12px;font-weight:800;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin:6px 0 8px;">📘 Contrat-cadre (signé une seule fois)</div>
+      <div style="font-size:12px;font-weight:800;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin:6px 0 8px;">Contrat-cadre (signé une seule fois)</div>
       <textarea id="cadreEditor" rows="12" style="width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.5;resize:vertical;"></textarea>
     </div>
 
-    <div style="font-size:12px;font-weight:800;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin:16px 0 8px;">📗 Contrat trimestriel</div>
+    <div style="font-size:12px;font-weight:800;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin:16px 0 8px;">Contrat trimestriel</div>
     <textarea id="trimEditor" rows="12" style="width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.5;resize:vertical;"></textarea>
 
     <div class="modal-buttons">
@@ -293,7 +293,7 @@
       document.getElementById('contactEmail').value = currentUser.email;
       document.getElementById('contactEntreprise').value = employerProfile.nom_entreprise || '';
       const siegeAdr = [employerProfile.adresse, employerProfile.code_postal, employerProfile.ville].filter(Boolean).join(', ');
-      if (siegeAdr) document.querySelector('#contactLieu option[value="siege"]').textContent = `🏢 Au siège social — ${siegeAdr}`;
+      if (siegeAdr) document.querySelector('#contactLieu option[value="siege"]').textContent = `Au siège social — ${siegeAdr}`;
     }
     document.body.classList.remove('access-checking');
   })();
@@ -380,17 +380,6 @@
     return distanceKm(a.lat, a.lng, b.lat, b.lng);
   }
 
-  // Normalise la préférence de lieu (valeurs d'inscription + valeurs héritées)
-  // vers : 'teletravail' | 'mixte' | 'presentiel'
-  function normTele(pref) {
-    if (['teletravail', 'oui', 'uniquement'].includes(pref)) return 'teletravail';
-    if (['presentiel', 'non', 'sur place'].includes(pref)) return 'presentiel';
-    return 'mixte'; // mixte, hybride, ou non renseigné
-  }
-  function teleLabel(pref) {
-    const n = normTele(pref);
-    return n === 'teletravail' ? '🏠 Télétravail' : (n === 'presentiel' ? '🏢 Présentiel' : '🔄 Mixte');
-  }
 
   // Domaines (secteurs) distincts couverts par les compétences d'un profil
   function domainesDuProfil(w) {
@@ -453,7 +442,7 @@
   function renderWorkers(workers) {
     const container = document.getElementById('workersList');
     if (workers.length === 0) {
-      container.innerHTML = `<div class="empty-state"><div style="font-size:48px;margin-bottom:12px;">🔍</div><p>Aucun profil ne correspond à vos critères.<br>Modifiez vos filtres ou postez une mission — nous notifions les travailleurs.</p></div>`;
+      container.innerHTML = `<div class="empty-state"><p>Aucun profil ne correspond à vos critères.<br>Modifiez vos filtres ou postez une mission — nous notifions les travailleurs.</p></div>`;
       return;
     }
 
@@ -461,9 +450,7 @@
 
     container.innerHTML = workers.map(w => {
       const initials = ((w.prenom || '?')[0] + (w.nom || '?')[0]).toUpperCase();
-      const comps = (w.competences || []).slice(0, 5);
       const domaines = domainesDuProfil(w);
-      const tauxMin = getTauxMin(w.competences || []);
 
       // Distance au point de recherche (si une ville est sélectionnée)
       let distLabel = '';
@@ -474,30 +461,19 @@
 
       return `
         <div class="worker-card" onclick="openProfile('${w.id}')">
-          <div class="worker-top">
-            <div class="avatar">${initials}</div>
-            <div>
-              <div class="worker-name">${w.prenom} ${w.nom[0]}.</div>
-              <div class="worker-status">${w.regime_travail || 'Salarié 4/5e'}</div>
-              ${w.eligible ? '<div class="badge-eligible">✅ Éligible flexi</div>' : ''}
+          <div class="avatar">${initials}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <span class="worker-name">${w.prenom} ${w.nom[0]}.</span>
+              ${w.eligible ? '<span class="badge-eligible">Éligible flexi</span>' : ''}
             </div>
+            ${domaines.length ? `<div class="domaine-row" style="margin:6px 0 4px;">${domaines.map(d => `<span class="domaine-tag" style="background:${d.bg};color:${d.couleur};">${d.label}</span>`).join('')}</div>` : ''}
+            <div class="worker-location" style="margin:0;">${w.ville || '—'}${distLabel} · ${w.regime_travail || 'Salarié 4/5e'}</div>
           </div>
-          ${domaines.length ? `<div class="domaine-row">${domaines.map(d => `<span class="domaine-tag" style="background:${d.bg};color:${d.couleur};">${d.label}</span>`).join('')}</div>` : ''}
-          <div class="worker-location">${w.ville || '—'}${distLabel}</div>
-          ${comps.length ? `<div class="chips-row">${comps.map(c => `<span class="w-chip">${c}</span>`).join('')}</div>` : ''}
-          <div class="worker-footer">
-            <span class="taux-range">~${tauxMin}–${tauxMin+8} €/h</span>
-            <button class="btn-contact" onclick="event.stopPropagation();openProfile('${w.id}')">Voir le profil →</button>
-          </div>
+          <span style="color:#6366f1;font-weight:700;font-size:20px;flex-shrink:0;">→</span>
         </div>
       `;
     }).join('');
-  }
-
-  function getTauxMin(comps) {
-    if (comps.some(c => ['Audit','Bilan annuel','Payroll'].includes(c))) return 25;
-    if (comps.some(c => ['Comptabilité','TVA','IT / Développement'].includes(c))) return 20;
-    return 17;
   }
 
   function openProfile(id) {
@@ -555,7 +531,7 @@
 
   function openModal(id, name) {
     selectedWorker = id;
-    document.getElementById('modalWorkerName').textContent = '📩 Proposer une mission à ' + name;
+    document.getElementById('modalWorkerName').textContent = 'Proposer une mission à ' + name;
     document.getElementById('modalOverlay').classList.remove('hidden');
   }
 
@@ -741,11 +717,11 @@
     pendingContact = null;
 
     if (candId) {
-      alert(`✅ Contrat envoyé à ${worker.prenom} pour signature en ligne (du ${new Date(date).toLocaleDateString('fr-BE')} au ${new Date(dateFin).toLocaleDateString('fr-BE')}).`);
+      alert(`Contrat envoyé à ${worker.prenom} pour signature en ligne (du ${new Date(date).toLocaleDateString('fr-BE')} au ${new Date(dateFin).toLocaleDateString('fr-BE')}).`);
       document.getElementById('previewOverlay').classList.add('hidden');
       closeModal();
     } else {
-      alert("⚠️ La proposition n'a pas pu être enregistrée. Réessayez, ou postez une mission complète.");
+      alert("La proposition n'a pas pu être enregistrée. Réessayez, ou postez une mission complète.");
     }
   }
 
