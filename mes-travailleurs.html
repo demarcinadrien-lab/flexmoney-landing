@@ -484,7 +484,7 @@
 
     if (candId) {
       try {
-        const confirmUrl = `${window.location.origin}/confirmation-creneau.html?cid=${candId}`;
+        const confirmUrl = `${window.location.origin}/signer-contrat.html?cid=${candId}`;
         const debLabel = new Date(date).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' });
         const finLabel = new Date(dateFin).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' });
         const mentionCadre = existingCadre ? '' : ' (contrat-cadre + contrat trimestriel)';

@@ -555,41 +555,61 @@
     const isDateProposee = c.statut === 'date_proposee';
     const isAccepted = c.statut === 'acceptee';
     const isRefused = c.statut === 'refusee';
+    const isSigned = !!c.contrat_signe_le;
 
-    const badgeClass = isAccepted ? 'badge-acceptee' : isRefused ? 'badge-refusee' : isDateProposee ? 'badge-date-proposee' : isTest ? 'badge-test' : 'badge-trim';
-    const badgeLabel = isAccepted ? '✅ Acceptée' : isRefused ? '❌ Refusée' : isDateProposee ? '📅 Créneau proposé' : isTest ? '🧪 Journée de test' : '📋 Mission récurrente';
+    const badgeClass = isSigned ? 'badge-acceptee' : isRefused ? 'badge-refusee' : isDateProposee ? 'badge-date-proposee' : isTest ? 'badge-test' : 'badge-trim';
+    const badgeLabel = isSigned ? '✅ Contrat signé' : isRefused ? '❌ Refusée' : isDateProposee ? '📅 Jour(s) proposé(s)' : isTest ? '🧪 Journée de test' : '📋 Mission récurrente';
 
-    let dateInfo = '';
-    if (isTest && c.date_test) {
-      const d = new Date(c.date_test).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' });
-      dateInfo = `<div class="cand-detail">📅 ${d}</div>`;
-      if (c.heure_debut && c.heure_fin) {
-        dateInfo += `<div class="cand-detail">🕐 ${c.heure_debut.slice(0,5)} → ${c.heure_fin.slice(0,5)}</div>`;
-      }
-    }
+    // Dates : jours proposés (contrat) ou repli sur date_test
+    let joursArr = [];
+    try { joursArr = Array.isArray(c.jours_proposes) ? c.jours_proposes : JSON.parse(c.jours_proposes || '[]'); } catch (e) { joursArr = []; }
+    if ((!joursArr || !joursArr.length) && c.date_test) joursArr = [{ date: c.date_test, heure_debut: c.heure_debut, heure_fin: c.heure_fin }];
+    let dateInfo = joursArr.map(j => {
+      const d = j.date ? new Date(j.date).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' }) : '';
+      const hd = j.heure_debut || j.debut, hf = j.heure_fin || j.fin;
+      const h = hd && hf ? ` · ${String(hd).slice(0,5)}–${String(hf).slice(0,5)}` : '';
+      return d ? `<div class="cand-detail">📅 ${d}${h}</div>` : '';
+    }).join('');
     if (isTest && c.disponibilites && c.disponibilites.length) {
       dateInfo += `<div class="cand-detail">🗓️ Disponibilités indiquées : ${c.disponibilites.join(', ')}</div>`;
     }
+    if (isSigned) {
+      dateInfo += `<div class="cand-detail" style="color:#16a34a;font-weight:600;">✍️ Contrat signé le ${new Date(c.contrat_signe_le).toLocaleDateString('fr-BE')}</div>`;
+    }
 
-    const jourJBtn = c.compliance_complete
-      ? `<a href="dossier-jour-j.html?cid=${c.id}" target="_blank" style="padding:9px 16px;background:#6366f1;color:#fff;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;display:inline-block;">📁 Dossier Jour J</a>`
-      : `<span style="font-size:12px;color:#f59e0b;font-weight:600;">⏳ En attente compliance</span>`;
-
-    const actions = isPending ? `
+    let actions;
+    if (isPending) {
+      actions = `
       <div class="cand-actions">
         <button class="btn-accept" onclick="accepterCandidature('${c.id}', '${c.type_contrat}')">✅ Accepter</button>
         <button class="btn-refuse" onclick="refuserCandidature('${c.id}')">❌ Refuser</button>
-      </div>` : isDateProposee ? `
+      </div>`;
+    } else if (isSigned) {
+      const pdfBtn = c.contrat_signe_url
+        ? `<a href="${c.contrat_signe_url}" target="_blank" style="padding:9px 16px;background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;display:inline-block;">📎 Contrat signé</a>`
+        : '';
+      actions = `
+      <div class="cand-actions" style="flex-wrap:wrap;">
+        ${pdfBtn}
+        <a href="mes-travailleurs.html" style="padding:9px 16px;background:#6366f1;color:#fff;border-radius:8px;font-size:13px;font-weight:700;text-decoration:none;display:inline-block;">👥 Portail travailleur →</a>
+      </div>
+      <div style="margin-top:8px;font-size:12px;color:#64748b;line-height:1.5;">Contrat signé et reçu. Pour proposer de nouveaux jours ou établir un contrat trimestriel, rendez-vous dans le portail travailleur.</div>`;
+    } else if (isDateProposee) {
+      actions = `
       <div class="cand-actions">
-        <span style="font-size:12px;color:#4338ca;font-weight:600;">⏳ En attente de confirmation du travailleur</span>
-      </div>` : isAccepted ? `
+        <span style="font-size:12px;color:#4338ca;font-weight:600;">⏳ En attente de signature du travailleur</span>
+      </div>`;
+    } else if (isAccepted) {
+      actions = `
       <div class="cand-actions">
         ${isTest
           ? `<button class="btn-dimona" onclick="showDimonaFiche('${c.id}')">📋 Voir fiche DIMONA</button>`
           : `<button class="btn-compliance" onclick="showComplianceInfo('${c.id}')">📁 Dossier de conformité</button>`
         }
-        ${jourJBtn}
-      </div>` : '';
+      </div>`;
+    } else {
+      actions = '';
+    }
 
     return `
       <div class="cand-card ${isTest ? 'test' : 'trimestriel'} ${c.statut}">
