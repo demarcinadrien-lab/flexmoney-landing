@@ -71,6 +71,73 @@ function fmt(n) {
   return (n || 0).toLocaleString('fr-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+// ── Fiche entreprise (consultable par les travailleurs, sur toutes les pages) ──
+// Usage : flxShowCompanyProfile({ email, bce, entreprise })
+async function flxShowCompanyProfile(opts = {}) {
+  if (!sb) return;
+
+  let ov = document.getElementById('flxCompanyModal');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'flxCompanyModal';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.55);display:flex;align-items:center;justify-content:center;z-index:3000;padding:20px;font-family:inherit;';
+    ov.innerHTML =
+      '<div style="background:#fff;border-radius:18px;max-width:520px;width:100%;max-height:88vh;overflow-y:auto;padding:26px 28px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px;">'
+      + '<h2 id="flxCompanyTitle" style="font-size:20px;font-weight:800;color:#0f172a;margin:0;">Entreprise</h2>'
+      + '<button id="flxCompanyClose" style="background:#f1f5f9;color:#64748b;border:none;border-radius:8px;width:32px;height:32px;font-size:20px;cursor:pointer;line-height:1;">&times;</button>'
+      + '</div><div id="flxCompanyBody" style="font-size:13px;color:#334155;"></div></div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+    ov.querySelector('#flxCompanyClose').addEventListener('click', () => ov.remove());
+  } else {
+    ov.style.display = 'flex';
+  }
+
+  const body = document.getElementById('flxCompanyBody');
+  body.innerHTML = '<div style="padding:20px;text-align:center;color:#64748b;">Chargement...</div>';
+
+  // Rechercher l'employeur : par BCE, puis e-mail de contact, puis dénomination
+  let emp = null;
+  try {
+    if (opts.bce) {
+      const { data } = await sb.from('employers_inscription').select('*').eq('numero_bce', opts.bce).limit(1);
+      emp = data && data[0];
+    }
+    if (!emp && opts.email) {
+      const { data } = await sb.from('employers_inscription').select('*').eq('email_contact', opts.email).order('created_at', { ascending: false }).limit(1);
+      emp = data && data[0];
+    }
+    if (!emp && opts.entreprise) {
+      const { data } = await sb.from('employers_inscription').select('*').eq('nom_entreprise', opts.entreprise).limit(1);
+      emp = data && data[0];
+    }
+  } catch (e) { /* silencieux */ }
+
+  const esc = s => (s == null ? '' : String(s)).replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
+  const nom = (emp && emp.nom_entreprise) || opts.entreprise || 'Entreprise';
+  document.getElementById('flxCompanyTitle').textContent = nom;
+
+  if (!emp) {
+    body.innerHTML = '<p style="color:#64748b;">Les détails de cette entreprise ne sont pas disponibles pour le moment.</p>';
+    return;
+  }
+
+  const secteurLabel = (window.FLEXMONEY_SECTEURS && (window.FLEXMONEY_SECTEURS.find(s => s.id === emp.secteur) || {}).label) || emp.secteur || '';
+  const adresse = [emp.adresse, [emp.code_postal, emp.ville].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+  const row = (label, val) => val ? '<div style="display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #f1f5f9;">'
+    + '<span style="min-width:150px;font-size:13px;color:#64748b;font-weight:600;">' + label + '</span>'
+    + '<span style="font-size:13px;color:#0f172a;">' + esc(val) + '</span></div>' : '';
+
+  body.innerHTML =
+    row('Secteur', secteurLabel) +
+    row('Activité', emp.activite) +
+    row('Commission paritaire', emp.commission_paritaire) +
+    row('Adresse', adresse) +
+    row('N° BCE', emp.numero_bce);
+}
+window.flxShowCompanyProfile = flxShowCompanyProfile;
+
 // ── Bandeau d'information cookies (stockage strictement nécessaire) ──
 function mountCookieNotice() {
   try { if (localStorage.getItem('flx_cookie_ack') === '1') return; } catch(e) { return; }

@@ -297,6 +297,9 @@
 
   let allMissions = [];
   let currentUserRole = null; // 'travailleur' | 'employeur' | null (visiteur)
+  let currentUserEmail = null;
+  let currentWorkerProfile = null; // profil d'inscription du travailleur connecté
+  let appliedMissionIds = new Set(); // missions déjà postulées par le travailleur
   let selectedMission = null;
   let selectedMissionData = null;
   const selectedTypeContrat = 'trimestriel'; // modèle unique : contrat de 1 jour à 3 mois
@@ -370,6 +373,23 @@
       return;
     }
     currentUserRole = session?.user?.user_metadata?.role || null;
+    currentUserEmail = session?.user?.email || null;
+
+    // Charger le profil d'inscription du travailleur (pour pré-remplir les candidatures)
+    if (currentUserRole === 'travailleur' && currentUserEmail) {
+      try {
+        const { data: wRows } = await sb.from('workers_inscription')
+          .select('*').eq('email', currentUserEmail).order('created_at', { ascending: false }).limit(1);
+        currentWorkerProfile = (wRows && wRows[0]) || null;
+      } catch (e) { currentWorkerProfile = null; }
+
+      // Missions auxquelles le travailleur a déjà postulé
+      try {
+        const { data: myCands } = await sb.from('candidatures')
+          .select('mission_id').eq('worker_email', currentUserEmail);
+        appliedMissionIds = new Set((myCands || []).map(c => String(c.mission_id)));
+      } catch (e) { appliedMissionIds = new Set(); }
+    }
 
     try {
       // Client authentifié : la RLS autorise la lecture des missions ouvertes (statut 'proposee')
@@ -431,10 +451,11 @@
       const secteurObj = FLEXMONEY_SECTEURS.find(s => s.id === m.secteur);
       const lieuLabel = m.lieu === 'remote' ? '🏠 Télétravail' : `📍 ${m.ville || 'Sur place'}`;
       const isEmployeur = currentUserRole === 'employeur';
-      const cardOnClick = isEmployeur ? '' : `onclick="openModal('${m.id}', '${(m.titre||'').replace(/'/g,"\\'")}')"`;
+      const dejaPostule = appliedMissionIds.has(String(m.id));
+      const cardOnClick = (isEmployeur || dejaPostule) ? '' : `onclick="openModal('${m.id}', '${(m.titre||'').replace(/'/g,"\\'")}')"`;
 
       return `
-        <div class="mission-card"${isEmployeur ? ' style="cursor:default;"' : ''} ${cardOnClick}>
+        <div class="mission-card"${(isEmployeur || dejaPostule) ? ' style="cursor:default;"' : ''} ${cardOnClick}>
           <div class="mission-top">
             <div>
               <div class="mission-title">${m.titre || 'Mission flexi-job'}</div>
@@ -452,8 +473,11 @@
           </div>
           ${secteurObj ? `<div class="mission-chips"><span class="m-chip" style="background:${secteurObj.couleur}20;color:${secteurObj.couleur};">${secteurObj.label}</span>${comps.map(c => `<span class="m-chip">${c}</span>`).join('')}</div>` : (comps.length ? `<div class="mission-chips">${comps.map(c => `<span class="m-chip">${c}</span>`).join('')}</div>` : '')}
           <div class="mission-footer">
-            <span class="mission-posted">Publiée ${timeAgo(m.created_at)}</span>
-            ${isEmployeur ? '' : `<button class="btn-postuler" onclick="event.stopPropagation();openModal('${m.id}', '${(m.titre||'').replace(/'/g,"\\'")}')">Postuler →</button>`}
+            <span class="mission-posted">Publiée ${timeAgo(m.created_at)} · <a href="#" onclick="event.stopPropagation();event.preventDefault();flxShowCompanyProfile({email:'${(m.email_employeur||'').replace(/'/g,"\\'")}',entreprise:'${(m.nom_entreprise||'').replace(/'/g,"\\'")}'})" style="color:#6366f1;font-weight:600;text-decoration:none;">Voir l'entreprise</a></span>
+            ${isEmployeur ? ''
+              : dejaPostule
+                ? `<span style="display:inline-flex;align-items:center;gap:6px;padding:10px 18px;background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;border-radius:8px;font-size:13px;font-weight:700;">✓ Déjà postulé</span>`
+                : `<button class="btn-postuler" onclick="event.stopPropagation();openModal('${m.id}', '${(m.titre||'').replace(/'/g,"\\'")}')">Postuler →</button>`}
           </div>
         </div>
       `;
@@ -478,17 +502,19 @@
 
   function openModal(id, titre) {
     if (currentUserRole === 'employeur') return; // un employeur ne peut pas postuler
+    if (appliedMissionIds.has(String(id))) { alert('Vous avez déjà postulé à cette mission.'); return; }
     selectedMission = id;
     selectedMissionData = allMissions.find(m => String(m.id) === String(id)) || null;
     document.getElementById('modalMissionTitle').textContent = titre;
     document.getElementById('modalForm').classList.remove('hidden');
     document.getElementById('modalSuccess').classList.add('hidden');
-    // Reset
-    selectedDispos = [];
+    // Pré-remplissage depuis le profil d'inscription du travailleur
+    const p = currentWorkerProfile;
+    selectedDispos = Array.isArray(p?.disponibilites) ? [...p.disponibilites] : [];
     renderDispoChips();
-    document.getElementById('postulantPrenom').value = '';
-    document.getElementById('postulantNom').value = '';
-    document.getElementById('postulantEmail').value = '';
+    document.getElementById('postulantPrenom').value = p?.prenom || '';
+    document.getElementById('postulantNom').value    = p?.nom || '';
+    document.getElementById('postulantEmail').value  = p?.email || currentUserEmail || '';
     document.getElementById('postulantMessage').value = '';
     document.getElementById('btnSend').disabled = false;
     document.getElementById('modalOverlay').classList.remove('hidden');
@@ -530,6 +556,11 @@
       // Client authentifié (session travailleur) requis par la RLS
       const { error } = await sb.from('candidatures').insert(payload);
       if (error) throw error;
+      // Mémoriser la mission comme déjà postulée (empêche une 2e candidature)
+      if (payload.mission_id) {
+        appliedMissionIds.add(String(payload.mission_id));
+        applyFilters(); // rafraîchit la liste en arrière-plan (badge « Déjà postulé »)
+      }
     } catch(e) {
       console.warn('Candidature non enregistrée', e);
     }

@@ -111,4 +111,36 @@ Journaux en cas d'échec : Dashboard → Edge Functions → `send-email` → **L
 
 ## Templates disponibles
 
-Rendus côté serveur dans `i
+Rendus côté serveur dans `index.ts` — versionnés dans git, plus d'éditeur externe.
+
+| Template | Ancien ID EmailJS | Usage |
+|----------|-------------------|-------|
+| `worker` | `template_y3zn6ll` | messages au travailleur (bienvenue, contestation, dossier Jour J) |
+| `employer` | `template_0hbqgjd` | messages à l'employeur (bienvenue, heures à valider, contrat signé) |
+| `mission-posted` | `template_tp6702f` | confirmation de mission publiée |
+| `mission-alert` | `template_jsgv5au` | alerte aux travailleurs matchés |
+| `proposition` | `template_lk3kj9n` | proposition de créneau / contrat au travailleur |
+| `candidature` | `template_78kr3h6` | nouvelle candidature reçue |
+
+Les noms de paramètres sont inchangés (`to_email`, `prenom`, `mission_titre`…),
+les appels front n'ont donc pas eu à être réécrits.
+
+### Ajouter un template
+
+Dans `index.ts`, ajouter une entrée à `TEMPLATES` puis une clé à `FLX_TPL`
+dans `shared.js`. Le gabarit `layout()` fournit l'en-tête, le bouton d'action
+et le pied de page légal.
+
+---
+
+## Points d'attention
+
+- **Quota** : offre gratuite Brevo = 300 e-mails/jour. `poster-mission.html`
+  notifie jusqu'à 10 travailleurs par mission : à surveiller à la montée en charge.
+- **Envois en masse** : les alertes mission partent en boucle côté client
+  (un appel par destinataire). À basculer vers un envoi groupé côté serveur
+  si le volume augmente.
+- **Non bloquant** : tous les appels sont dans des `try/catch` — un échec d'e-mail
+  n'interrompt jamais une inscription ou une signature.
+- **RGPD** : Brevo est un sous-traitant au sens de l'art. 28. Signez le DPA
+  (Brevo → Compte → **Data Processing Agreement**) et conservez-le.

@@ -361,9 +361,11 @@
     const ids = [...new Set(cands.map(c => c.mission_id).filter(Boolean))];
     let missionsById = {};
     if (ids.length > 0) {
-      const { data: ms } = await sb.from('missions').select('id,titre,nom_entreprise').in('id', ids);
+      const { data: ms } = await sb.from('missions').select('id,titre,nom_entreprise,email_employeur').in('id', ids);
       (ms || []).forEach(m => { missionsById[m.id] = m; });
     }
+
+    const esc = s => (s == null ? '' : String(s)).replace(/[<>&]/g, ch => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[ch]));
 
     const html = cands.map(c => {
       const m = missionsById[c.mission_id] || {};
@@ -375,7 +377,7 @@
         badge = '<span class="status-badge status-proposee">⏳ En attente de réponse</span>';
       } else if (c.statut === 'date_proposee') {
         badge = '<span class="status-badge status-proposee">📅 Créneau proposé</span>';
-        action = `<button class="btn btn-primary" onclick="window.location.href='confirmation-creneau.html?cid=${c.id}'">Confirmer le créneau →</button>`;
+        action = `<button class="btn btn-primary" onclick="window.location.href='signer-contrat.html?cid=${c.id}'">Voir la proposition et signer →</button>`;
       } else if (c.statut === 'acceptee' && !c.compliance_complete) {
         badge = '<span class="status-badge" style="background:#fffbeb;color:#92400e;">⚠️ Dossier incomplet</span>';
         action = `<button class="btn btn-primary" onclick="window.location.href='compliance.html?cid=${c.id}'">Compléter mon dossier →</button>`;
@@ -394,14 +396,24 @@
       const dateInfo = c.date_test ? `📅 ${new Date(c.date_test).toLocaleDateString('fr-BE')}` : '';
       const heures = c.heure_debut ? `⏱️ ${c.heure_debut}–${c.heure_fin || '?'}` : '';
 
+      const msgBlock = (c.statut === 'date_proposee' && c.message_employeur && c.message_employeur.trim())
+        ? `<div style="margin:8px 0;background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:10px 12px;">
+             <div style="font-size:11px;font-weight:700;color:#4338ca;margin-bottom:3px;">Message de l'employeur</div>
+             <div style="font-size:13px;color:#334155;white-space:pre-wrap;">${esc(c.message_employeur.trim())}</div>
+           </div>`
+        : '';
+
+      const compLink = `<a href="#" onclick="event.preventDefault();flxShowCompanyProfile({email:'${(m.email_employeur||'').replace(/'/g,"\\'")}',entreprise:'${(entreprise||'').replace(/'/g,"\\'")}'})" style="color:#6366f1;font-weight:600;text-decoration:none;font-size:12px;">Voir l'entreprise</a>`;
+
       return `
         <div class="mission-item">
           <div class="top">
             <div>
               <div class="titre">${titre}</div>
-              <div class="company">🏢 ${entreprise}</div>
+              <div class="company">🏢 ${entreprise} · ${compLink}</div>
             </div>
           </div>
+          ${msgBlock}
           <div class="meta"><span>${dateInfo}</span><span>${heures}</span></div>
           <div class="footer">${badge}${action}</div>
         </div>`;

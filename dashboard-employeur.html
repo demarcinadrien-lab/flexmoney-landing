@@ -342,7 +342,13 @@
       <h2>Proposer les jours de travail</h2>
       <p class="modal-subtitle">Indiquez un ou plusieurs jours et un message. Le travailleur recevra la proposition avec les contrats à compléter et signer, en une seule étape.</p>
       <div id="joursList"></div>
-      <button type="button" class="btn-copy" style="background:#eef2ff;color:#4338ca;margin-bottom:16px;" onclick="ajouterJour()">+ Ajouter un jour</button>
+      <button type="button" class="btn-copy" style="background:#eef2ff;color:#4338ca;margin-bottom:14px;" onclick="ajouterJour()">+ Ajouter un jour</button>
+
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#92400e;line-height:1.6;">
+        <strong>Voici les dates du contrat proposé.</strong><br>
+        Pour un premier jour avec un nouveau travailleur, les dates saisies ci-dessus sont les dates proposées pour le <strong>premier jour de travail</strong> (en principe une seule journée). Par la suite, si la collaboration se poursuit, vous pourrez établir un <strong>contrat trimestriel</strong> couvrant une période plus longue.
+      </div>
+
       <div class="field" style="margin-bottom:14px;">
         <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;">Message au travailleur</label>
         <textarea id="propMessage" rows="3" placeholder="Ex : Bonjour, nous vous proposons de commencer aux dates ci-dessus. Merci de compléter vos données (NISS, IBAN) et de signer les contrats pour que tout soit en ordre." style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;"></textarea>
