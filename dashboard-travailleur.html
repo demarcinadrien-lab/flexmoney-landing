@@ -373,28 +373,47 @@
       const entreprise = m.nom_entreprise || 'Employeur';
       let badge, action = '';
 
-      if (c.statut === 'en_attente') {
+      // Jours proposés (ou repli sur date_test)
+      let jours = [];
+      try { jours = Array.isArray(c.jours_proposes) ? c.jours_proposes : JSON.parse(c.jours_proposes || '[]'); }
+      catch (e) { jours = []; }
+      if ((!jours || !jours.length) && c.date_test) {
+        jours = [{ date: c.date_test, heure_debut: c.heure_debut, heure_fin: c.heure_fin }];
+      }
+      const joursLabel = (jours || []).map(j => {
+        const d = j.date ? new Date(j.date).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' }) : '';
+        const hd = j.heure_debut || j.debut, hf = j.heure_fin || j.fin;
+        const h = hd && hf ? ` · ${hd}–${hf}` : '';
+        return d ? `📅 ${d}${h}` : '';
+      }).filter(Boolean);
+
+      const estSigne = !!c.contrat_signe_le;
+
+      if (estSigne) {
+        // Contrat signé = dossier complet (toutes les infos sont collectées à la signature)
+        badge = '<span class="status-badge status-acceptee">✅ Contrat signé — dossier complet</span>';
+        const pdfBtn = c.contrat_signe_url
+          ? `<a href="${c.contrat_signe_url}" target="_blank" class="btn btn-outline" style="text-decoration:none;">📎 Mon contrat signé</a>`
+          : '';
+        action = pdfBtn;
+      } else if (c.statut === 'en_attente') {
         badge = '<span class="status-badge status-proposee">⏳ En attente de réponse</span>';
       } else if (c.statut === 'date_proposee') {
-        badge = '<span class="status-badge status-proposee">📅 Créneau proposé</span>';
+        badge = '<span class="status-badge status-proposee">📅 Jour(s) proposé(s) — à signer</span>';
         action = `<button class="btn btn-primary" onclick="window.location.href='signer-contrat.html?cid=${c.id}'">Voir la proposition et signer →</button>`;
-      } else if (c.statut === 'acceptee' && !c.compliance_complete) {
-        badge = '<span class="status-badge" style="background:#fffbeb;color:#92400e;">⚠️ Dossier incomplet</span>';
-        action = `<button class="btn btn-primary" onclick="window.location.href='compliance.html?cid=${c.id}'">Compléter mon dossier →</button>`;
-      } else if (c.statut === 'acceptee') {
-        badge = '<span class="status-badge status-acceptee">✅ Acceptée — dossier complet</span>';
-        const contratBtn = c.contrat_signe_url
-          ? `<a href="${c.contrat_signe_url}" target="_blank" class="btn btn-outline" style="text-decoration:none;">📎 Contrat signé envoyé ✓</a>`
-          : `<button class="btn btn-green" onclick="uploadContratSigne('${c.id}')">📤 Envoyer mon contrat signé</button>`;
-        action = `<button class="btn btn-outline" onclick="window.location.href='dossier-jour-j.html?cid=${c.id}'">Voir mon dossier →</button>${contratBtn}`;
+      } else if (c.statut === 'declinee') {
+        badge = '<span class="status-badge status-cloturee">Proposition déclinée</span>';
       } else if (c.statut === 'refusee') {
         badge = '<span class="status-badge status-cloturee">Refusée</span>';
+      } else if (c.statut === 'acceptee') {
+        badge = '<span class="status-badge status-acceptee">✅ Acceptée</span>';
+        action = `<button class="btn btn-primary" onclick="window.location.href='signer-contrat.html?cid=${c.id}'">Voir la proposition et signer →</button>`;
       } else {
         badge = `<span class="status-badge status-cloturee">${c.statut}</span>`;
       }
 
-      const dateInfo = c.date_test ? `📅 ${new Date(c.date_test).toLocaleDateString('fr-BE')}` : '';
-      const heures = c.heure_debut ? `⏱️ ${c.heure_debut}–${c.heure_fin || '?'}` : '';
+      const dateInfo = joursLabel.length ? joursLabel.join('<br>') : '';
+      const heures = '';
 
       const msgBlock = (c.statut === 'date_proposee' && c.message_employeur && c.message_employeur.trim())
         ? `<div style="margin:8px 0;background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:10px 12px;">
