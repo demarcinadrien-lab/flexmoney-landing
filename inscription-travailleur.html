@@ -453,16 +453,6 @@
  <!-- Généré par JS -->
  </div>
 
- <div class="field" style="margin-top:8px;">
- <label>Préférence de travail <span class="required">*</span></label>
- <select id="pref-lieu">
- <option value="" disabled selected>Choisissez...</option>
- <option value="teletravail">Télétravail uniquement</option>
- <option value="presentiel">Présentiel uniquement</option>
- <option value="mixte">Mixte (télétravail + présentiel)</option>
- </select>
- </div>
-
  <div class="field">
  <label>Présentation — parlez de vous <span style="font-weight:400;color:var(--muted);">(facultatif)</span></label>
  <textarea id="presentation" maxlength="600" placeholder="Décrivez votre expérience, vos points forts, ce que vous recherchez... Cette description sera visible par les employeurs."></textarea>
@@ -809,7 +799,6 @@
     btn.textContent = 'Enregistrement...'; btn.disabled = true;
 
     formData.disponibilites = selectedDispos;
-    formData.pref_lieu      = document.getElementById('pref-lieu').value;
     formData.presentation   = document.getElementById('presentation').value.trim();
     formData.type           = 'worker';
 
@@ -826,7 +815,6 @@
       eligible:               formData.eligible,
       competences:            formData.competences,
       disponibilites:         formData.disponibilites,
-      teletravail_preference: formData.pref_lieu,
       presentation:           formData.presentation || null
     };
 
@@ -990,7 +978,6 @@
     // Étape 4
     selectedDispos = [...(row.disponibilites || [])];
     applyDispoSelections();
-    if (row.teletravail_preference) document.getElementById('pref-lieu').value = row.teletravail_preference;
     if (row.presentation) document.getElementById('presentation').value = row.presentation;
 
     // CGU déjà acceptées lors de l'inscription initiale

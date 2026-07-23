@@ -143,9 +143,6 @@
           <span class="lbl">Régime</span><span class="val" id="pRegime">—</span>
         </div>
         <div class="profile-field">
-          <span class="lbl">Télétravail</span><span class="val" id="pTele">—</span>
-        </div>
-        <div class="profile-field">
           <span class="lbl">Inscrit le</span><span class="val" id="pDate">—</span>
         </div>
 
@@ -441,7 +438,6 @@
     document.getElementById('heroName').textContent = w.prenom;
     document.getElementById('pVille').textContent = w.ville || '—';
     document.getElementById('pRegime').textContent = w.regime_travail || '—';
-    document.getElementById('pTele').textContent = w.teletravail_preference === 'oui' ? '✅ Oui' : '🔄 Hybride';
     document.getElementById('pDate').textContent = new Date(w.created_at).toLocaleDateString('fr-BE');
 
     const badge = document.getElementById('eligibleBadge');

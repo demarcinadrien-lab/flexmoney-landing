@@ -450,7 +450,7 @@
           <div class="c-avatar">${initials}</div>
           <div class="c-info">
             <div class="c-name">${w.prenom} ${w.nom[0]}. <span style="font-size:11px;color:#94a3b8;">· ${w.ville || '—'}</span></div>
-            <div class="c-meta">${w.regime_travail || 'Salarié'} · ${w.teletravail_preference === 'oui' ? '🏠 Télétravail' : '🔄 Hybride'}</div>
+            <div class="c-meta">${w.regime_travail || 'Salarié'}</div>
             <div class="c-chips">${comps.map(c => `<span class="c-chip">${c}</span>`).join('')}</div>
           </div>
           <button class="btn btn-sm btn-primary" onclick="contactWorker('${w.prenom} ${w.nom}')">Contacter</button>
@@ -643,8 +643,6 @@
     }
     const dispo = Array.isArray(w.disponibilites) ? w.disponibilites.join(', ') : (w.disponibilites || '');
     const comp  = Array.isArray(w.competences) ? w.competences.join(', ') : (w.competences || '');
-    const teletravail = w.teletravail_preference === true ? 'Ouvert au télétravail'
-      : w.teletravail_preference === false ? 'Sur place uniquement' : (w.teletravail_preference || '—');
     const esc = s => (s == null ? '' : String(s)).replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
 
     const ligne = (label, val) => val ? `<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;">
@@ -662,7 +660,6 @@
       ${ligne('Éligible flexi-job', w.eligible === true ? 'Oui' : w.eligible === false ? 'À vérifier' : '')}
       ${ligne('Compétences', comp)}
       ${ligne('Disponibilités', dispo)}
-      ${ligne('Télétravail', teletravail)}
       ${ligne('Rayon de déplacement', w.rayon_deplacement ? w.rayon_deplacement + ' km' : '')}
       ${ligne('Taux horaire souhaité', w.taux_horaire_min ? w.taux_horaire_min + ' €/h min.' : '')}
     `;

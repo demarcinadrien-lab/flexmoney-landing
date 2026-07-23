@@ -127,7 +127,6 @@
   <p>Profils vérifiés · Compétences validées · Disponibles rapidement</p>
   <div class="stats">
     <div class="stat"><div class="val" id="statWorkers">—</div><div class="lab">Profils actifs</div></div>
-    <div class="stat"><div class="val" id="statRemote">—</div><div class="lab">Télétravail</div></div>
     <div class="stat"><div class="val">24h</div><div class="lab">Délai moyen</div></div>
   </div>
 </div>
@@ -135,12 +134,7 @@
 <div class="main">
   <!-- Filtres -->
   <div class="filters">
-    <h3>🎯 Filtrer les profils</h3>
-
-    <div class="filter-group">
-      <label>Recherche</label>
-      <input type="text" id="searchInput" placeholder="Comptable, Excel..." oninput="applyFilters()">
-    </div>
+    <h3>Filtrer les profils</h3>
 
     <div class="filter-group">
       <label>Ville — tri par proximité</label>
@@ -344,9 +338,7 @@
       return true;
     });
 
-    const remoteCount = allWorkers.filter(w => normTele(w.teletravail_preference) === 'teletravail').length;
     document.getElementById('statWorkers').textContent = allWorkers.length;
-    document.getElementById('statRemote').textContent = remoteCount;
     applyFilters();
   }
 
@@ -435,18 +427,14 @@
   }
 
   function applyFilters() {
-    const search = document.getElementById('searchInput').value.toLowerCase();
     const ville = document.getElementById('villeFilter').value; // ville wallonne de référence (tri par proximité)
     const secteurId = document.getElementById('secteurFilter').value;
     const secteur = secteurId ? FLEXMONEY_SECTEURS.find(s => s.id === secteurId) : null;
 
-    // 1) Filtrage : recherche libre et domaine de compétences
-    //    (la préférence télétravail est affichée sur le profil mais n'est plus un critère de tri/filtre)
+    // 1) Filtrage par domaine de compétences uniquement
     let filtered = allWorkers.filter(w => {
-      const comps = (w.competences || []).join(' ').toLowerCase();
-      const matchSearch = !search || comps.includes(search) || (w.prenom + ' ' + w.nom).toLowerCase().includes(search);
       const matchSecteur = !secteur || (w.competences || []).some(c => secteur.competences.includes(c));
-      return matchSearch && matchSecteur;
+      return matchSecteur;
     });
 
     // 2) Tri : si une ville est choisie, du profil le plus proche au plus éloigné
@@ -495,7 +483,7 @@
             </div>
           </div>
           ${domaines.length ? `<div class="domaine-row">${domaines.map(d => `<span class="domaine-tag" style="background:${d.bg};color:${d.couleur};">${d.label}</span>`).join('')}</div>` : ''}
-          <div class="worker-location">📍 ${w.ville || '—'} · ${teleLabel(w.teletravail_preference)}${distLabel}</div>
+          <div class="worker-location">${w.ville || '—'}${distLabel}</div>
           ${comps.length ? `<div class="chips-row">${comps.map(c => `<span class="w-chip">${c}</span>`).join('')}</div>` : ''}
           <div class="worker-footer">
             <span class="taux-range">~${tauxMin}–${tauxMin+8} €/h</span>
@@ -520,7 +508,7 @@
     document.getElementById('profileAvatar').textContent = ((w.prenom || '?')[0] + (w.nom || '?')[0]).toUpperCase();
     document.getElementById('profileName').textContent = `${w.prenom || ''} ${(w.nom || '')[0] || ''}.`;
     document.getElementById('profileMeta').textContent =
-      `${w.regime_travail || 'Salarié 4/5e'} · 📍 ${w.ville || '—'} · ${teleLabel(w.teletravail_preference)}`;
+      `${w.regime_travail || 'Salarié 4/5e'} · ${w.ville || '—'}`;
 
     // Domaines + sous-domaines cochés
     const domaines = domainesDuProfil(w);
@@ -762,7 +750,6 @@
   }
 
   function resetFilters() {
-    document.getElementById('searchInput').value = '';
     document.getElementById('villeFilter').value = '';
     document.getElementById('secteurFilter').value = '';
     applyFilters();
