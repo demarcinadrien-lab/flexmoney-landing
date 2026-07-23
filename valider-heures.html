@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Valider les heures — FlexMoney</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f8fafc; color: #1e293b; }
+    header { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 16px 32px; display: flex; align-items: center; gap: 12px; }
+    header .logo { font-weight: 800; font-size: 20px; color: #6366f1; }
+    header .logo span { color: #1e293b; }
+    header nav { margin-left: auto; display: flex; gap: 10px; }
+    header a, header button { background: #f1f5f9; color: #64748b; padding: 8px 16px; border-radius: 8px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; text-decoration: none; }
+
+    .wrap { max-width: 720px; margin: 28px auto; padding: 0 20px 80px; }
+    .hero { margin-bottom: 22px; }
+    .hero h1 { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+    .hero p { font-size: 14px; color: #64748b; }
+
+    .section-title { font-size: 13px; font-weight: 800; color: #6366f1; text-transform: uppercase; letter-spacing: .5px; margin: 26px 0 12px; }
+
+    /* Carte à valider */
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px 20px; margin-bottom: 14px; }
+    .card .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+    .card .date { font-size: 15px; font-weight: 800; text-transform: capitalize; }
+    .card .mission { font-size: 12px; color: #64748b; margin-top: 2px; }
+    .badge { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 10px; white-space: nowrap; }
+    .b-pending { background: #cffafe; color: #0e7490; }
+    .b-ok { background: #dcfce7; color: #15803d; }
+    .b-contest { background: #fee2e2; color: #b91c1c; }
+
+    .hrow { display: flex; justify-content: space-between; font-size: 13px; padding: 5px 0; border-bottom: 1px solid #f1f5f9; }
+    .hrow .k { color: #64748b; }
+    .hrow .v { font-weight: 700; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 18px; margin: 12px 0; }
+    .pill { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 8px; margin-left: 6px; }
+    .p-ok { background: #dcfce7; color: #15803d; }
+    .p-warn { background: #fef3c7; color: #92400e; }
+    .p-over { background: #fee2e2; color: #b91c1c; }
+    .total { margin-top: 6px; font-size: 15px; font-weight: 800; color: #16a34a; text-align: right; }
+    .comment { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; font-size: 13px; color: #334155; margin-top: 10px; }
+
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+    .btn { padding: 10px 18px; border: none; border-radius: 9px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .btn-valider { background: #16a34a; color: #fff; }
+    .btn-contester { background: #fff; color: #b91c1c; border: 1.5px solid #fecaca; }
+    .contest-box { margin-top: 12px; display: none; }
+    .contest-box textarea { width: 100%; padding: 10px 12px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 13px; font-family: inherit; resize: vertical; }
+    .contest-box .btn { margin-top: 8px; }
+
+    /* Historique compact */
+    .hist { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden; }
+    .hist-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+    .hist-row:last-child { border-bottom: none; }
+    .hist-row .h-date { font-weight: 700; flex: 1; text-transform: capitalize; }
+    .hist-row .h-hours { color: #64748b; min-width: 60px; text-align: right; }
+    .hist-row .h-amount { font-weight: 700; min-width: 80px; text-align: right; }
+
+    .empty { text-align: center; padding: 40px 20px; color: #94a3b8; }
+    .loading { text-align: center; padding: 50px; color: #94a3b8; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Flex<span>Money</span></div>
+  <nav>
+    <a href="mes-travailleurs.html">← Mes travailleurs</a>
+    <a href="dashboard-employeur.html">Tableau de bord</a>
+  </nav>
+</header>
+
+<div class="wrap">
+  <div class="hero">
+    <h1 id="heroTitle">Valider les heures</h1>
+    <p id="heroSub">Confirmez les heures prestées ou contestez-les.</p>
+  </div>
+
+  <div id="loading" class="loading">Chargement des heures...</div>
+
+  <div id="content" class="hidden">
+    <div id="pendingSection" style="display:none;">
+      <div class="section-title">Heures à valider (<span id="pendingCount">0</span>)</div>
+      <div id="pendingList"></div>
+    </div>
+
+    <div id="historySection" style="display:none;">
+      <div class="section-title">Historique — heures déjà validées</div>
+      <div class="hist" id="historyList"></div>
+    </div>
+
+    <div id="emptyState" class="empty" style="display:none;">
+      Aucune heure à valider ni validée pour ce travailleur pour le moment.
+    </div>
+  </div>
+</div>
+
+<script src="shared.js"></script>
+<script>
+  const TPL_EMPLOYEUR = FLX_TPL.EMPLOYER;
+  const params = new URLSearchParams(window.location.search);
+  const workerEmail = (params.get('email') || '').toLowerCase();
+  const workerNom = params.get('nom') || '';
+
+  let currentUser = null;
+  let missionsById = {};
+
+  const fmt = n => (n || 0).toLocaleString('fr-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  function fmtH(h) {
+    if (h == null || isNaN(h)) return '—';
+    const s = h < 0 ? '-' : '', a = Math.abs(h), hh = Math.floor(a), mm = Math.round((a - hh) * 60);
+    return `${s}${hh}h${mm > 0 ? String(mm).padStart(2, '0') : '00'}`;
+  }
+  const esc = s => (s == null ? '' : String(s)).replace(/[<>&]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
+  const dLabel = d => d ? new Date(d).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' }) : '—';
+
+  async function init() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) {
+      const next = encodeURIComponent('valider-heures.html' + window.location.search);
+      window.location.replace('auth.html?next=' + next);
+      return;
+    }
+    currentUser = session.user;
+    if (session.user.user_metadata?.role !== 'employeur') {
+      document.getElementById('loading').textContent = "Cette page est réservée aux employeurs.";
+      return;
+    }
+    if (!workerEmail) {
+      document.getElementById('loading').textContent = "Aucun travailleur spécifié.";
+      return;
+    }
+
+    document.getElementById('heroTitle').textContent = `Valider les heures — ${workerNom || workerEmail}`;
+    document.getElementById('heroSub').textContent = workerNom ? workerEmail : 'Confirmez les heures prestées ou contestez-les.';
+
+    // Missions de cet employeur (pour les titres et le filtrage)
+    const { data: missions } = await sb.from('missions').select('id,titre').eq('email_employeur', currentUser.email);
+    (missions || []).forEach(m => { missionsById[m.id] = m; });
+
+    await loadDeclarations();
+  }
+
+  async function loadDeclarations() {
+    const { data } = await sb.from('declarations_heures')
+      .select('*')
+      .eq('worker_email', workerEmail)
+      .eq('employer_email', currentUser.email)
+      .order('date_prestation', { ascending: true });
+
+    const decls = data || [];
+    document.getElementById('loading').classList.add('hidden');
+    document.getElementById('content').classList.remove('hidden');
+
+    const pending = decls.filter(d => d.statut === 'en_attente');
+    const history = decls.filter(d => d.statut === 'validee');
+    const contestees = decls.filter(d => d.statut === 'contestee');
+
+    // À valider (en attente + contestées en attente de re-soumission affichées comme historique contesté)
+    if (pending.length) {
+      document.getElementById('pendingCount').textContent = pending.length;
+      document.getElementById('pendingList').innerHTML = pending.map(cardPending).join('');
+      document.getElementById('pendingSection').style.display = 'block';
+    }
+
+    // Historique compact : validées + contestées
+    const hist = [...history, ...contestees].sort((a, b) =>
+      String(b.date_prestation || '').localeCompare(String(a.date_prestation || '')));
+    if (hist.length) {
+      document.getElementById('historyList').innerHTML = hist.map(rowHistory).join('');
+      document.getElementById('historySection').style.display = 'block';
+    }
+
+    if (!pending.length && !hist.length) {
+      document.getElementById('emptyState').style.display = 'block';
+    }
+  }
+
+  function cardPending(d) {
+    const mission = missionsById[d.mission_id];
+    const heures = d.heures_reelles != null ? d.heures_reelles : d.heures_prevues;
+    const salaire = (heures || 0) * (d.taux_horaire || 0);
+    const pecule = salaire * 0.0767;
+    const total = salaire + pecule;
+
+    let diff = '';
+    if (d.heures_prevues && d.heures_reelles) {
+      const delta = d.heures_reelles - d.heures_prevues;
+      if (Math.abs(delta) < 0.05) diff = `<span class="pill p-ok">✓ Conforme</span>`;
+      else if (delta > 0) diff = `<span class="pill p-warn">+${fmtH(delta)}</span>`;
+      else diff = `<span class="pill p-over">${fmtH(delta)}</span>`;
+    }
+
+    return `
+      <div class="card" id="decl-${d.id}">
+        <div class="top">
+          <div>
+            <div class="date">${esc(dLabel(d.date_prestation))}</div>
+            ${mission ? `<div class="mission">📌 ${esc(mission.titre)}</div>` : ''}
+          </div>
+          <span class="badge b-pending">📨 Heures reçues</span>
+        </div>
+
+        <div class="grid2">
+          <div class="hrow"><span class="k">Prévu</span><span class="v">${d.heure_debut_prevue ? d.heure_debut_prevue.slice(0,5) : '—'}–${d.heure_fin_prevue ? d.heure_fin_prevue.slice(0,5) : '—'} (${fmtH(d.heures_prevues)})</span></div>
+          <div class="hrow"><span class="k">Réel</span><span class="v">${d.heure_debut_reelle ? d.heure_debut_reelle.slice(0,5) : '—'}–${d.heure_fin_reelle ? d.heure_fin_reelle.slice(0,5) : '—'} (${fmtH(d.heures_reelles)}) ${diff}</span></div>
+          <div class="hrow"><span class="k">Taux</span><span class="v">${fmt(d.taux_horaire)} €/h</span></div>
+          <div class="hrow"><span class="k">Salaire + pécule</span><span class="v">${fmt(total)} €</span></div>
+        </div>
+        ${d.commentaire_travailleur ? `<div class="comment">💬 ${esc(d.commentaire_travailleur)}</div>` : ''}
+        <div class="total">Total dû : ${fmt(total)} € net</div>
+
+        <div class="actions">
+          <button class="btn btn-valider" onclick="validerHeures('${d.id}')">✅ Valider ces heures</button>
+          <button class="btn btn-contester" onclick="toggleContest('${d.id}')">Contester</button>
+        </div>
+        <div class="contest-box" id="contest-${d.id}">
+          <textarea id="motif-${d.id}" rows="2" placeholder="Expliquez au travailleur ce qui ne va pas (ex : horaire incorrect)..."></textarea>
+          <button class="btn btn-contester" onclick="envoyerContestation('${d.id}')">Envoyer la contestation</button>
+        </div>
+      </div>`;
+  }
+
+  function rowHistory(d) {
+    const heures = d.heures_validees != null ? d.heures_validees : (d.heures_reelles != null ? d.heures_reelles : d.heures_prevues);
+    const total = (heures || 0) * (d.taux_horaire || 0) * 1.0767;
+    const badge = d.statut === 'validee'
+      ? '<span class="badge b-ok">✅ Validées</span>'
+      : '<span class="badge b-contest">❌ Contestée</span>';
+    return `
+      <div class="hist-row">
+        <span class="h-date">${esc(dLabel(d.date_prestation))}</span>
+        <span class="h-hours">${fmtH(heures)}</span>
+        <span class="h-amount">${fmt(total)} €</span>
+        ${badge}
+      </div>`;
+  }
+
+  async function validerHeures(id) {
+    const { data: d } = await sb.from('declarations_heures').select('*').eq('id', id).single();
+    await sb.from('declarations_heures').update({
+      statut: 'validee',
+      heures_validees: d?.heures_reelles ?? d?.heures_prevues ?? null,
+      updated_at: new Date().toISOString()
+    }).eq('id', id);
+    await refresh();
+  }
+
+  function toggleContest(id) {
+    const box = document.getElementById(`contest-${id}`);
+    box.style.display = box.style.display === 'block' ? 'none' : 'block';
+  }
+
+  async function envoyerContestation(id) {
+    const motif = document.getElementById(`motif-${id}`).value.trim();
+    if (!motif) { alert('Indiquez le motif de la contestation.'); return; }
+
+    const { data: d } = await sb.from('declarations_heures').select('*').eq('id', id).single();
+    await sb.from('declarations_heures').update({
+      statut: 'contestee',
+      motif_contestation: motif,
+      updated_at: new Date().toISOString()
+    }).eq('id', id);
+
+    if (d?.worker_email && window.flxSendEmail) {
+      const lien = `${window.location.origin}/declaration-heures.html?cid=${d.candidature_id || ''}`;
+      const prenom = (d.worker_nom || '').split(' ')[0] || 'Bonjour';
+      try {
+        await flxSendEmail(TPL_EMPLOYEUR, {
+          to_email: d.worker_email,
+          to_name: d.worker_nom || d.worker_email,
+          prenom: prenom,
+          subject: 'Vos heures ont été contestées — à corriger',
+          message:
+            `HEURES CONTESTÉES\n` +
+            `-----------------\n` +
+            `L'employeur a contesté les heures déclarées pour le ${dLabel(d.date_prestation)}.\n\n` +
+            `Motif : ${motif}\n\n` +
+            `Merci de corriger et re-soumettre vos heures ici :\n${lien}\n\n` +
+            `— FlexMoney`,
+          reply_to: 'contact@flexmoney.be'
+        });
+      } catch (e) { console.warn('Email contestation non envoyé', e); }
+    }
+    await refresh();
+  }
+
+  async function refresh() {
+    document.getElementById('pendingSection').style.display = 'none';
+    document.getElementById('historySection').style.display = 'none';
+    document.getElementById('emptyState').style.display = 'none';
+    await loadDeclarations();
+  }
+
+  init();
+</script>
+</body>
+</html>

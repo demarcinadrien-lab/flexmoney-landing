@@ -310,7 +310,7 @@
             </div>
           </div>
           <div style="display:flex;flex-direction:column;gap:6px;align-items:stretch;">
-            ${w.heures_a_valider > 0 ? `<a href="dashboard-employeur.html#declarationsSection" class="btn-validate" onclick="event.stopPropagation()">⏱️ Valider les heures (${w.heures_a_valider})</a>` : ''}
+            <a href="valider-heures.html?email=${encodeURIComponent(w.email)}&nom=${encodeURIComponent(((w.prenom||'')+' '+(w.nom||'')).trim())}" class="btn-validate" onclick="event.stopPropagation()">⏱️ Valider les heures${w.heures_a_valider > 0 ? ` (${w.heures_a_valider})` : ''}</a>
             <button class="btn-propose" onclick="event.stopPropagation();ouvrirNouveauContrat('${w.email}', '${(w.prenom||'').replace(/'/g,"\\'")}', '${(w.nom||'').replace(/'/g,"\\'")}')">📄 Proposer un nouveau contrat</button>
           </div>
         </div>`;
