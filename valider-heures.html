@@ -189,7 +189,7 @@
     let diff = '';
     if (d.heures_prevues && d.heures_reelles) {
       const delta = d.heures_reelles - d.heures_prevues;
-      if (Math.abs(delta) < 0.05) diff = `<span class="pill p-ok">✓ Conforme</span>`;
+      if (Math.abs(delta) < 0.05) diff = `<span class="pill p-ok">Conforme</span>`;
       else if (delta > 0) diff = `<span class="pill p-warn">+${fmtH(delta)}</span>`;
       else diff = `<span class="pill p-over">${fmtH(delta)}</span>`;
     }
@@ -199,9 +199,9 @@
         <div class="top">
           <div>
             <div class="date">${esc(dLabel(d.date_prestation))}</div>
-            ${mission ? `<div class="mission">📌 ${esc(mission.titre)}</div>` : ''}
+            ${mission ? `<div class="mission">${esc(mission.titre)}</div>` : ''}
           </div>
-          <span class="badge b-pending">📨 Heures reçues</span>
+          <span class="badge b-pending">Heures reçues</span>
         </div>
 
         <div class="grid2">
@@ -210,11 +210,11 @@
           <div class="hrow"><span class="k">Taux</span><span class="v">${fmt(d.taux_horaire)} €/h</span></div>
           <div class="hrow"><span class="k">Salaire + pécule</span><span class="v">${fmt(total)} €</span></div>
         </div>
-        ${d.commentaire_travailleur ? `<div class="comment">💬 ${esc(d.commentaire_travailleur)}</div>` : ''}
+        ${d.commentaire_travailleur ? `<div class="comment">${esc(d.commentaire_travailleur)}</div>` : ''}
         <div class="total">Total dû : ${fmt(total)} € net</div>
 
         <div class="actions">
-          <button class="btn btn-valider" onclick="validerHeures('${d.id}')">✅ Valider ces heures</button>
+          <button class="btn btn-valider" onclick="validerHeures('${d.id}')">Valider ces heures</button>
           <button class="btn btn-contester" onclick="toggleContest('${d.id}')">Contester</button>
         </div>
         <div class="contest-box" id="contest-${d.id}">
@@ -228,8 +228,8 @@
     const heures = d.heures_validees != null ? d.heures_validees : (d.heures_reelles != null ? d.heures_reelles : d.heures_prevues);
     const total = (heures || 0) * (d.taux_horaire || 0) * 1.0767;
     const badge = d.statut === 'validee'
-      ? '<span class="badge b-ok">✅ Validées</span>'
-      : '<span class="badge b-contest">❌ Contestée</span>';
+      ? '<span class="badge b-ok">Validées</span>'
+      : '<span class="badge b-contest">Contestée</span>';
     return `
       <div class="hist-row">
         <span class="h-date">${esc(dLabel(d.date_prestation))}</span>

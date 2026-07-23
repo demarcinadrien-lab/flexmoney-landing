@@ -78,7 +78,7 @@
 </header>
 
 <div class="hero">
-  <h1>🤝 Mes travailleurs</h1>
+  <h1>Mes travailleurs</h1>
   <p>Les flexi-jobbeurs ayant déjà travaillé pour vous — proposez-leur directement un nouveau contrat.</p>
 </div>
 
@@ -94,7 +94,7 @@
     <p class="sub" id="modalSub">Ce travailleur recevra directement la proposition par email, sans passer par une candidature publique.</p>
 
     <div style="background:#f0f0ff;border:1px solid #c7d2fe;border-radius:10px;padding:12px 14px;font-size:13px;color:#4338ca;margin-bottom:16px;">
-      📋 <strong>Contrat flexi-job</strong> — de 1 jour à 3 mois maximum (3 mois par défaut, modifiable). Une fois le contrat accepté et signé, vous proposerez les journées de travail à l'intérieur de sa période.
+      <strong>Contrat flexi-job</strong> — de 1 jour à 3 mois maximum (3 mois par défaut, modifiable). Une fois le contrat accepté et signé, vous proposerez les journées de travail à l'intérieur de sa période.
     </div>
 
     <div class="form-group">
@@ -130,15 +130,15 @@
 <!-- Modal aperçu & édition du contrat avant envoi -->
 <div class="modal-overlay hidden" id="previewOverlay">
   <div class="modal" style="max-width:720px;">
-    <h2>📄 Vérifiez le contrat avant envoi</h2>
+    <h2>Vérifiez le contrat avant envoi</h2>
     <p class="sub" id="previewSub">Le contrat est pré-rempli. Vous pouvez le modifier librement avant de l'envoyer à la signature du travailleur.</p>
 
     <div id="cadreBlock">
-      <div style="font-size:12px;font-weight:800;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin:6px 0 8px;">📘 Contrat-cadre (signé une seule fois)</div>
+      <div style="font-size:12px;font-weight:800;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin:6px 0 8px;">Contrat-cadre (signé une seule fois)</div>
       <textarea id="cadreEditor" rows="12" style="width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.5;resize:vertical;"></textarea>
     </div>
 
-    <div style="font-size:12px;font-weight:800;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin:16px 0 8px;">📗 Contrat trimestriel</div>
+    <div style="font-size:12px;font-weight:800;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin:16px 0 8px;">Contrat trimestriel</div>
     <textarea id="trimEditor" rows="12" style="width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.5;resize:vertical;"></textarea>
 
     <div class="modal-buttons">
@@ -151,35 +151,46 @@
 <!-- Modal fiche travailleur : contrat + proposition de jours -->
 <div class="modal-overlay hidden" id="ficheOverlay">
   <div class="modal">
-    <h2 id="ficheTitle">👤 Travailleur</h2>
+    <h2 id="ficheTitle">Travailleur</h2>
     <p class="sub" id="ficheEmail"></p>
 
     <div id="ficheContrat"></div>
 
-    <div id="ficheJoursSection" class="hidden">
-      <div style="font-size:12px;font-weight:800;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin:18px 0 10px;">📅 Proposer des jours de travail</div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Date *</label>
-          <input type="date" id="jour-date">
-        </div>
-        <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <div>
-            <label>Début *</label>
-            <input type="time" id="jour-debut" value="09:00">
-          </div>
-          <div>
-            <label>Fin *</label>
-            <input type="time" id="jour-fin" value="17:00">
-          </div>
-        </div>
-      </div>
-      <button onclick="ajouterJour()" style="width:100%;padding:10px;background:#f0f0ff;color:#6366f1;border:1.5px dashed #6366f1;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:12px;">＋ Ajouter ce jour à la liste</button>
-      <div id="joursList"></div>
-    </div>
-
     <div class="modal-buttons">
       <button class="btn-cancel" onclick="closeFiche()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal dédié : proposer des jours de travail (basé sur les dates du contrat) -->
+<div class="modal-overlay hidden" id="proposerJoursOverlay">
+  <div class="modal">
+    <h2>Proposer des jours de travail</h2>
+    <p class="sub" id="pjSub">Ajoutez une ou plusieurs journées dans la période du contrat.</p>
+
+    <div id="pjPeriode" style="font-size:13px;color:#334155;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 12px;margin-bottom:14px;"></div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Date *</label>
+        <input type="date" id="jour-date">
+      </div>
+      <div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div>
+          <label>Début *</label>
+          <input type="time" id="jour-debut" value="09:00">
+        </div>
+        <div>
+          <label>Fin *</label>
+          <input type="time" id="jour-fin" value="17:00">
+        </div>
+      </div>
+    </div>
+    <button onclick="ajouterJour()" style="width:100%;padding:10px;background:#f0f0ff;color:#6366f1;border:1.5px dashed #6366f1;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:12px;">＋ Ajouter ce jour à la liste</button>
+    <div id="joursList"></div>
+
+    <div class="modal-buttons">
+      <button class="btn-cancel" onclick="closeProposerJours()">Annuler</button>
       <button class="btn-send hidden" id="btnEnvoyerJours" onclick="envoyerJours()">Envoyer la proposition de jours →</button>
     </div>
   </div>
@@ -282,7 +293,7 @@
     const el = document.getElementById('workersList');
     if (pastWorkers.length === 0) {
       el.innerHTML = `<div class="empty-state">
-        <div class="icon">🤝</div>
+        <div class="icon"></div>
         Aucun travailleur n'a encore de mission acceptée avec vous.<br>
         Dès qu'une candidature sera acceptée (journée de test ou mission), le travailleur apparaîtra ici pour que vous puissiez lui proposer un nouveau contrat.
       </div>`;
@@ -293,7 +304,7 @@
       const initials = ((w.prenom || '?')[0] + (w.nom || '?')[0]).toUpperCase();
       const isTest = w.type_contrat === 'test_jour';
       const badgeClass = isTest ? 'badge-test' : 'badge-trim';
-      const badgeLabel = isTest ? '🧪 Journée de test' : '📋 Mission trimestrielle';
+      const badgeLabel = isTest ? 'Journée de test' : 'Mission trimestrielle';
       const dateLabel = w.derniere_date ? new Date(w.derniere_date).toLocaleDateString('fr-BE') : '—';
 
       return `
@@ -301,17 +312,18 @@
           <div class="avatar">${initials}</div>
           <div class="w-info">
             <div class="w-name">${w.prenom || ''} ${w.nom || ''}</div>
-            <div class="w-email">✉️ ${w.email}</div>
+            <div class="w-email">${w.email}</div>
             <div class="w-meta">
               <span class="type-badge ${badgeClass}">${badgeLabel}</span>
-              <span class="missions-count">📌 ${w.derniere_mission} · ${dateLabel}</span>
+              <span class="missions-count">${w.derniere_mission} · ${dateLabel}</span>
               ${w.nb_missions > 1 ? `<span class="missions-count">· ${w.nb_missions} missions ensemble</span>` : ''}
-              <span class="missions-count" style="color:#6366f1;font-weight:700;">· Voir le profil, les contrats signés & proposer des jours →</span>
+              <span class="missions-count" style="color:#6366f1;font-weight:700;">· Voir le profil et les contrats signés →</span>
             </div>
           </div>
           <div style="display:flex;flex-direction:column;gap:6px;align-items:stretch;">
-            <a href="valider-heures.html?email=${encodeURIComponent(w.email)}&nom=${encodeURIComponent(((w.prenom||'')+' '+(w.nom||'')).trim())}" class="btn-validate" onclick="event.stopPropagation()">⏱️ Valider les heures${w.heures_a_valider > 0 ? ` (${w.heures_a_valider})` : ''}</a>
-            <button class="btn-propose" onclick="event.stopPropagation();ouvrirNouveauContrat('${w.email}', '${(w.prenom||'').replace(/'/g,"\\'")}', '${(w.nom||'').replace(/'/g,"\\'")}')">📄 Proposer un nouveau contrat</button>
+            <a href="valider-heures.html?email=${encodeURIComponent(w.email)}&nom=${encodeURIComponent(((w.prenom||'')+' '+(w.nom||'')).trim())}" class="btn-validate" onclick="event.stopPropagation()">Valider les heures${w.heures_a_valider > 0 ? ` (${w.heures_a_valider})` : ''}</a>
+            <button class="btn-propose" onclick="event.stopPropagation();ouvrirProposerJours('${w.email}')">Proposer des jours</button>
+            <button class="btn-propose" onclick="event.stopPropagation();ouvrirNouveauContrat('${w.email}', '${(w.prenom||'').replace(/'/g,"\\'")}', '${(w.nom||'').replace(/'/g,"\\'")}')">Proposer un nouveau contrat</button>
           </div>
         </div>`;
     }).join('');
@@ -508,20 +520,20 @@
     pendingContrat = null;
 
     if (candId) {
-      alert(`✅ Contrat envoyé à ${worker.prenom} pour signature en ligne !`);
+      alert(`Contrat envoyé à ${worker.prenom} pour signature en ligne !`);
       document.getElementById('previewOverlay').classList.add('hidden');
       closeModal();
       await loadPastWorkers();
     } else {
-      alert("⚠️ La proposition n'a pas pu être enregistrée. Réessayez.");
+      alert("La proposition n'a pas pu être enregistrée. Réessayez.");
     }
   }
 
   // ── Helpers profil travailleur ─────────────────────────────
   function teleLabel(pref) {
-    if (['teletravail', 'oui', 'uniquement'].includes(pref)) return '🏠 Télétravail';
-    if (['presentiel', 'non', 'sur place'].includes(pref)) return '🏢 Présentiel';
-    return '🔄 Mixte';
+    if (['teletravail', 'oui', 'uniquement'].includes(pref)) return 'Télétravail';
+    if (['presentiel', 'non', 'sur place'].includes(pref)) return 'Présentiel';
+    return 'Mixte';
   }
   function domainesDuProfil(prof) {
     if (typeof getSecteurDeCompetence !== 'function') return [];
@@ -564,9 +576,9 @@
 
     const lieu = [prof.ville, prof.code_postal].filter(Boolean).join(' · ');
     return `
-      <div style="font-size:12px;font-weight:800;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">📇 Profil du travailleur</div>
+      <div style="font-size:12px;font-weight:800;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">Profil du travailleur</div>
       <div style="border:1px solid #e2e8f0;border-radius:12px;padding:14px;margin-bottom:18px;">
-        <div style="font-size:13px;color:#64748b;margin-bottom:12px;">📍 ${lieu || '—'} · ${teleLabel(prof.teletravail_preference)}</div>
+        <div style="font-size:13px;color:#64748b;margin-bottom:12px;">${lieu || '—'} · ${teleLabel(prof.teletravail_preference)}</div>
         <div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:6px;">Domaines & sous-domaines</div>
         ${domHtml}
         <div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;margin:14px 0 6px;">Disponibilités récurrentes</div>
@@ -588,7 +600,7 @@
     ficheContratActif = null;
     joursProposes = [];
 
-    document.getElementById('ficheTitle').textContent = `👤 ${w.prenom || ''} ${w.nom || ''}`.trim();
+    document.getElementById('ficheTitle').textContent = `${w.prenom || ''} ${w.nom || ''}`.trim();
     document.getElementById('ficheEmail').textContent = w.email;
 
     const today = new Date().toISOString().split('T')[0];
@@ -596,7 +608,7 @@
 
     // Détails du profil du travailleur (compétences, disponibilités, présentation)
     let html = buildProfilSection(email);
-    html += '<div style="font-size:12px;font-weight:800;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">📋 Contrat trimestriel</div>';
+    html += '<div style="font-size:12px;font-weight:800;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">Contrat trimestriel</div>';
     if (trims.length === 0) {
       html += `<div style="font-size:13px;color:#94a3b8;padding:12px;border:1px dashed #e2e8f0;border-radius:10px;">Aucun contrat trimestriel accepté avec ce travailleur.<br>Utilisez « Proposer un nouveau contrat » pour en créer un.</div>`;
     } else {
@@ -611,15 +623,15 @@
 
         const dateSigne = c.contrat_signe_le ? new Date(c.contrat_signe_le).toLocaleDateString('fr-BE') : '';
         const signeControl = signe
-          ? `<div style="font-size:12px;margin-top:6px;color:#16a34a;font-weight:600;">✅ Contrat signé reçu${dateSigne ? ` le ${dateSigne}` : ''}${c.contrat_signe_url ? ` · <a href="${c.contrat_signe_url}" target="_blank" style="color:#6366f1;font-weight:700;">ouvrir</a>` : ''}
+          ? `<div style="font-size:12px;margin-top:6px;color:#16a34a;font-weight:600;">Contrat signé reçu${dateSigne ? ` le ${dateSigne}` : ''}${c.contrat_signe_url ? ` · <a href="${c.contrat_signe_url}" target="_blank" style="color:#6366f1;font-weight:700;">ouvrir</a>` : ''}
                <button onclick="marquerContratSigne('${c.id}', false)" style="margin-left:8px;background:none;border:none;color:#ef4444;font-size:12px;font-weight:700;cursor:pointer;text-decoration:underline;">Annuler</button>
              </div>`
           : `<div style="margin-top:8px;">
                <span style="font-size:12px;color:#f59e0b;font-weight:600;display:block;margin-bottom:6px;">⏳ Contrat signé pas encore reçu du travailleur</span>
-               <button onclick="marquerContratSigne('${c.id}', true)" style="padding:7px 14px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">✅ J'ai reçu le contrat signé</button>
+               <button onclick="marquerContratSigne('${c.id}', true)" style="padding:7px 14px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">J'ai reçu le contrat signé</button>
              </div>`;
 
-        const statutLabel = !dansPeriode ? '⏱️ Hors période' : (signe ? '✅ Signé — prêt' : '📝 En attente de signature');
+        const statutLabel = !dansPeriode ? '⏱Hors période' : (signe ? 'Signé — prêt' : 'En attente de signature');
         const statutColor = !dansPeriode ? '#94a3b8' : (signe ? '#16a34a' : '#f59e0b');
         const borderColor = actif ? '#bbf7d0' : (dansPeriode ? '#fde68a' : '#e2e8f0');
         const bgColor     = actif ? '#f0fdf4' : (dansPeriode ? '#fffbeb' : '#fff');
@@ -627,7 +639,7 @@
           <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px;border:1.5px solid ${borderColor};background:${bgColor};border-radius:10px;margin-bottom:8px;flex-wrap:wrap;">
             <div>
               <div style="font-size:13px;font-weight:700;">${m?.titre || 'Contrat trimestriel'}</div>
-              <div style="font-size:12px;color:#64748b;margin-top:2px;">Période : ${fmtD(deb)} → ${fmtD(fin)} · 💶 ${m?.taux_horaire || '—'} €/h</div>
+              <div style="font-size:12px;color:#64748b;margin-top:2px;">Période : ${fmtD(deb)} → ${fmtD(fin)} · ${m?.taux_horaire || '—'} €/h</div>
               ${signeControl}
             </div>
             <span style="font-size:12px;font-weight:700;color:${statutColor};">${statutLabel}</span>
@@ -639,17 +651,17 @@
           return m?.date_debut && m?.date_fin && today <= m.date_fin && !c.contrat_signe_le;
         });
         html += enPeriodeNonSigne
-          ? `<div style="font-size:12px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;margin-top:4px;">📝 Marquez le contrat comme <strong>signé reçu</strong> ci-dessus pour pouvoir proposer une date officielle de prestation.</div>`
-          : `<div style="font-size:12px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;margin-top:4px;">⚠️ Aucun contrat dans sa période de validité — impossible de proposer des jours. Proposez un nouveau contrat trimestriel.</div>`;
+          ? `<div style="font-size:12px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;margin-top:4px;">Marquez le contrat comme <strong>signé reçu</strong> ci-dessus pour pouvoir proposer une date officielle de prestation.</div>`
+          : `<div style="font-size:12px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;margin-top:4px;">Aucun contrat dans sa période de validité — impossible de proposer des jours. Proposez un nouveau contrat trimestriel.</div>`;
       }
     }
     // Documents signés reçus (tous contrats confondus)
     const docsSignes = allCandsAcceptees.filter(c => c.worker_email === email && c.contrat_signe_url);
     if (docsSignes.length > 0) {
-      html += '<div style="font-size:12px;font-weight:800;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin:18px 0 10px;">📎 Documents signés reçus</div>';
+      html += '<div style="font-size:12px;font-weight:800;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin:18px 0 10px;">Documents signés reçus</div>';
       html += docsSignes.map(c => {
         const m = allMyMissions.find(x => x.id === c.mission_id);
-        const icone = c.type_contrat === 'test_jour' ? '🧪' : '📋';
+        const icone = c.type_contrat === 'test_jour' ? '' : '';
         const dateRecu = c.contrat_signe_le ? new Date(c.contrat_signe_le).toLocaleDateString('fr-BE') : '';
         return `
           <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:6px;font-size:13px;">
@@ -662,17 +674,17 @@
     // ── Jours de travail : liste simple des dates de prestation + validation des heures ──
     const joursTrav = allDeclarations.filter(c => c.worker_email === email)
       .sort((a, b) => String(a.date_prestation || '').localeCompare(String(b.date_prestation || '')));
-    html += '<div style="font-size:12px;font-weight:800;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin:18px 0 10px;">📅 Jours de travail</div>';
+    html += '<div style="font-size:12px;font-weight:800;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin:18px 0 10px;">Jours de travail</div>';
     if (joursTrav.length === 0) {
       html += `<div style="font-size:13px;color:#94a3b8;padding:12px;border:1px dashed #e2e8f0;border-radius:10px;">Aucun jour de travail proposé pour le moment. Proposez une date ci-dessous.</div>`;
     } else {
       const statutMap = {
         proposee:   { label: '⏳ Proposé — en attente du travailleur', color: '#f59e0b' },
-        acceptee:   { label: '📅 Accepté — heures à venir',            color: '#4338ca' },
-        en_attente: { label: '📨 Heures reçues — à valider',          color: '#0891b2' },
-        validee:    { label: '✅ Heures validées',                     color: '#16a34a' },
-        contestee:  { label: '❌ Contestée',                           color: '#ef4444' },
-        refusee:    { label: '🚫 Refusé par le travailleur',           color: '#94a3b8' }
+        acceptee:   { label: 'Accepté — heures à venir',            color: '#4338ca' },
+        en_attente: { label: 'Heures reçues — à valider',          color: '#0891b2' },
+        validee:    { label: 'Heures validées',                     color: '#16a34a' },
+        contestee:  { label: 'Contestée',                           color: '#ef4444' },
+        refusee:    { label: 'Refusé par le travailleur',           color: '#94a3b8' }
       };
       html += joursTrav.map(d => {
         const info = statutMap[d.statut] || { label: d.statut || '—', color: '#64748b' };
@@ -684,31 +696,61 @@
         return `
           <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid ${recu ? '#a5f3fc' : '#e2e8f0'};background:${recu ? '#ecfeff' : '#fff'};border-radius:10px;margin-bottom:6px;flex-wrap:wrap;">
             <div>
-              <div style="font-size:13px;font-weight:700;">📅 ${dLabel}${hPrev ? ` · 🕐 ${hPrev}` : ''}</div>
+              <div style="font-size:13px;font-weight:700;">${dLabel}${hPrev ? ` · ${hPrev}` : ''}</div>
               <div style="font-size:12px;font-weight:600;color:${info.color};margin-top:2px;">${info.label}${hReel}</div>
             </div>
-            ${recu ? `<button onclick="validerHeuresFiche('${d.id}')" style="padding:8px 14px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">✅ Valider les heures</button>` : ''}
+            ${recu ? `<button onclick="validerHeuresFiche('${d.id}')" style="padding:8px 14px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">Valider les heures</button>` : ''}
           </div>`;
       }).join('');
     }
 
     document.getElementById('ficheContrat').innerHTML = html;
 
-    const joursSection = document.getElementById('ficheJoursSection');
-    if (ficheContratActif) {
-      joursSection.classList.remove('hidden');
-      const dInput = document.getElementById('jour-date');
-      dInput.min = today > ficheContratActif.mission.date_debut ? today : ficheContratActif.mission.date_debut;
-      dInput.max = ficheContratActif.mission.date_fin;
-      dInput.value = '';
-    } else {
-      joursSection.classList.add('hidden');
-    }
-    renderJours();
     document.getElementById('ficheOverlay').classList.remove('hidden');
   }
 
   function closeFiche() { document.getElementById('ficheOverlay').classList.add('hidden'); }
+
+  // ── Proposer des jours : modal dédié, basé sur les dates du contrat signé ──
+  function ouvrirProposerJours(email) {
+    const w = pastWorkers.find(x => x.email === email);
+    if (!w) return;
+    ficheWorker = w;
+    joursProposes = [];
+    ficheContratActif = null;
+
+    const today = new Date().toISOString().split('T')[0];
+    const trims = allCandsAcceptees.filter(c => c.worker_email === email && c.type_contrat === 'trimestriel');
+    for (const c of trims) {
+      const m = allMyMissions.find(x => x.id === c.mission_id);
+      const dansPeriode = !!(m?.date_debut && m?.date_fin && today <= m.date_fin);
+      if (dansPeriode && c.contrat_signe_le) { ficheContratActif = { cand: c, mission: m }; break; }
+    }
+
+    if (!ficheContratActif) {
+      const enPeriodeNonSigne = trims.some(c => {
+        const m = allMyMissions.find(x => x.id === c.mission_id);
+        return m?.date_debut && m?.date_fin && today <= m.date_fin && !c.contrat_signe_le;
+      });
+      alert(enPeriodeNonSigne
+        ? "Le contrat n'est pas encore marqué comme signé reçu. Ouvrez la fiche du travailleur (Voir le profil) pour le confirmer, puis proposez des jours."
+        : "Aucun contrat trimestriel signé et en cours avec ce travailleur. Proposez d'abord un nouveau contrat.");
+      return;
+    }
+
+    const m = ficheContratActif.mission;
+    const fmtD = d => new Date(d).toLocaleDateString('fr-BE');
+    document.getElementById('pjSub').textContent = `${w.prenom || ''} ${w.nom || ''}`.trim() + ' — ' + (m.titre || 'Contrat trimestriel');
+    document.getElementById('pjPeriode').innerHTML = `Période du contrat : <strong>${fmtD(m.date_debut)} → ${fmtD(m.date_fin)}</strong> · ${m.taux_horaire || '—'} €/h`;
+    const dInput = document.getElementById('jour-date');
+    dInput.min = today > m.date_debut ? today : m.date_debut;
+    dInput.max = m.date_fin;
+    dInput.value = '';
+    renderJours();
+    document.getElementById('proposerJoursOverlay').classList.remove('hidden');
+  }
+
+  function closeProposerJours() { document.getElementById('proposerJoursOverlay').classList.add('hidden'); }
 
   // ── Marquer / annuler la réception du contrat signé ──
   async function marquerContratSigne(candId, signe) {
@@ -717,7 +759,7 @@
     const { error } = await sb.from('candidatures')
       .update({ contrat_signe_le: signe ? new Date().toISOString() : null, updated_at: new Date().toISOString() })
       .eq('id', candId);
-    if (error) { console.log('maj contrat signé', error); alert('⚠️ Impossible de mettre à jour le statut du contrat. Réessayez.'); return; }
+    if (error) { console.log('maj contrat signé', error); alert('Impossible de mettre à jour le statut du contrat. Réessayez.'); return; }
     const email = ficheWorker?.email;
     await loadPastWorkers();
     if (email) ouvrirFicheTravailleur(email); // rouvrir la fiche à jour
@@ -734,7 +776,7 @@
       salaire_brut: (heures != null && d?.taux_horaire != null) ? heures * d.taux_horaire : null,
       updated_at: new Date().toISOString()
     }).eq('id', id);
-    if (error) { console.log('validation heures', error); alert('⚠️ Validation impossible. Réessayez.'); return; }
+    if (error) { console.log('validation heures', error); alert('Validation impossible. Réessayez.'); return; }
     const email = ficheWorker?.email;
     await loadPastWorkers();
     if (email) ouvrirFicheTravailleur(email); // rouvrir la fiche à jour
@@ -770,8 +812,8 @@
     document.getElementById('btnEnvoyerJours').classList.toggle('hidden', joursProposes.length === 0);
     el.innerHTML = joursProposes.map((j, i) => `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:6px;font-size:13px;">
-        <span>📅 ${new Date(j.date).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' })} · 🕐 ${j.deb}–${j.fin} (${hDiff(j.deb, j.fin)}h)</span>
-        <button onclick="retirerJour(${i})" style="background:none;border:none;color:#ef4444;font-weight:700;cursor:pointer;">✕</button>
+        <span>${new Date(j.date).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' })} · ${j.deb}–${j.fin} (${hDiff(j.deb, j.fin)}h)</span>
+        <button onclick="retirerJour(${i})" style="background:none;border:none;color:#ef4444;font-weight:700;cursor:pointer;"></button>
       </div>`).join('');
   }
 
@@ -811,7 +853,7 @@
     const { error } = await sb.from('declarations_heures').insert(rows);
     if (error) {
       console.log('Insert jours', error);
-      alert("⚠️ Les jours n'ont pas pu être enregistrés. Réessayez.");
+      alert("Les jours n'ont pas pu être enregistrés. Réessayez.");
       resetBtn();
       return;
     }
@@ -836,12 +878,12 @@
     } catch(e) { console.log('Email non bloquant', e); }
 
     resetBtn();
-    alert(`✅ ${rows.length} jour(s) proposé(s) à ${ficheWorker.prenom || 'ce travailleur'}. Ils apparaîtront dans « Valider les heures » dès acceptation.`);
-    closeFiche();
+    alert(`${rows.length} jour(s) proposé(s) à ${ficheWorker.prenom || 'ce travailleur'}. Vous pourrez valider les heures une fois les journées effectuées.`);
+    closeProposerJours();
+    await loadPastWorkers();
   }
 
   init();
-  // v2 — contrat trimestriel : date de fin = fin du trimestre
 </script>
 </body>
 </html>
