@@ -44,6 +44,8 @@
     .btn-propose:hover { background: #4f46e5; }
     .btn-validate { padding: 9px 18px; background: #fffbeb; color: #92400e; border: 1.5px solid #fde68a; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; text-decoration: none; text-align: center; white-space: nowrap; transition: background 0.2s; }
     .btn-validate:hover { background: #fef3c7; }
+    .btn-validate.alert { background: #fef2f2; color: #b91c1c; border-color: #fca5a5; }
+    .btn-validate.alert:hover { background: #fee2e2; }
 
     /* Modal */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
@@ -306,12 +308,17 @@
       const badgeClass = isTest ? 'badge-test' : 'badge-trim';
       const badgeLabel = isTest ? 'Journée de test' : 'Mission trimestrielle';
       const dateLabel = w.derniere_date ? new Date(w.derniere_date).toLocaleDateString('fr-BE') : '—';
+      const nAValider = w.heures_a_valider || 0;
+      const validerBadge = nAValider > 0
+        ? `<span style="background:#ef4444;color:#fff;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:800;margin-left:6px;">${nAValider} à valider</span>`
+        : '';
+      const validerHref = `valider-heures.html?email=${encodeURIComponent(w.email)}&nom=${encodeURIComponent(((w.prenom||'')+' '+(w.nom||'')).trim())}`;
 
       return `
-        <div class="worker-row" style="cursor:pointer;" onclick="ouvrirFicheTravailleur('${w.email}')">
+        <div class="worker-row" style="cursor:pointer;${nAValider > 0 ? 'border-color:#fca5a5;' : ''}" onclick="ouvrirFicheTravailleur('${w.email}')">
           <div class="avatar">${initials}</div>
           <div class="w-info">
-            <div class="w-name">${w.prenom || ''} ${w.nom || ''}</div>
+            <div class="w-name">${w.prenom || ''} ${w.nom || ''}${nAValider > 0 ? ` <span style="display:inline-block;width:9px;height:9px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-left:4px;" title="Heures à valider"></span>` : ''}</div>
             <div class="w-email">${w.email}</div>
             <div class="w-meta">
               <span class="type-badge ${badgeClass}">${badgeLabel}</span>
@@ -321,7 +328,7 @@
             </div>
           </div>
           <div style="display:flex;flex-direction:column;gap:6px;align-items:stretch;">
-            <a href="valider-heures.html?email=${encodeURIComponent(w.email)}&nom=${encodeURIComponent(((w.prenom||'')+' '+(w.nom||'')).trim())}" class="btn-validate" onclick="event.stopPropagation()">Valider les heures${w.heures_a_valider > 0 ? ` (${w.heures_a_valider})` : ''}</a>
+            <a href="${validerHref}" class="btn-validate${nAValider > 0 ? ' alert' : ''}" onclick="event.stopPropagation()">Valider les heures${validerBadge}</a>
             <button class="btn-propose" onclick="event.stopPropagation();ouvrirProposerJours('${w.email}')">Proposer des jours</button>
             <button class="btn-propose" onclick="event.stopPropagation();ouvrirNouveauContrat('${w.email}', '${(w.prenom||'').replace(/'/g,"\\'")}', '${(w.nom||'').replace(/'/g,"\\'")}')">Proposer un nouveau contrat</button>
           </div>
