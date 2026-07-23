@@ -104,6 +104,7 @@
   <span class="user-badge" id="userBadge">Chargement...</span>
   <nav>
     <a href="tableau-missions.html" class="nav-btn nav-btn-ghost">📋 Missions disponibles</a>
+    <button class="nav-btn nav-btn-ghost" onclick="toggleAccount(true)">👤 Mon compte</button>
     <button class="nav-btn nav-btn-ghost" onclick="signOut()">Déconnexion</button>
   </nav>
 </header>
@@ -123,9 +124,10 @@
 <div class="container">
   <div id="loadingState" class="loading">⏳ Chargement de votre profil...</div>
 
-  <div id="mainContent" class="grid hidden">
-    <!-- Colonne gauche : profil -->
-    <div>
+  <div id="mainContent" class="hidden">
+    <!-- Vue COMPTE (masquée par défaut, accessible via « Mon compte ») -->
+    <div id="accountView" style="display:none;max-width:560px;margin:0 auto;">
+      <button class="btn btn-outline" style="margin-bottom:16px;" onclick="toggleAccount(false)">← Retour au tableau de bord</button>
       <div class="card">
         <div class="profile-avatar" id="profileAvatar">?</div>
         <div class="profile-name" id="profileName">—</div>
@@ -174,42 +176,37 @@
       </div>
     </div>
 
-    <!-- Colonne droite : missions -->
-    <div>
-      <!-- Jours de travail proposés par l'employeur -->
-      <div class="card" id="joursProposesCard" style="display:none;">
-        <h2>📅 Jours de travail proposés</h2>
-        <p style="font-size:13px;color:#64748b;margin-bottom:16px;">Votre employeur vous propose ces jours dans le cadre de votre contrat trimestriel. Acceptez-les pour confirmer.</p>
-        <div id="joursProposesList"></div>
+    <!-- Vue TABLEAU DE BORD -->
+    <div id="boardView" style="max-width:720px;margin:0 auto;">
+
+      <!-- 3. Trouver une mission -->
+      <div class="card">
+        <h2>🔎 Trouver une mission</h2>
+        <p style="font-size:13px;color:#64748b;margin-bottom:16px;">Parcourez les missions flexi-job disponibles et postulez à celles qui vous intéressent.</p>
+        <a href="tableau-missions.html"><button class="btn btn-primary" style="width:100%;">Voir les missions disponibles →</button></a>
       </div>
 
-      <!-- Mes candidatures -->
+      <!-- 2. Propositions reçues -->
+      <div class="card" id="propositionsCard" style="display:none;">
+        <h2>📅 Propositions reçues</h2>
+        <p style="font-size:13px;color:#64748b;margin-bottom:16px;">Un employeur vous propose de commencer. Consultez la proposition, puis signez les contrats — ou déclinez.</p>
+        <div id="myPropositions"></div>
+      </div>
+
+      <!-- 4. Contrats signés → validation des heures -->
+      <div class="card" id="signedCard" style="display:none;">
+        <h2>✅ Mes contrats signés</h2>
+        <p style="font-size:13px;color:#64748b;margin-bottom:16px;">Une fois la journée de travail effectuée, validez vos heures pour être payé.</p>
+        <div id="mySigned"></div>
+      </div>
+
+      <!-- 1. Mes candidatures et leur état -->
       <div class="card" id="candidaturesCard" style="display:none;">
         <h2>📌 Mes candidatures</h2>
+        <p style="font-size:13px;color:#64748b;margin-bottom:16px;">Suivi de vos candidatures en attente de réponse.</p>
         <div id="myCandidatures"></div>
       </div>
 
-      <!-- Missions suggérées -->
-      <div class="card">
-        <h2>🎯 Missions pour vous</h2>
-        <p style="font-size:13px;color:#64748b;margin-bottom:16px;">Sélectionnées selon vos compétences déclarées.</p>
-        <div id="suggestedMissions"><div class="loading">Chargement...</div></div>
-        <div style="margin-top:12px;">
-          <a href="tableau-missions.html"><button class="btn btn-outline" style="width:100%;">Voir toutes les missions →</button></a>
-        </div>
-      </div>
-
-      <!-- Mes missions actives -->
-      <div class="card">
-        <h2>⚡ Mes missions actives</h2>
-        <div id="activeMissions"><div class="empty"><div class="icon">📭</div>Aucune mission en cours.<br>Postulez à une mission disponible !</div></div>
-      </div>
-
-      <!-- Historique -->
-      <div class="card">
-        <h2>📋 Historique des missions</h2>
-        <div id="historyMissions"><div class="empty"><div class="icon">🕒</div>Votre historique apparaîtra ici après votre première mission.</div></div>
-      </div>
     </div>
   </div>
 
@@ -252,9 +249,15 @@
 
     workerProfile = workers[0];
     renderProfile();
-    loadMissions();
+    document.getElementById('mainContent').classList.remove('hidden');
     loadCandidatures();
-    loadJoursProposes();
+  }
+
+  // Basculer entre le tableau de bord et la vue « Mon compte »
+  function toggleAccount(show) {
+    document.getElementById('accountView').style.display = show ? 'block' : 'none';
+    document.getElementById('boardView').style.display = show ? 'none' : 'block';
+    window.scrollTo(0, 0);
   }
 
   // ── Envoi du contrat signé (scan/photo/PDF) par le travailleur ──
@@ -350,14 +353,13 @@
     if (statut === 'acceptee') alert('✅ Jour accepté ! Il apparaîtra chez votre employeur dans « Valider les heures ». Pensez à déclarer vos heures réelles après la journée.');
   }
 
-  // ── Mes candidatures : en attente, à confirmer, dossier à compléter ──
+  // ── Candidatures : réparties en propositions, contrats signés, et en attente ──
   async function loadCandidatures() {
     const { data: cands } = await sb.from('candidatures')
       .select('*').eq('worker_email', currentUser.email)
       .order('created_at', { ascending: false });
     if (!cands || cands.length === 0) return;
 
-    // Récupérer les missions liées (titre, entreprise)
     const ids = [...new Set(cands.map(c => c.mission_id).filter(Boolean))];
     let missionsById = {};
     if (ids.length > 0) {
@@ -366,80 +368,67 @@
     }
 
     const esc = s => (s == null ? '' : String(s)).replace(/[<>&]/g, ch => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[ch]));
-
-    const html = cands.map(c => {
-      const m = missionsById[c.mission_id] || {};
-      const titre = m.titre || (c.type_contrat === 'test_jour' ? 'Journée de test' : 'Mission flexi');
-      const entreprise = m.nom_entreprise || 'Employeur';
-      let badge, action = '';
-
-      // Jours proposés (ou repli sur date_test)
+    const joursDe = (c) => {
       let jours = [];
-      try { jours = Array.isArray(c.jours_proposes) ? c.jours_proposes : JSON.parse(c.jours_proposes || '[]'); }
-      catch (e) { jours = []; }
-      if ((!jours || !jours.length) && c.date_test) {
-        jours = [{ date: c.date_test, heure_debut: c.heure_debut, heure_fin: c.heure_fin }];
-      }
-      const joursLabel = (jours || []).map(j => {
+      try { jours = Array.isArray(c.jours_proposes) ? c.jours_proposes : JSON.parse(c.jours_proposes || '[]'); } catch (e) { jours = []; }
+      if ((!jours || !jours.length) && c.date_test) jours = [{ date: c.date_test, heure_debut: c.heure_debut, heure_fin: c.heure_fin }];
+      return (jours || []).map(j => {
         const d = j.date ? new Date(j.date).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' }) : '';
         const hd = j.heure_debut || j.debut, hf = j.heure_fin || j.fin;
-        const h = hd && hf ? ` · ${hd}–${hf}` : '';
-        return d ? `📅 ${d}${h}` : '';
+        return d ? `📅 ${d}${hd && hf ? ` · ${hd}–${hf}` : ''}` : '';
       }).filter(Boolean);
+    };
+    const compLink = (m, entreprise) => `<a href="#" onclick="event.preventDefault();flxShowCompanyProfile({email:'${(m.email_employeur||'').replace(/'/g,"\\'")}',entreprise:'${(entreprise||'').replace(/'/g,"\\'")}'})" style="color:#6366f1;font-weight:600;text-decoration:none;font-size:12px;">Voir l'entreprise</a>`;
+    const head = (m, entreprise, titre) => `<div class="top"><div><div class="titre">${esc(titre)}</div><div class="company">🏢 ${esc(entreprise)} · ${compLink(m, entreprise)}</div></div></div>`;
 
-      const estSigne = !!c.contrat_signe_le;
+    // Répartition
+    const propositions = [], signes = [], autres = [];
+    cands.forEach(c => {
+      if (c.contrat_signe_le) signes.push(c);
+      else if (c.statut === 'date_proposee') propositions.push(c);
+      else autres.push(c);
+    });
 
-      if (estSigne) {
-        // Contrat signé = dossier complet (toutes les infos sont collectées à la signature)
-        badge = '<span class="status-badge status-acceptee">✅ Contrat signé — dossier complet</span>';
-        const pdfBtn = c.contrat_signe_url
-          ? `<a href="${c.contrat_signe_url}" target="_blank" class="btn btn-outline" style="text-decoration:none;">📎 Mon contrat signé</a>`
+    // 2) Propositions reçues
+    if (propositions.length) {
+      document.getElementById('myPropositions').innerHTML = propositions.map(c => {
+        const m = missionsById[c.mission_id] || {};
+        const entreprise = m.nom_entreprise || 'Employeur';
+        const dates = joursDe(c);
+        const msg = (c.message_employeur && c.message_employeur.trim())
+          ? `<div style="margin:8px 0;background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:10px 12px;"><div style="font-size:11px;font-weight:700;color:#4338ca;margin-bottom:3px;">Message de l'employeur</div><div style="font-size:13px;color:#334155;white-space:pre-wrap;">${esc(c.message_employeur.trim())}</div></div>`
           : '';
-        action = pdfBtn;
-      } else if (c.statut === 'en_attente') {
-        badge = '<span class="status-badge status-proposee">⏳ En attente de réponse</span>';
-      } else if (c.statut === 'date_proposee') {
-        badge = '<span class="status-badge status-proposee">📅 Jour(s) proposé(s) — à signer</span>';
-        action = `<button class="btn btn-primary" onclick="window.location.href='signer-contrat.html?cid=${c.id}'">Voir la proposition et signer →</button>`;
-      } else if (c.statut === 'declinee') {
-        badge = '<span class="status-badge status-cloturee">Proposition déclinée</span>';
-      } else if (c.statut === 'refusee') {
-        badge = '<span class="status-badge status-cloturee">Refusée</span>';
-      } else if (c.statut === 'acceptee') {
-        badge = '<span class="status-badge status-acceptee">✅ Acceptée</span>';
-        action = `<button class="btn btn-primary" onclick="window.location.href='signer-contrat.html?cid=${c.id}'">Voir la proposition et signer →</button>`;
-      } else {
-        badge = `<span class="status-badge status-cloturee">${c.statut}</span>`;
-      }
+        return `<div class="mission-item">${head(m, entreprise, m.titre || 'Proposition de travail')}${msg}${dates.length ? `<div class="meta"><span>${dates.join('<br>')}</span></div>` : ''}<div class="footer"><span class="status-badge status-proposee">📅 À signer</span><button class="btn btn-primary" onclick="window.location.href='signer-contrat.html?cid=${c.id}'">Voir et signer →</button></div></div>`;
+      }).join('');
+      document.getElementById('propositionsCard').style.display = 'block';
+    }
 
-      const dateInfo = joursLabel.length ? joursLabel.join('<br>') : '';
-      const heures = '';
+    // 4) Contrats signés → validation des heures
+    if (signes.length) {
+      document.getElementById('mySigned').innerHTML = signes.map(c => {
+        const m = missionsById[c.mission_id] || {};
+        const entreprise = m.nom_entreprise || 'Employeur';
+        const dates = joursDe(c);
+        const pdf = c.contrat_signe_url ? `<a href="${c.contrat_signe_url}" target="_blank" class="btn btn-outline" style="text-decoration:none;">📎 Mon contrat</a>` : '';
+        return `<div class="mission-item">${head(m, entreprise, m.titre || 'Contrat signé')}${dates.length ? `<div class="meta"><span>${dates.join('<br>')}</span></div>` : ''}<div class="footer"><span class="status-badge status-acceptee">✅ Contrat signé</span><div style="display:flex;gap:8px;flex-wrap:wrap;">${pdf}<button class="btn btn-green" onclick="window.location.href='declaration-heures.html?cid=${c.id}'">⏱️ Valider mes heures →</button></div></div></div>`;
+      }).join('');
+      document.getElementById('signedCard').style.display = 'block';
+    }
 
-      const msgBlock = (c.statut === 'date_proposee' && c.message_employeur && c.message_employeur.trim())
-        ? `<div style="margin:8px 0;background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;padding:10px 12px;">
-             <div style="font-size:11px;font-weight:700;color:#4338ca;margin-bottom:3px;">Message de l'employeur</div>
-             <div style="font-size:13px;color:#334155;white-space:pre-wrap;">${esc(c.message_employeur.trim())}</div>
-           </div>`
-        : '';
-
-      const compLink = `<a href="#" onclick="event.preventDefault();flxShowCompanyProfile({email:'${(m.email_employeur||'').replace(/'/g,"\\'")}',entreprise:'${(entreprise||'').replace(/'/g,"\\'")}'})" style="color:#6366f1;font-weight:600;text-decoration:none;font-size:12px;">Voir l'entreprise</a>`;
-
-      return `
-        <div class="mission-item">
-          <div class="top">
-            <div>
-              <div class="titre">${titre}</div>
-              <div class="company">🏢 ${entreprise} · ${compLink}</div>
-            </div>
-          </div>
-          ${msgBlock}
-          <div class="meta"><span>${dateInfo}</span><span>${heures}</span></div>
-          <div class="footer">${badge}${action}</div>
-        </div>`;
-    }).join('');
-
-    document.getElementById('myCandidatures').innerHTML = html;
-    document.getElementById('candidaturesCard').style.display = 'block';
+    // 1) Candidatures en attente / refusées / déclinées
+    if (autres.length) {
+      document.getElementById('myCandidatures').innerHTML = autres.map(c => {
+        const m = missionsById[c.mission_id] || {};
+        const entreprise = m.nom_entreprise || 'Employeur';
+        let badge;
+        if (c.statut === 'en_attente') badge = '<span class="status-badge status-proposee">⏳ En attente de réponse</span>';
+        else if (c.statut === 'refusee') badge = '<span class="status-badge status-cloturee">Refusée</span>';
+        else if (c.statut === 'declinee') badge = '<span class="status-badge status-cloturee">Proposition déclinée</span>';
+        else badge = `<span class="status-badge status-cloturee">${esc(c.statut)}</span>`;
+        return `<div class="mission-item">${head(m, entreprise, m.titre || 'Candidature')}<div class="footer">${badge}</div></div>`;
+      }).join('');
+      document.getElementById('candidaturesCard').style.display = 'block';
+    }
   }
 
   function renderProfile() {
