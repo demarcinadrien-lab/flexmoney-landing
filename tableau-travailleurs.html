@@ -48,6 +48,9 @@
       transition: all 0.2s; cursor: pointer; display: flex; align-items: center; gap: 14px;
     }
     .worker-card:hover { border-color: #6366f1; box-shadow: 0 2px 12px rgba(99,102,241,0.08); }
+    .worker-card.contacte { border-color: #16a34a; background: #f0fdf4; }
+    .worker-card.contacte:hover { border-color: #15803d; }
+    .badge-contacte { font-size: 11px; font-weight: 700; color: #15803d; background: #dcfce7; border: 1px solid #bbf7d0; padding: 2px 8px; border-radius: 10px; }
 
     .worker-top { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
     .avatar { width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; color: #fff; flex-shrink: 0; }
@@ -299,6 +302,7 @@
   })();
 
   let allWorkers = [];
+  let contactedEmails = new Set(); // profils déjà contactés par cet employeur
   let selectedWorker = null;
 
   // Liste déroulante des domaines de compétences (génériques, pas le détail)
@@ -337,6 +341,17 @@
       seen.add(w.email);
       return true;
     });
+
+    // Profils déjà contactés : une candidature existe dans une de mes missions
+    contactedEmails = new Set();
+    try {
+      const { data: myMissions } = await sb.from('missions').select('id').eq('email_employeur', currentUser.email);
+      const mIds = (myMissions || []).map(m => m.id).filter(Boolean);
+      if (mIds.length) {
+        const { data: cands } = await sb.from('candidatures').select('worker_email').in('mission_id', mIds);
+        (cands || []).forEach(c => { if (c.worker_email) contactedEmails.add(c.worker_email.toLowerCase()); });
+      }
+    } catch (e) { /* non bloquant */ }
 
     document.getElementById('statWorkers').textContent = allWorkers.length;
     applyFilters();
@@ -451,6 +466,7 @@
     container.innerHTML = workers.map(w => {
       const initials = ((w.prenom || '?')[0] + (w.nom || '?')[0]).toUpperCase();
       const domaines = domainesDuProfil(w);
+      const contacte = contactedEmails.has((w.email || '').toLowerCase());
 
       // Distance au point de recherche (si une ville est sélectionnée)
       let distLabel = '';
@@ -460,12 +476,13 @@
       }
 
       return `
-        <div class="worker-card" onclick="openProfile('${w.id}')">
+        <div class="worker-card${contacte ? ' contacte' : ''}" onclick="openProfile('${w.id}')">
           <div class="avatar">${initials}</div>
           <div style="flex:1;min-width:0;">
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
               <span class="worker-name">${w.prenom} ${w.nom[0]}.</span>
               ${w.eligible ? '<span class="badge-eligible">Éligible flexi</span>' : ''}
+              ${contacte ? '<span class="badge-contacte">Déjà contacté</span>' : ''}
             </div>
             ${domaines.length ? `<div class="domaine-row" style="margin:6px 0 4px;">${domaines.map(d => `<span class="domaine-tag" style="background:${d.bg};color:${d.couleur};">${d.label}</span>`).join('')}</div>` : ''}
             <div class="worker-location" style="margin:0;">${w.ville || '—'}${distLabel} · ${w.regime_travail || 'Salarié 4/5e'}</div>
@@ -692,7 +709,7 @@
     } catch(e) { console.log('Candidature non créée', e); }
 
     if (candId) {
-      const confirmUrl = `${window.location.origin}/confirmation-creneau.html?cid=${candId}`;
+      const confirmUrl = `${window.location.origin}/signer-contrat.html?cid=${candId}`;
       const debLabel = new Date(date).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' });
       const finLabel = new Date(dateFin).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' });
       const mentionCadre = existingCadre ? '' : ' (contrat-cadre + contrat trimestriel)';

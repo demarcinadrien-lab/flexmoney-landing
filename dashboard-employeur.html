@@ -247,6 +247,14 @@
       <div id="posteesList"><div class="loading">Chargement...</div></div>
     </div>
 
+    <!-- Contrats proposés directement (depuis « Parcourir les profils ») -->
+    <div class="candidatures-section" id="directSection" style="display:none;">
+      <div class="section-header">
+        <h2>Contrats proposés directement <span class="badge-count" id="directCount">0</span></h2>
+      </div>
+      <div id="directList"></div>
+    </div>
+
     <!-- Profils suggérés -->
     <div class="card">
       <h2>Profils suggérés pour vos missions</h2>
@@ -527,6 +535,19 @@
           </div>
         </div>`;
       }).join('');
+    }
+
+    // ── 2. Contrats proposés directement (missions « directes » créées depuis « Parcourir les profils ») ──
+    const directMissionIds = new Set(myMissionsList.filter(m => m.origine === 'directe').map(m => m.id));
+    const directCands = allCandidatures.filter(c => directMissionIds.has(c.mission_id));
+    const directSection = document.getElementById('directSection');
+    document.getElementById('directCount').textContent = directCands.length;
+    if (directCands.length) {
+      document.getElementById('directList').innerHTML = directCands
+        .map(c => candCard(c, myMissionsList.find(x => x.id === c.mission_id))).join('');
+      directSection.style.display = 'block';
+    } else {
+      directSection.style.display = 'none';
     }
   }
 
