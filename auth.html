@@ -95,52 +95,34 @@
 
   <!-- État normal -->
   <div id="formState">
-    <h1>Connexion / Inscription</h1>
-    <p class="sub">Pas besoin de mot de passe — on vous envoie un lien magique.</p>
-
-    <!-- Sélection rôle -->
-    <div class="role-tabs">
-      <button class="role-tab active" id="tabTravailleur" onclick="setRole('travailleur')">👤 Je suis travailleur</button>
-      <button class="role-tab" id="tabEmployeur" onclick="setRole('employeur')">🏢 Je suis employeur</button>
-    </div>
+    <h1>Connexion</h1>
+    <p class="sub">Connectez-vous avec votre adresse email et votre mot de passe.</p>
 
     <div class="form-group">
       <label>Votre adresse email</label>
-      <input type="email" id="emailInput" placeholder="vous@email.com" onkeydown="if(event.key==='Enter') sendMagicLink()">
+      <input type="email" id="emailInput" placeholder="vous@email.com" onkeydown="if(event.key==='Enter') document.getElementById('passwordInput').focus()">
     </div>
-
-    <button class="btn btn-primary" id="btnMagic" onclick="sendMagicLink()">
-      ✉️ Recevoir mon lien de connexion
-    </button>
-
-    <div class="divider">ou</div>
-
-    <button class="btn btn-magic" onclick="showPasswordForm()">
-      🔑 Connexion avec mot de passe
-    </button>
-
-    <!-- Formulaire mot de passe (caché par défaut) -->
-    <div id="passwordForm" class="hidden" style="margin-top:16px;">
-      <div class="form-group">
-        <label>Mot de passe</label>
-        <div class="password-wrap">
-          <input type="password" id="passwordInput" placeholder="••••••••" onkeydown="if(event.key==='Enter') signInWithPassword()">
-          <button type="button" class="password-toggle" onclick="togglePasswordVisibility('passwordInput', this)">👁️</button>
-        </div>
+    <div class="form-group">
+      <label>Mot de passe</label>
+      <div class="password-wrap">
+        <input type="password" id="passwordInput" placeholder="Votre mot de passe" onkeydown="if(event.key==='Enter') signInWithPassword()">
+        <button type="button" class="password-toggle" onclick="togglePasswordVisibility('passwordInput', this)">Afficher</button>
       </div>
-      <button class="btn btn-primary" onclick="signInWithPassword()">Se connecter</button>
-      <div style="text-align:center;margin-top:10px;">
-        <a href="#" onclick="sendPasswordReset()" style="font-size:13px;color:#6366f1;text-decoration:none;">Mot de passe oublié ?</a>
-      </div>
-      <div style="text-align:center;margin-top:6px;">
-        <a href="#" onclick="showPasswordForm()" style="font-size:13px;color:#6366f1;text-decoration:none;">← Retour au lien magique</a>
-      </div>
+    </div>
+    <button class="btn btn-primary" onclick="signInWithPassword()">Se connecter</button>
+    <div style="text-align:center;margin-top:12px;">
+      <a href="#" onclick="sendPasswordReset()" style="font-size:13px;color:#6366f1;text-decoration:none;">Mot de passe oublié ?</a>
+    </div>
+    <div style="text-align:center;margin-top:14px;font-size:13px;color:#64748b;">
+      Pas encore de compte ?
+      <a href="inscription-travailleur.html" style="color:#6366f1;font-weight:600;">Je suis travailleur</a>
+      ·
+      <a href="inscription-employeur.html" style="color:#6366f1;font-weight:600;">Je suis employeur</a>
     </div>
   </div>
 
   <!-- État après demande de réinitialisation -->
   <div id="resetSentState" class="hidden success-state">
-    <div class="icon">🔒</div>
     <h2>Vérifiez votre boîte mail !</h2>
     <p>Un lien pour choisir un nouveau mot de passe a été envoyé à<br><span class="email-shown" id="resetEmailShown">—</span></p>
     <button class="btn btn-magic" onclick="resetForm()" style="margin-top:20px;width:100%;padding:12px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;font-weight:600;cursor:pointer;">← Retour</button>
@@ -155,33 +137,17 @@
       <label>Nouveau mot de passe</label>
       <div class="password-wrap">
         <input type="password" id="newPasswordInput" placeholder="8 caractères minimum">
-        <button type="button" class="password-toggle" onclick="togglePasswordVisibility('newPasswordInput', this)">👁️</button>
+        <button type="button" class="password-toggle" onclick="togglePasswordVisibility('newPasswordInput', this)">Afficher</button>
       </div>
     </div>
     <div class="form-group">
       <label>Confirmer le nouveau mot de passe</label>
       <div class="password-wrap">
         <input type="password" id="newPasswordConfirmInput" placeholder="8 caractères minimum" onkeydown="if(event.key==='Enter') updatePassword()">
-        <button type="button" class="password-toggle" onclick="togglePasswordVisibility('newPasswordConfirmInput', this)">👁️</button>
+        <button type="button" class="password-toggle" onclick="togglePasswordVisibility('newPasswordConfirmInput', this)">Afficher</button>
       </div>
     </div>
     <button class="btn btn-primary" onclick="updatePassword()">Valider le nouveau mot de passe</button>
-  </div>
-
-  <!-- État après envoi magic link -->
-  <div id="successState" class="hidden success-state">
-    <div class="icon">📬</div>
-    <h2>Vérifiez votre boîte mail !</h2>
-    <p>Un lien de connexion a été envoyé à<br><span class="email-shown" id="emailShown">—</span></p>
-    <p style="margin-top:12px;font-size:13px;color:#94a3b8;">Cliquez sur le lien dans l'email, ou entrez ci-dessous le code à 6 chiffres reçu dans le même email.</p>
-
-    <div class="form-group" style="margin-top:20px;text-align:left;">
-      <label>Code de connexion (6 chiffres)</label>
-      <input type="text" id="otpInput" inputmode="numeric" maxlength="6" placeholder="123456" onkeydown="if(event.key==='Enter') verifyCode()">
-    </div>
-    <button class="btn btn-primary" id="btnVerify" onclick="verifyCode()">Valider le code</button>
-
-    <button class="btn btn-magic" onclick="resetForm()" style="margin-top:12px;width:100%;padding:12px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;font-weight:600;cursor:pointer;">← Changer d'email</button>
   </div>
 
   <div class="footer-link">
@@ -192,7 +158,6 @@
 <script src="shared.js"></script>
 <script>
   let currentRole = 'travailleur';
-  let passwordFormVisible = false;
 
   // Vérifier si déjà connecté → redirect (sauf si on arrive via un lien de réinitialisation de mot de passe)
   (async () => {
@@ -215,22 +180,11 @@
     }
   });
 
-  function setRole(role) {
-    currentRole = role;
-    document.getElementById('tabTravailleur').classList.toggle('active', role === 'travailleur');
-    document.getElementById('tabEmployeur').classList.toggle('active', role === 'employeur');
-  }
-
   function togglePasswordVisibility(inputId, btn) {
     const input = document.getElementById(inputId);
     const isHidden = input.type === 'password';
     input.type = isHidden ? 'text' : 'password';
-    btn.textContent = isHidden ? '🙈' : '👁️';
-  }
-
-  function showPasswordForm() {
-    passwordFormVisible = !passwordFormVisible;
-    document.getElementById('passwordForm').classList.toggle('hidden', !passwordFormVisible);
+    btn.textContent = isHidden ? 'Masquer' : 'Afficher';
   }
 
   async function signInWithPassword() {
@@ -240,7 +194,7 @@
 
     const { data, error } = await sb.auth.signInWithPassword({ email, password });
     if (error) {
-      showAlert('Email ou mot de passe incorrect. Le mot de passe est celui choisi lors de votre inscription — sinon, utilisez le lien magique.', 'error');
+      showAlert('Email ou mot de passe incorrect. Le mot de passe est celui choisi lors de votre inscription.', 'error');
     } else {
       await saveRole(data.user);
       redirectByRole(data.user);
@@ -284,63 +238,6 @@
     }
   }
 
-  async function sendMagicLink() {
-    const email = document.getElementById('emailInput').value.trim();
-    if (!email || !email.includes('@')) {
-      showAlert('Veuillez entrer une adresse email valide.', 'error');
-      return;
-    }
-
-    const btn = document.getElementById('btnMagic');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span> Envoi en cours...';
-    hideAlert();
-
-    const redirectTo = window.location.origin + '/auth.html';
-
-    const { error } = await sb.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: redirectTo,
-        data: { role: currentRole }
-      }
-    });
-
-    if (error) {
-      showAlert('Erreur : ' + error.message, 'error');
-      btn.disabled = false;
-      btn.innerHTML = '✉️ Recevoir mon lien de connexion';
-    } else {
-      document.getElementById('emailShown').textContent = email;
-      document.getElementById('formState').classList.add('hidden');
-      document.getElementById('successState').classList.remove('hidden');
-    }
-  }
-
-  async function verifyCode() {
-    const email = document.getElementById('emailShown').textContent;
-    const token = document.getElementById('otpInput').value.trim();
-    if (!token || token.length < 6) {
-      showAlert('Veuillez entrer le code à 6 chiffres reçu par email.', 'error');
-      return;
-    }
-
-    const btn = document.getElementById('btnVerify');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span> Vérification...';
-    hideAlert();
-
-    const { data, error } = await sb.auth.verifyOtp({ email, token, type: 'email' });
-    if (error) {
-      showAlert('Code invalide ou expiré : ' + error.message, 'error');
-      btn.disabled = false;
-      btn.innerHTML = 'Valider le code';
-    } else {
-      await saveRole(data.user);
-      redirectByRole(data.user);
-    }
-  }
-
   async function saveRole(user) {
     // Sauvegarder le rôle dans les métadonnées utilisateur
     const role = user.user_metadata?.role || currentRole;
@@ -366,7 +263,6 @@
 
   function resetForm() {
     document.getElementById('formState').classList.remove('hidden');
-    document.getElementById('successState').classList.add('hidden');
     document.getElementById('resetSentState').classList.add('hidden');
     document.getElementById('emailInput').value = '';
   }
