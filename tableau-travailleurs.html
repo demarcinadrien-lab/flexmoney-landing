@@ -225,6 +225,21 @@
       <small style="display:block;margin-top:4px;color:#94a3b8;font-size:11px;">Préremplie à début + 3 mois — modifiable, de 1 jour à 3 mois. Les journées de travail seront proposées à l'intérieur de cette période.</small>
     </div>
     <div class="form-group">
+      <label>Premier jour de travail proposé *</label>
+      <input type="date" id="contactJour1">
+      <small style="display:block;margin-top:4px;color:#94a3b8;font-size:11px;">Comme c'est un premier contact, proposez déjà une première journée (dans la période du contrat). Les suivantes se proposent ensuite.</small>
+    </div>
+    <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group">
+        <label>Heure de début *</label>
+        <input type="time" id="contactJour1Deb" value="09:00">
+      </div>
+      <div class="form-group">
+        <label>Heure de fin *</label>
+        <input type="time" id="contactJour1Fin" value="17:00">
+      </div>
+    </div>
+    <div class="form-group">
       <label>Taux horaire (€/h) *</label>
       <input type="number" id="contactTaux" min="12" step="0.5" value="20">
     </div>
@@ -571,6 +586,13 @@
     fin.min = d;
     fin.max = plus3Mois(d);
     fin.value = plus3Mois(d);
+    // Premier jour de travail : borné à la période, prérempli à la date de début
+    const j1 = document.getElementById('contactJour1');
+    if (j1) {
+      j1.min = d;
+      j1.max = plus3Mois(d);
+      if (!j1.value || j1.value < d || j1.value > plus3Mois(d)) j1.value = d;
+    }
   }
 
   let pendingContact = null;
@@ -592,9 +614,15 @@
     const taux = parseFloat(document.getElementById('contactTaux').value);
     const lieuChoix = document.getElementById('contactLieu').value;
     const lieuAutre = document.getElementById('contactLieuAutre').value.trim();
+    const jour1 = document.getElementById('contactJour1').value;
+    const jour1Deb = document.getElementById('contactJour1Deb').value;
+    const jour1Fin = document.getElementById('contactJour1Fin').value;
     if (!email || !ent || !date || !dateFin || !desc || !taux) { alert('Veuillez remplir tous les champs obligatoires (dates, description et taux horaire compris).'); return; }
     if (dateFin < date) { alert('La date de fin doit être après la date de début.'); return; }
     if (dateFin > plus3Mois(date)) { alert('La durée du contrat ne peut pas dépasser 3 mois.'); return; }
+    if (!jour1 || !jour1Deb || !jour1Fin) { alert('Indiquez le premier jour de travail proposé, avec ses heures de début et de fin.'); return; }
+    if (jour1 < date || jour1 > dateFin) { alert('Le premier jour de travail doit être compris dans la période du contrat.'); return; }
+    if (jour1Deb >= jour1Fin) { alert("L'heure de fin doit être après l'heure de début."); return; }
     if (lieuChoix === 'autre' && !lieuAutre) { alert("Veuillez indiquer l'adresse de la prestation."); return; }
     const siegeAdr = employerProfile ? [employerProfile.adresse, employerProfile.code_postal, employerProfile.ville].filter(Boolean).join(', ') : '';
     const adresseLieu = lieuChoix === 'remote' ? null : (lieuChoix === 'siege' ? siegeAdr : lieuAutre);
@@ -643,7 +671,7 @@
         `Première proposition : le contrat-cadre ET le contrat trimestriel seront envoyés à la signature. Vous pouvez tout modifier avant envoi.`;
     }
 
-    pendingContact = { worker, email, ent, date, dateFin, desc, taux, lieuChoix, adresseLieu, secteurObj, titre, comps, existingCadre };
+    pendingContact = { worker, email, ent, date, dateFin, desc, taux, lieuChoix, adresseLieu, secteurObj, titre, comps, existingCadre, jour1, jour1Deb, jour1Fin };
 
     btn.disabled = false; btn.textContent = 'Vérifier le contrat →';
     document.getElementById('modalOverlay').classList.add('hidden');
@@ -658,7 +686,7 @@
   // Étape 2 : enregistrer et envoyer à la signature
   async function confirmerEnvoiContact() {
     if (!pendingContact) return;
-    const { worker, email, ent, date, dateFin, desc, taux, lieuChoix, adresseLieu, secteurObj, titre, comps, existingCadre } = pendingContact;
+    const { worker, email, ent, date, dateFin, desc, taux, lieuChoix, adresseLieu, secteurObj, titre, comps, existingCadre, jour1, jour1Deb, jour1Fin } = pendingContact;
     const cadreTexte = document.getElementById('cadreEditor').value;
     const trimTexte = document.getElementById('trimEditor').value;
 
@@ -698,8 +726,10 @@
       mission_id: missionId,
       worker_email: worker.email, worker_nom: worker.nom, worker_prenom: worker.prenom,
       message: desc || null, type_contrat: 'trimestriel',
-      statut: 'date_proposee', date_test: date,
-      heure_debut: null, heure_fin: null,
+      statut: 'date_proposee',
+      jours_proposes: [{ date: jour1, heure_debut: jour1Deb, heure_fin: jour1Fin }],
+      proposition_le: new Date().toISOString(),
+      date_test: jour1, heure_debut: jour1Deb, heure_fin: jour1Fin,
       contrat_texte: trimTexte, cadre_id: cadreId
     };
     let candId = null;
@@ -712,6 +742,7 @@
       const confirmUrl = `${window.location.origin}/signer-contrat.html?cid=${candId}`;
       const debLabel = new Date(date).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' });
       const finLabel = new Date(dateFin).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' });
+      const jour1Label = new Date(jour1).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' });
       const mentionCadre = existingCadre ? '' : ' (contrat-cadre + contrat trimestriel)';
       try {
         await flxSendEmail(TPL_PROPOSITION, {
@@ -722,8 +753,8 @@
           description: desc,
           taux_horaire: `${taux} €/h`,
           lieu_prestation: lieuChoix === 'remote' ? 'Télétravail' : adresseLieu,
-          date_proposee: `du ${debLabel} au ${finLabel} — à signer en ligne`,
-          heure_debut: '—', heure_fin: '—',
+          date_proposee: `Contrat du ${debLabel} au ${finLabel}. Premier jour proposé : ${jour1Label} de ${jour1Deb} à ${jour1Fin}.`,
+          heure_debut: jour1Deb, heure_fin: jour1Fin,
           lien_confirmation: confirmUrl,
           reply_to: email
         });
