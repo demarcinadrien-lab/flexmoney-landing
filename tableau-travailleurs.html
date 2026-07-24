@@ -634,6 +634,10 @@
     }
 
     if (!(await flxEnsureCP(employerProfile, currentUser.email))) return;
+    const maxTaux = flxSalaireMax(employerProfile?.bareme_cp);
+    if (maxTaux && taux > maxTaux) {
+      if (!confirm(`Le taux de ${taux} €/h dépasse le maximum légal de ${maxTaux} €/h (150 % du barème de votre CP). Continuer quand même ?`)) return;
+    }
 
     const btn = document.getElementById('btnContactSend');
     btn.disabled = true; btn.textContent = 'Préparation...';

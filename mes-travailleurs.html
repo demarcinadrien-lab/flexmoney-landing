@@ -424,6 +424,10 @@
     if (dateFin < date) { alert('La date de fin doit être après la date de début.'); return; }
     if (dateFin > plus3Mois(date)) { alert('La durée du contrat ne peut pas dépasser 3 mois.'); return; }
     if (!(await flxEnsureCP(employerProfile, currentUser.email))) return;
+    const maxTaux = flxSalaireMax(employerProfile?.bareme_cp);
+    if (maxTaux && taux > maxTaux) {
+      if (!confirm(`Le taux de ${taux} €/h dépasse le maximum légal de ${maxTaux} €/h (150 % du barème de votre CP). Continuer quand même ?`)) return;
+    }
 
     const worker = pastWorkers.find(w => w.email === selectedWorkerEmail);
     if (!worker) { alert('Travailleur introuvable.'); return; }

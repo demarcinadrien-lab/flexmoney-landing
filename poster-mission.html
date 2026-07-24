@@ -427,11 +427,15 @@
     document.getElementById('prevONSS').textContent   = fmt(onss) + ' €';
     document.getElementById('prevTotal').textContent  = fmt(total) + ' €';
 
-    // Avertissement si taux dépasse 150% du RMMMG (plafond salaire de base loi 12/05/2026)
+    // Avertissement si le taux dépasse 150% du barème de la CP (salaire de base max, loi 12/05/2026)
     const alertEl = document.getElementById('tauxMaxAlert');
-    if (t > 0 && t > TAUX_MAX_BASE) {
+    const maxCP = (typeof flxSalaireMax === 'function') ? flxSalaireMax(employerProfile?.bareme_cp) : null;
+    const maxBase = maxCP || TAUX_MAX_BASE;
+    if (t > 0 && t > maxBase) {
       alertEl.style.display = 'block';
-      alertEl.innerHTML = `Le taux de ${fmt(t)} €/h dépasse <strong>${fmt(TAUX_MAX_BASE)} €/h</strong> (150% du RMMMG). Le <em>salaire de base</em> flexi est plafonné à 150% du minimum barémique de votre Commission Paritaire (loi du 12 mai 2026). Si votre CP a un barème plus élevé, ce taux peut être valide — vérifiez avec votre secrétariat social.`;
+      alertEl.innerHTML = maxCP
+        ? `Le taux de ${fmt(t)} €/h dépasse le <strong>maximum de ${fmt(maxCP)} €/h</strong> (150 % du barème de votre CP : ${fmt(employerProfile.bareme_cp)} €/h). Le salaire de base flexi ne peut pas dépasser ce plafond.`
+        : `Le taux de ${fmt(t)} €/h dépasse <strong>${fmt(TAUX_MAX_BASE)} €/h</strong> (150 % du minimum national). Le salaire de base flexi est plafonné à 150 % du barème de votre CP — vérifiez votre barème.`;
     } else {
       alertEl.style.display = 'none';
     }
@@ -465,8 +469,12 @@
       return;
     }
 
-    // Commission paritaire obligatoire au lancement d'une mission
+    // Commission paritaire + barème obligatoires au lancement d'une mission
     if (!(await flxEnsureCP(employerProfile, email))) return;
+    const maxTaux = flxSalaireMax(employerProfile?.bareme_cp);
+    if (maxTaux && taux > maxTaux) {
+      if (!confirm(`Le taux de ${taux} €/h dépasse le maximum légal de ${maxTaux} €/h (150 % du barème de votre CP). Voulez-vous continuer quand même ?`)) return;
+    }
 
     const brut = heures * taux;
     const ref = 'FM-' + new Date().getFullYear() + '-' + Math.floor(Math.random() * 9000 + 1000);

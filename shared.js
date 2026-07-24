@@ -138,28 +138,51 @@ async function flxShowCompanyProfile(opts = {}) {
 }
 window.flxShowCompanyProfile = flxShowCompanyProfile;
 
-// ── Commission paritaire obligatoire au lancement d'un contrat/mission ──
-// Vérifie que l'employeur a une CP ; sinon la demande et l'enregistre.
-// profile : l'objet employeur en mémoire (mis à jour en place si fourni).
-// Renvoie la CP (string) si OK, ou null si l'employeur annule.
+// ── Commission paritaire + barème obligatoires au lancement d'un contrat/mission ──
+// Vérifie que l'employeur a une CP ET un barème minimum (€/h) ; sinon les demande
+// et les enregistre. profile est mis à jour en place si fourni.
+// Renvoie true si OK, false si l'employeur annule.
 async function flxEnsureCP(profile, employerEmail) {
-  if (profile && profile.commission_paritaire) return profile.commission_paritaire;
   const email = employerEmail || profile?.email_contact;
-  const cp = (prompt(
-    "Commission paritaire (CP) de votre entreprise — obligatoire pour lancer un contrat flexi-job.\n" +
-    "Elle détermine le barème salarial applicable.\n\nEx. : CP 302 — Horeca"
-  ) || '').trim();
-  if (!cp) { alert("La commission paritaire est obligatoire pour lancer un contrat."); return null; }
-  if (sb && email) {
-    try {
-      const { error } = await sb.from('employers_inscription').update({ commission_paritaire: cp }).eq('email_contact', email);
-      if (error) { alert("Impossible d'enregistrer la CP. Réessayez."); return null; }
-    } catch (e) { alert("Impossible d'enregistrer la CP. Réessayez."); return null; }
+  const patch = {};
+
+  let cp = profile?.commission_paritaire;
+  if (!cp) {
+    cp = (prompt(
+      "Commission paritaire (CP) de votre entreprise — obligatoire pour lancer un contrat flexi-job.\n\nEx. : CP 302 — Horeca"
+    ) || '').trim();
+    if (!cp) { alert("La commission paritaire est obligatoire pour lancer un contrat."); return false; }
+    patch.commission_paritaire = cp;
   }
-  if (profile) profile.commission_paritaire = cp;
-  return cp;
+
+  let bareme = profile?.bareme_cp;
+  if (bareme == null || bareme === '' || isNaN(parseFloat(bareme))) {
+    const raw = (prompt(
+      "Barème minimum de votre CP (salaire horaire brut minimum, en €/h).\n" +
+      "Il fixe le salaire flexi minimum, et le maximum = 150 % de ce barème.\n" +
+      "Vous le trouvez sur vos fiches de paie ou auprès de votre secrétariat social.\n\nEx. : 14.50"
+    ) || '').replace(',', '.').trim();
+    bareme = parseFloat(raw);
+    if (!bareme || bareme <= 0) { alert("Le barème minimum (€/h) est obligatoire pour déterminer le salaire flexi."); return false; }
+    patch.bareme_cp = bareme;
+  }
+
+  if (Object.keys(patch).length && sb && email) {
+    try {
+      const { error } = await sb.from('employers_inscription').update(patch).eq('email_contact', email);
+      if (error) { alert("Impossible d'enregistrer la CP / le barème. Réessayez."); return false; }
+    } catch (e) { alert("Impossible d'enregistrer la CP / le barème. Réessayez."); return false; }
+  }
+  if (profile) { if (patch.commission_paritaire) profile.commission_paritaire = cp; profile.bareme_cp = parseFloat(bareme); }
+  return true;
+}
+// Salaire flexi max légal = 150 % du barème de la CP
+function flxSalaireMax(bareme) {
+  const b = parseFloat(bareme);
+  return (b && b > 0) ? Math.round(b * 1.5 * 100) / 100 : null;
 }
 window.flxEnsureCP = flxEnsureCP;
+window.flxSalaireMax = flxSalaireMax;
 
 // ── Bandeau d'information cookies (stockage strictement nécessaire) ──
 function mountCookieNotice() {
