@@ -108,7 +108,7 @@
   let currentUser = null;
   let missionsById = {};
 
-  const fmt = n => (n || 0).toLocaleString('fr-BE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  // fmt() est déjà fourni par shared.js (formatage montant fr-BE, 2 décimales)
   function fmtH(h) {
     if (h == null || isNaN(h)) return '—';
     const s = h < 0 ? '-' : '', a = Math.abs(h), hh = Math.floor(a), mm = Math.round((a - hh) * 60);
