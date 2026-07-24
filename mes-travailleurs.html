@@ -423,6 +423,7 @@
     if (!titre || !date || !dateFin || !taux) { alert('Veuillez remplir les champs obligatoires.'); return; }
     if (dateFin < date) { alert('La date de fin doit être après la date de début.'); return; }
     if (dateFin > plus3Mois(date)) { alert('La durée du contrat ne peut pas dépasser 3 mois.'); return; }
+    if (!(await flxEnsureCP(employerProfile, currentUser.email))) return;
 
     const worker = pastWorkers.find(w => w.email === selectedWorkerEmail);
     if (!worker) { alert('Travailleur introuvable.'); return; }

@@ -633,6 +633,8 @@
       return;
     }
 
+    if (!(await flxEnsureCP(employerProfile, currentUser.email))) return;
+
     const btn = document.getElementById('btnContactSend');
     btn.disabled = true; btn.textContent = 'Préparation...';
 

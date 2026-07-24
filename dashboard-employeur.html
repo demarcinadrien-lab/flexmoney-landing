@@ -773,6 +773,8 @@
   let pendingCandidatureId = null;
 
   async function accepterCandidature(id, type) {
+    // La commission paritaire est obligatoire avant tout contrat (barème salarial)
+    if (!(await flxEnsureCP(employerProfile, currentUser.email))) return;
     // Accepter une candidature = proposer directement le(s) jour(s) de travail
     // et les contrats au travailleur, en une seule étape.
     ouvrirProposerCreneau(id);

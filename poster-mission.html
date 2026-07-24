@@ -263,6 +263,8 @@
 <script src="villes.js"></script>
 <script src="shared.js"></script>
 <script>
+  let employerProfile = null;
+
   // ── Session : rediriger les travailleurs + pré-remplir les infos entreprise ──
   (async () => {
     const { data: { session } } = await sb.auth.getSession();
@@ -278,6 +280,7 @@
       .select('*').eq('email_contact', session.user.email)
       .order('created_at', { ascending: false }).limit(1);
     const p = (emp && emp[0]) || null;
+    employerProfile = p;
     if (!p) return;
 
     if (p.email_contact)  document.getElementById('emailEmployeur').value = p.email_contact;
@@ -461,6 +464,9 @@
       alert('Veuillez sélectionner la ville de la mission.');
       return;
     }
+
+    // Commission paritaire obligatoire au lancement d'une mission
+    if (!(await flxEnsureCP(employerProfile, email))) return;
 
     const brut = heures * taux;
     const ref = 'FM-' + new Date().getFullYear() + '-' + Math.floor(Math.random() * 9000 + 1000);

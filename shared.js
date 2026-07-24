@@ -138,6 +138,29 @@ async function flxShowCompanyProfile(opts = {}) {
 }
 window.flxShowCompanyProfile = flxShowCompanyProfile;
 
+// ── Commission paritaire obligatoire au lancement d'un contrat/mission ──
+// Vérifie que l'employeur a une CP ; sinon la demande et l'enregistre.
+// profile : l'objet employeur en mémoire (mis à jour en place si fourni).
+// Renvoie la CP (string) si OK, ou null si l'employeur annule.
+async function flxEnsureCP(profile, employerEmail) {
+  if (profile && profile.commission_paritaire) return profile.commission_paritaire;
+  const email = employerEmail || profile?.email_contact;
+  const cp = (prompt(
+    "Commission paritaire (CP) de votre entreprise — obligatoire pour lancer un contrat flexi-job.\n" +
+    "Elle détermine le barème salarial applicable.\n\nEx. : CP 302 — Horeca"
+  ) || '').trim();
+  if (!cp) { alert("La commission paritaire est obligatoire pour lancer un contrat."); return null; }
+  if (sb && email) {
+    try {
+      const { error } = await sb.from('employers_inscription').update({ commission_paritaire: cp }).eq('email_contact', email);
+      if (error) { alert("Impossible d'enregistrer la CP. Réessayez."); return null; }
+    } catch (e) { alert("Impossible d'enregistrer la CP. Réessayez."); return null; }
+  }
+  if (profile) profile.commission_paritaire = cp;
+  return cp;
+}
+window.flxEnsureCP = flxEnsureCP;
+
 // ── Bandeau d'information cookies (stockage strictement nécessaire) ──
 function mountCookieNotice() {
   try { if (localStorage.getItem('flx_cookie_ack') === '1') return; } catch(e) { return; }
