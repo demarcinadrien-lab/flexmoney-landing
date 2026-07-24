@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Valider les heures — FlexMoney</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f8fafc; color: #1e293b; }
@@ -107,6 +108,8 @@
 
   let currentUser = null;
   let missionsById = {};
+  let employerProfile = null;
+  let allDecls = [];
 
   // fmt() est déjà fourni par shared.js (formatage montant fr-BE, 2 décimales)
   function fmtH(h) {
@@ -144,6 +147,10 @@
       const { data: missions } = await sb.from('missions').select('id,titre').eq('email_employeur', currentUser.email);
       (missions || []).forEach(m => { missionsById[m.id] = m; });
 
+      // Profil employeur (pour le récapitulatif au secrétariat social)
+      const { data: emp } = await sb.from('employers_inscription').select('*').eq('email_contact', currentUser.email).limit(1);
+      employerProfile = (emp && emp[0]) || null;
+
       await loadDeclarations();
     } catch (e) {
       console.error('valider-heures init', e);
@@ -163,6 +170,7 @@
     if (error) console.warn('Lecture déclarations:', error);
 
     const decls = data || [];
+    allDecls = decls;
     document.getElementById('loading').classList.add('hidden');
     document.getElementById('content').classList.remove('hidden');
 
@@ -247,13 +255,94 @@
     const badge = d.statut === 'validee'
       ? '<span class="badge b-ok">Validées</span>'
       : '<span class="badge b-contest">Contestée</span>';
+    const recapBtn = d.statut === 'validee'
+      ? `<button onclick="genererRecap('${d.id}')" style="padding:6px 12px;background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">Récapitulatif</button>`
+      : '';
     return `
       <div class="hist-row">
         <span class="h-date">${esc(dLabel(d.date_prestation))}</span>
         <span class="h-hours">${fmtH(heures)}</span>
         <span class="h-amount">${fmt(total)} €</span>
         ${badge}
+        ${recapBtn}
       </div>`;
+  }
+
+  // Récapitulatif PDF à transmettre au secrétariat social
+  async function genererRecap(declId) {
+    const d = allDecls.find(x => x.id === declId);
+    if (!d) { alert('Déclaration introuvable.'); return; }
+    if (!window.jspdf) { alert('Génération du PDF indisponible, rechargez la page.'); return; }
+
+    let cand = null;
+    if (d.candidature_id) {
+      const { data } = await sb.from('candidatures')
+        .select('worker_niss,worker_iban,worker_iban_titulaire,worker_prenom,worker_nom')
+        .eq('id', d.candidature_id).single();
+      cand = data;
+    }
+    const mission = missionsById[d.mission_id];
+    const heures = (d.heures_validees != null ? d.heures_validees : (d.heures_reelles != null ? d.heures_reelles : d.heures_prevues)) || 0;
+    const taux = d.taux_horaire || 0;
+    const salaire = heures * taux;
+    const pecule = salaire * 0.0767;
+    const totalTravailleur = salaire + pecule;
+    const cotisation = totalTravailleur * 0.28;
+    const coutTotal = totalTravailleur + cotisation;
+
+    const workerNom = (cand ? `${cand.worker_prenom || ''} ${cand.worker_nom || ''}`.trim() : '') || d.worker_nom || d.worker_email;
+    const dateStr = d.date_prestation ? new Date(d.date_prestation).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '—';
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const M = 56, W = 595 - M * 2; let y = M;
+    const line = (txt, opts = {}) => {
+      const size = opts.size || 10, style = opts.style || 'normal', gap = opts.gap != null ? opts.gap : 5;
+      doc.setFont('helvetica', style); doc.setFontSize(size);
+      doc.setTextColor(...(opts.color || [30, 41, 59]));
+      doc.splitTextToSize(txt, W).forEach(l => { if (y > 790) { doc.addPage(); y = M; } doc.text(l, M, y); y += size + gap; });
+    };
+    const kv = (k, v) => {
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(100, 116, 139); doc.text(k, M, y);
+      doc.setFont('helvetica', 'bold'); doc.setTextColor(15, 23, 42); doc.text(String(v), M + 230, y); y += 17;
+    };
+
+    line('FlexMoney — Récapitulatif de prestation flexi-job', { size: 15, style: 'bold', color: [79, 70, 229], gap: 6 });
+    line('Document à transmettre à votre secrétariat social.', { size: 9, color: [100, 116, 139], gap: 16 });
+
+    line('EMPLOYEUR', { size: 11, style: 'bold', gap: 8 });
+    kv('Entreprise', employerProfile?.nom_entreprise || '—');
+    kv('N° BCE', employerProfile?.numero_bce || '—');
+    kv('Commission paritaire', employerProfile?.commission_paritaire || '—');
+    y += 8;
+
+    line('TRAVAILLEUR FLEXI', { size: 11, style: 'bold', gap: 8 });
+    kv('Nom', workerNom);
+    kv('NISS', cand?.worker_niss || '—');
+    kv('IBAN', cand?.worker_iban || '—');
+    kv('Titulaire du compte', cand?.worker_iban_titulaire || '—');
+    y += 8;
+
+    line('PRESTATION', { size: 11, style: 'bold', gap: 8 });
+    kv('Mission', mission?.titre || '—');
+    kv('Date', dateStr);
+    kv('Heures réelles', `${d.heure_debut_reelle ? d.heure_debut_reelle.slice(0,5) : '—'} - ${d.heure_fin_reelle ? d.heure_fin_reelle.slice(0,5) : '—'}`);
+    kv('Total heures validées', fmtH(heures));
+    y += 8;
+
+    line('CALCUL SALARIAL (loi flexi-job)', { size: 11, style: 'bold', gap: 8 });
+    kv('Taux horaire flexi', fmt(taux) + ' €/h');
+    kv('Salaire (' + fmtH(heures) + ')', fmt(salaire) + ' €');
+    kv('Pécule de vacances (7,67%)', fmt(pecule) + ' €');
+    kv('Total dû au travailleur', fmt(totalTravailleur) + ' € (brut = net)');
+    kv('Cotisation patronale (28%)', fmt(cotisation) + ' €');
+    kv('COÛT TOTAL EMPLOYEUR', fmt(coutTotal) + ' €');
+    y += 14;
+
+    line('Rappel : la déclaration Dimona FLX doit être introduite avant la prestation. Ce document facilite le traitement par votre secrétariat social.', { size: 8, color: [100, 116, 139] });
+    line('Généré via FlexMoney le ' + new Date().toLocaleString('fr-BE'), { size: 8, color: [148, 163, 184] });
+
+    doc.save(`recap-flexi-${(workerNom || 'travailleur').replace(/\s+/g, '-')}-${d.date_prestation || ''}.pdf`);
   }
 
   async function validerHeures(id) {
