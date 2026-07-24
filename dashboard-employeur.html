@@ -978,17 +978,21 @@ Type : FLX`;
     const pending = decls.filter(d => d.statut === 'en_attente');
     document.getElementById('declCount').textContent = pending.length;
 
-    // Jours visibles : acceptés par l'ouvrier (en attente), heures envoyées, confirmées, contestées — triés par date
-    const visibles = decls
-      .filter(d => !['proposee', 'refusee'].includes(d.statut))
-      .sort((a, b) => String(a.date_prestation || '9999-12-31').localeCompare(String(b.date_prestation || '9999-12-31')));
-
-    if (visibles.length > 0) {
-      document.getElementById('declarationsSection').style.display = 'block';
-      renderDeclarations(visibles);
-      if (window.location.hash === '#declarationsSection') {
-        document.getElementById('declarationsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+    // Rappel simple : la validation des heures se fait depuis « Mes travailleurs »
+    const section = document.getElementById('declarationsSection');
+    if (pending.length > 0) {
+      const nbWorkers = new Set(pending.map(d => d.worker_email)).size;
+      document.getElementById('declarationsList').innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:16px 18px;">
+          <div style="font-size:14px;color:#991b1b;">
+            <strong>${pending.length} heure(s) de travail à valider</strong> pour ${nbWorkers} travailleur(s).
+            La validation se fait depuis la fiche du travailleur.
+          </div>
+          <a href="mes-travailleurs.html" style="padding:10px 18px;background:#dc2626;color:#fff;border-radius:9px;font-size:14px;font-weight:700;text-decoration:none;white-space:nowrap;">Aller à Mes travailleurs →</a>
+        </div>`;
+      section.style.display = 'block';
+    } else {
+      section.style.display = 'none';
     }
   }
 

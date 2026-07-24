@@ -118,30 +118,38 @@
   const dLabel = d => d ? new Date(d).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' }) : '—';
 
   async function init() {
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) {
-      const next = encodeURIComponent('valider-heures.html' + window.location.search);
-      window.location.replace('auth.html?next=' + next);
-      return;
-    }
-    currentUser = session.user;
-    if (session.user.user_metadata?.role !== 'employeur') {
-      document.getElementById('loading').textContent = "Cette page est réservée aux employeurs.";
-      return;
-    }
-    if (!workerEmail) {
-      document.getElementById('loading').textContent = "Aucun travailleur spécifié.";
-      return;
-    }
+    try {
+      if (!sb) { document.getElementById('loading').textContent = "Erreur de connexion à la base. Rechargez la page."; return; }
 
-    document.getElementById('heroTitle').textContent = `Valider les heures — ${workerNom || workerEmail}`;
-    document.getElementById('heroSub').textContent = workerNom ? workerEmail : 'Confirmez les heures prestées ou contestez-les.';
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) {
+        const next = encodeURIComponent('valider-heures.html' + window.location.search);
+        window.location.replace('auth.html?next=' + next);
+        return;
+      }
+      currentUser = session.user;
+      if (session.user.user_metadata?.role !== 'employeur') {
+        document.getElementById('loading').textContent = "Cette page est réservée aux employeurs.";
+        return;
+      }
+      if (!workerEmail) {
+        document.getElementById('loading').textContent = "Aucun travailleur spécifié.";
+        return;
+      }
 
-    // Missions de cet employeur (pour les titres et le filtrage)
-    const { data: missions } = await sb.from('missions').select('id,titre').eq('email_employeur', currentUser.email);
-    (missions || []).forEach(m => { missionsById[m.id] = m; });
+      document.getElementById('heroTitle').textContent = `Valider les heures — ${workerNom || workerEmail}`;
+      document.getElementById('heroSub').textContent = workerNom ? workerEmail : 'Confirmez les heures prestées ou contestez-les.';
 
-    await loadDeclarations();
+      // Missions de cet employeur (pour les titres et le filtrage)
+      const { data: missions } = await sb.from('missions').select('id,titre').eq('email_employeur', currentUser.email);
+      (missions || []).forEach(m => { missionsById[m.id] = m; });
+
+      await loadDeclarations();
+    } catch (e) {
+      console.error('valider-heures init', e);
+      const l = document.getElementById('loading');
+      if (l) { l.classList.remove('hidden'); l.textContent = "Erreur au chargement : " + (e && e.message ? e.message : e); }
+    }
   }
 
   async function loadDeclarations() {
@@ -178,7 +186,13 @@
     }
 
     if (!pending.length && !hist.length) {
-      document.getElementById('emptyState').style.display = 'block';
+      const es = document.getElementById('emptyState');
+      es.innerHTML = `Aucune heure à valider ni validée pour ce travailleur pour le moment.
+        <div style="margin-top:14px;font-size:12px;color:#cbd5e1;">
+          Diagnostic — travailleur interrogé : <strong>${esc(workerEmail || '(vide)')}</strong> ·
+          lignes reçues : <strong>${decls.length}</strong>${error ? ' · erreur : ' + esc(error.message || String(error)) : ''}
+        </div>`;
+      es.style.display = 'block';
     }
   }
 
