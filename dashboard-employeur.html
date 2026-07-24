@@ -234,7 +234,7 @@
 <!-- DÉCLARATIONS D'HEURES À VALIDER -->
     <div class="candidatures-section" id="declarationsSection" style="display:none;">
       <div class="section-header">
-        <h2>Déclarations d'heures à valider <span class="badge-count" id="declCount">0</span></h2>
+        <h2>Prestations à suivre <span class="badge-count" id="declCount">0</span></h2>
       </div>
       <div id="declarationsList"></div>
     </div>
@@ -250,7 +250,7 @@
     <!-- Contrats proposés directement (depuis « Parcourir les profils ») -->
     <div class="candidatures-section" id="directSection" style="display:none;">
       <div class="section-header">
-        <h2>Contrats proposés directement <span class="badge-count" id="directCount">0</span></h2>
+        <h2>Contrats en attente de signature <span class="badge-count" id="directCount">0</span></h2>
       </div>
       <div id="directList"></div>
     </div>
@@ -510,7 +510,10 @@
     } else {
       const statusMap = { proposee: 'Ouverte', acceptee: 'Pourvue', en_cours: 'En cours', attente_validation: 'À valider', cloturee: 'Clôturée' };
       postEl.innerHTML = postees.map(m => {
-        const mc = allCandidatures.filter(c => c.mission_id === m.id);
+        // Uniquement les candidatures encore « en cours » (ni signées/reçues, ni refusées/déclinées)
+        const mc = allCandidatures.filter(c => c.mission_id === m.id
+          && !c.contrat_signe_le
+          && !['refusee', 'declinee'].includes(c.statut));
         const isCloturee = m.statut === 'cloturee';
         const actionBtn = isCloturee
           ? `<button onclick="rouvrirMission('${m.id}')" style="padding:7px 14px;background:#fff;color:#6366f1;border:1.5px solid #6366f1;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">🔓 Rouvrir</button>`
@@ -528,18 +531,22 @@
             </div>
           </div>
           <div style="margin-top:12px;padding-top:12px;border-top:1px solid #f1f5f9;">
-            <div style="font-size:12px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">📬 Candidatures (${mc.length})</div>
+            <div style="font-size:12px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Candidatures en attente (${mc.length})</div>
             ${mc.length === 0
-              ? '<div style="font-size:13px;color:#94a3b8;">Aucune candidature reçue pour cette mission.</div>'
+              ? '<div style="font-size:13px;color:#94a3b8;">Aucune candidature en attente pour cette mission.</div>'
               : mc.map(c => candCard(c, m)).join('')}
           </div>
         </div>`;
       }).join('');
     }
 
-    // ── 2. Contrats proposés directement (missions « directes » créées depuis « Parcourir les profils ») ──
+    // ── 2. Contrats proposés directement, EN ATTENTE de signature du travailleur ──
+    // (une fois signé/reçu, le contrat quitte le dashboard : il n'y a plus de tâche en cours)
     const directMissionIds = new Set(myMissionsList.filter(m => m.origine === 'directe').map(m => m.id));
-    const directCands = allCandidatures.filter(c => directMissionIds.has(c.mission_id));
+    const directCands = allCandidatures.filter(c =>
+      directMissionIds.has(c.mission_id) &&
+      !c.contrat_signe_le &&
+      !['refusee', 'declinee'].includes(c.statut));
     const directSection = document.getElementById('directSection');
     document.getElementById('directCount').textContent = directCands.length;
     if (directCands.length) {
@@ -977,14 +984,34 @@ Type : FLX`;
 
     allDeclarations = decls;
 
-    const pending = decls.filter(d => d.statut === 'en_attente');
-    document.getElementById('declCount').textContent = pending.length;
+    const pending = decls.filter(d => d.statut === 'en_attente');   // heures reçues à valider
+    const proposed = decls.filter(d => d.statut === 'proposee');    // jours proposés, en attente de confirmation
+    document.getElementById('declCount').textContent = pending.length + proposed.length;
 
-    // Rappel simple : la validation des heures se fait depuis « Mes travailleurs »
     const section = document.getElementById('declarationsSection');
+    let html = '';
+
+    // Jours de travail proposés, en attente de confirmation du travailleur
+    if (proposed.length > 0) {
+      const rows = proposed
+        .sort((a, b) => String(a.date_prestation || '').localeCompare(String(b.date_prestation || '')))
+        .map(d => {
+          const nom = d.worker_nom || d.worker_email || 'Travailleur';
+          const dLbl = d.date_prestation ? new Date(d.date_prestation).toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' }) : '—';
+          const h = d.heure_debut_prevue && d.heure_fin_prevue ? ` · ${d.heure_debut_prevue.slice(0,5)}–${d.heure_fin_prevue.slice(0,5)}` : '';
+          return `<div style="font-size:13px;color:#92400e;margin-top:5px;">• <strong>${nom}</strong> — ${dLbl}${h}</div>`;
+        }).join('');
+      html += `
+        <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:16px 18px;margin-bottom:12px;">
+          <div style="font-size:14px;font-weight:700;color:#92400e;">${proposed.length} jour(s) de travail proposé(s) — en attente de confirmation du travailleur</div>
+          ${rows}
+        </div>`;
+    }
+
+    // Heures reçues à valider (la validation se fait depuis « Mes travailleurs »)
     if (pending.length > 0) {
       const nbWorkers = new Set(pending.map(d => d.worker_email)).size;
-      document.getElementById('declarationsList').innerHTML = `
+      html += `
         <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:16px 18px;">
           <div style="font-size:14px;color:#991b1b;">
             <strong>${pending.length} heure(s) de travail à valider</strong> pour ${nbWorkers} travailleur(s).
@@ -992,10 +1019,10 @@ Type : FLX`;
           </div>
           <a href="mes-travailleurs.html" style="padding:10px 18px;background:#dc2626;color:#fff;border-radius:9px;font-size:14px;font-weight:700;text-decoration:none;white-space:nowrap;">Aller à Mes travailleurs →</a>
         </div>`;
-      section.style.display = 'block';
-    } else {
-      section.style.display = 'none';
     }
+
+    if (html) { document.getElementById('declarationsList').innerHTML = html; section.style.display = 'block'; }
+    else { section.style.display = 'none'; }
   }
 
   function renderDeclarations(decls) {
