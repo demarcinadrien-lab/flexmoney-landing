@@ -280,9 +280,18 @@
     <div style="font-size:12px;font-weight:800;color:#6366f1;text-transform:uppercase;letter-spacing:0.5px;margin:16px 0 8px;">Contrat trimestriel</div>
     <textarea id="trimEditor" rows="12" style="width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.5;resize:vertical;"></textarea>
 
+    <div style="border:2px dashed #c7d2fe;background:#f5f3ff;border-radius:12px;padding:16px;margin-top:16px;">
+      <div style="font-size:13px;font-weight:800;color:#4f46e5;margin-bottom:10px;">Votre signature (employeur)</div>
+      <input type="text" id="empSignName" placeholder="Prénom et nom du signataire" style="width:100%;padding:11px 13px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:14px;font-family:inherit;">
+      <label style="display:flex;gap:9px;align-items:flex-start;font-size:12px;color:#374151;margin-top:10px;cursor:pointer;">
+        <input type="checkbox" id="empSignConsent" style="margin-top:2px;flex-shrink:0;">
+        <span>Je signe électroniquement ce(s) contrat(s) au nom de l'entreprise. Le travailleur recevra le document pré-signé et le contresignera pour finaliser l'accord des deux parties (signature électronique simple, eIDAS).</span>
+      </label>
+    </div>
+
     <div class="modal-buttons">
       <button class="btn-cancel" onclick="retourFormulaireContact()">← Modifier les champs</button>
-      <button class="btn-send" id="btnConfirmContrat" onclick="confirmerEnvoiContact()">Confirmer et envoyer à la signature →</button>
+      <button class="btn-send" id="btnConfirmContrat" onclick="confirmerEnvoiContact()">Signer et envoyer au travailleur →</button>
     </div>
   </div>
 </div>
@@ -696,6 +705,11 @@
     const cadreTexte = document.getElementById('cadreEditor').value;
     const trimTexte = document.getElementById('trimEditor').value;
 
+    const empSignNom = document.getElementById('empSignName').value.trim();
+    const empConsent = document.getElementById('empSignConsent').checked;
+    if (empSignNom.length < 3 || !empConsent) { alert("Veuillez signer le contrat (nom du signataire + case de consentement) avant de l'envoyer."); return; }
+    const empSigneLe = new Date().toISOString();
+
     const btn = document.getElementById('btnConfirmContrat');
     btn.disabled = true; btn.textContent = 'Envoi en cours...';
 
@@ -722,7 +736,8 @@
         const { data: kRows, error: kErr } = await sb.from('contrats_cadre').insert({
           employer_email: email, employer_nom: ent,
           worker_email: worker.email, worker_nom: worker.nom, worker_prenom: worker.prenom,
-          texte: cadreTexte
+          texte: cadreTexte,
+          employeur_signataire_nom: empSignNom, employeur_signe_le: empSigneLe
         }).select().single();
         if (!kErr && kRows) cadreId = kRows.id;
       } catch(e) { console.log('Cadre non créé', e); }
@@ -736,7 +751,8 @@
       jours_proposes: [{ date: jour1, heure_debut: jour1Deb, heure_fin: jour1Fin }],
       proposition_le: new Date().toISOString(),
       date_test: jour1, heure_debut: jour1Deb, heure_fin: jour1Fin,
-      contrat_texte: trimTexte, cadre_id: cadreId
+      contrat_texte: trimTexte, cadre_id: cadreId,
+      employeur_signataire_nom: empSignNom, employeur_signe_le: empSigneLe
     };
     let candId = null;
     try {

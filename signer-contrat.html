@@ -353,6 +353,11 @@
   function renderView() {
     const block = (t) => `<pre style="white-space:pre-wrap;font-family:inherit;font-size:13px;line-height:1.6;margin:0;">${esc(t)}</pre>`;
     let html = '';
+    if (cand?.employeur_signataire_nom) {
+      html += `<div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:10px;padding:12px 15px;margin-bottom:18px;font-size:13px;color:#065f46;">
+        Ce contrat a déjà été <strong>signé par l'employeur</strong> (${esc(cand.employeur_signataire_nom)}${cand.employeur_signe_le ? ', le ' + new Date(cand.employeur_signe_le).toLocaleDateString('fr-BE') : ''}). Votre signature ci-dessous finalise l'accord des deux parties.
+      </div>`;
+    }
     if (cadreASigner) {
       html += `<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:14px 16px;margin-bottom:20px;font-size:13px;color:#92400e;line-height:1.6;">
         <strong style="font-size:14px;">Première collaboration : deux contrats à signer</strong><br>
@@ -489,6 +494,15 @@
     y += 14;
     if (y > 720) { doc.addPage(); y = M; }
     doc.setDrawColor(203, 213, 225); doc.line(M, y, M + W, y); y += 16;
+    // Signature de l'employeur (apposée avant l'envoi au travailleur)
+    if (cand?.employeur_signataire_nom) {
+      emit('SIGNATURE ÉLECTRONIQUE DE L\'EMPLOYEUR', { style: 'bold', size: 10, color: [79, 70, 229] });
+      emit(`Pour ${C.entreprise}`, { size: 9, color: [100, 116, 139] });
+      emit(`Signé par : ${cand.employeur_signataire_nom}`, { size: 10 });
+      emit(`Date et heure : ${cand.employeur_signe_le ? new Date(cand.employeur_signe_le).toLocaleString('fr-BE') : '—'}`, { size: 10 });
+      emit('Signature électronique simple (eIDAS) apposée en ligne via FlexMoney.', { size: 8, color: [100, 116, 139] });
+      y += 12;
+    }
     emit('SIGNATURE ÉLECTRONIQUE DU TRAVAILLEUR', { style: 'bold', size: 10, color: [79, 70, 229] });
     if (cadreASigner) emit('Signature valant pour le contrat-cadre ET le contrat trimestriel ci-dessus.', { size: 8, color: [100, 116, 139] });
     emit(`Signé par : ${signName}`, { size: 10 });
